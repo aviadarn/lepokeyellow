@@ -1,0 +1,25 @@
+# ROMs are never committed. Bring your own legally acquired dump.
+*.gb
+*.gbc
+*.sav
+
+# Save states hold game RAM, so they are derived from the ROM. Not committed.
+*.state
+states/
+
+# Large or regenerable artifacts.
+episodes/
+checkpoints/
+plans/
+mlruns/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Smoke-test screenshots only. results/ and docs/ figures ARE committed:
+# a .gitignore entry that quietly swallows run data is how you end up
+# pushing an empty results directory three commits in a row.
+/before.png
+/after.png
+/frame.png

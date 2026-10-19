@@ -1,0 +1,30 @@
+[project]
+name = "lepokeyellow"
+version = "0.1.0"
+description = "A JEPA world model and latent planner for Pokemon Yellow"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "LICENSE.upstream"]
+requires-python = ">=3.12"
+dependencies = [
+    "einops>=0.8.2",
+    "h5py>=3.16.0",
+    "numpy>=2.1",
+    "pillow>=11.0",
+    "pyboy>=2.7.0",
+    "torch>=2.6",
+    "tqdm>=4.67",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["poke"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

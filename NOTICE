@@ -1,0 +1,49 @@
+lepokeyellow
+============
+
+This project is a Pokemon Yellow port and extension of:
+
+    lePokeRed -- https://github.com/stmonty/lePokeRed
+    Copyright (c) Monty Bichouna
+    MIT License (see LICENSE.upstream)
+    Vendored from commit d7f49fc266597b4917571b20ab60d3aff846dba7
+    ("Readme", 2026-09-23)
+
+Files vendored unchanged from that commit:
+
+    poke/__init__.py        poke/actions.py       poke/action_encoder.py
+    poke/encoder.py         poke/predictor.py     poke/jepa.py
+    poke/sigreg.py          poke/splits.py        poke/utils.py
+    scripts/show_state.py
+
+Files adapted from it (each carries a header saying what changed):
+
+    poke/env.py             poke/ram.py           poke/writer.py
+    poke/dataset.py
+    scripts/collect.py      scripts/train.py      scripts/probe.py
+    scripts/finetune_rollout.py                   scripts/plan_cem.py
+    scripts/eval_plan.py    scripts/capture_state.py
+    scripts/smoke_test.py
+
+Files original to this project:
+
+    poke/games.py           poke/tasks.py         poke/goals.py
+    poke/baselines.py       poke/routes.py
+    scripts/record_route.py scripts/calibrate_ram.py
+    scripts/eval_baselines.py                     scripts/sweep_seeds.py
+    tests/
+
+Research this builds on:
+
+    LeWorldModel: Stable End-to-End Joint-Embedding Predictive Architecture
+    from Pixels -- Lucas Maes, Quentin Le Lidec, Damien Scieur, Yann LeCun,
+    Randall Balestriero (2026). arXiv:2603.19312
+
+    LeJEPA -- arXiv:2511.08544, which introduces SIGReg.
+
+    "Teaching a World Model to Play Pokemon" -- Monty Bichouna, 2026-09-20.
+    https://nostalgia.dev/posts/teaching-a-world-model-to-play-pokemon/
+
+No Pokemon ROM, game asset, or save state is included or distributed here.
+Pokemon is a trademark of Nintendo / Creatures Inc. / GAME FREAK Inc. This
+project is unaffiliated with them.
