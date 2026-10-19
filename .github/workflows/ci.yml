@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # Installs the project rather than only its deps, so a packaging
+      # mistake fails here instead of on someone else's machine.
+      - run: uv sync --locked --group dev
+
+      # SDL2 is pulled in by pyboy; the suite never opens a window, but the
+      # import path still wants a video driver on a headless runner.
+      - run: uv run pytest -q
+        env:
+          SDL_VIDEODRIVER: dummy
+
+      # Every script must at least import and parse its arguments. Cheap, and
+      # it catches the import errors that only surface when a ROM is present.
+      - run: |
+          for s in capture_state smoke_test record_route calibrate_ram collect \
+                   eval_baselines train probe finetune_rollout plan_cem \
+                   eval_plan sweep_seeds show_state; do
+            echo "--- $s"
+            uv run python -m "scripts.$s" --help > /dev/null
+          done
+        env:
+          SDL_VIDEODRIVER: dummy
