@@ -1,3 +1,5 @@
+import io
+
 import numpy as np
 from pyboy import PyBoy
 
@@ -71,6 +73,34 @@ class PokeEnv:
     def screen(self) -> np.ndarray:
         """RGB frame. In DMG mode R == G == B, so channel 0 is luminance."""
         return np.asarray(self.pyboy.screen.ndarray[:, :, :3]).copy()
+
+    def snapshot(self) -> bytes:
+        """In-memory save state. Fidelity checked: position, screen and WRAM
+        all come back identical and replay from a restore is deterministic."""
+        buffer = io.BytesIO()
+        self.pyboy.save_state(buffer)
+        return buffer.getvalue()
+
+    def restore(self, blob: bytes) -> None:
+        self.pyboy.load_state(io.BytesIO(blob))
+        self.pyboy.tick(1, True)
+
+    def screen_of_state(self, state_path) -> np.ndarray:
+        """The screen a save state shows, without disturbing the current one.
+
+        Milestone goal images come from the bootstrap states, so this is how a
+        goal frame is obtained: no extra data collection, and the goal is a
+        frame the game actually produced rather than one picked out of a
+        dataset by hand.
+        """
+        blob = self.snapshot()
+        try:
+            with open(state_path, "rb") as handle:
+                self.pyboy.load_state(handle)
+            self.pyboy.tick(1, True)
+            return self.screen()
+        finally:
+            self.restore(blob)
 
     def close(self) -> None:
         self.pyboy.stop()

@@ -110,8 +110,12 @@ TASKS: dict[str, Task] = {
         goal=_left_start_map,
         start_context=_map_context,
         horizon=24,
-        state="states/oaks_lab.state",
-        route=None,
+        # Defined from the bootstrap state so it lines up with the route
+        # bootstrap writes for it; leaving the bedroom is as good an instance of
+        # the task as leaving any other room, and it is the one that is
+        # reproducible from a bare ROM.
+        state="states/bedroom.state",
+        route="routes/leave_room.json",
     ),
 }
 

@@ -208,6 +208,45 @@ uv run python -m scripts.sweep_seeds checkpoints/rollout/best.pt --seeds 100
 uv run python -m scripts.sweep_seeds checkpoints/rollout/best.pt --seeds 100 --untrained
 ```
 
+## Playing: closed-loop, along a chain
+
+Everything else here plans once, open-loop, to one goal — which is what the blog
+post does, and it is why 14 actions is the ceiling. Latent rollouts compound
+error, so a 40-action blind plan is hopeless however good the model is.
+`scripts/play.py` replaces it with:
+
+> plan H actions, execute the first few, **re-encode the real screen**, plan again
+
+Affordable because CEM is cheap: 173 ms per round, so replanning every 3 actions
+costs under half a second of planning per action, against one second of emulated
+game time.
+
+Three controllers share the pad and every action records which one chose it:
+
+| controller | when | why |
+|---|---|---|
+| `planner` | overworld | CEM in latent space towards the milestone's goal image |
+| `battle` | `wIsInBattle` set | the planner has no business in a battle menu, and the fight is unavoidable — the rival challenges you the moment Oak hands over Pikachu. Mashing A cleared it on the cartridge in **43 presses**, Pikachu intact |
+| `fallback` | milestone has no goal image | so a run reports "no goal image" instead of quietly steering at nothing |
+
+**Goal images need no extra collection.** `bootstrap` already writes a verified
+state for each point in the story, and the screen of that state is exactly the
+frame to steer towards. So a milestone is a RAM predicate (did we get there)
+plus the state file that says what getting there looks like.
+
+The first scoped chain, which contains exactly one battle on purpose:
+
+| milestone | reached when | goal image |
+|---|---|---|
+| `pikachu` | party ≥ 1 | `states/pikachu.state` |
+| `rival_beaten` | a trainer battle was seen, is over, party survived | — scripted |
+| `left_lab` | party ≥ 1 and map ≠ 40 | `states/pallet.state` |
+| `left_pallet` | map outside {0, 37, 38, 40} | — no state yet |
+
+`rival_beaten` consults a history flag rather than just "not in a battle",
+because "not in a battle" is true *before* the fight too and the milestone would
+fire immediately.
+
 ## Cost
 
 Measured on an Apple M5 (32 GB) with torch 2.13 on MPS, on this architecture at
@@ -245,10 +284,8 @@ planning all work end to end on a dataset in the collector's h5 format, on MPS.
 They have not yet been run on frames from the game, because no dataset has been
 collected yet.
 
-**Not built yet:** the MPC play loop. Everything so far plans once, open-loop,
-to one goal. Playing needs replanning against the real screen, a chain of
-subgoals, data along the route, and a scripted policy for battles — see the
-roadmap.
+**Built, not yet run on a trained model:** `scripts/play.py`, the closed-loop
+play loop. See below.
 
 67 tests, none needing a ROM or a GPU.
 
