@@ -72,23 +72,115 @@ emulator is deterministic from a save state and the plan is fixed, so N runs are
 N identical episodes. Varying anything means varying the planner seed, which is
 what `sweep_seeds.py` does.
 
+## No hand-made save state
+
+Upstream needs you to play the game: *"Play until you can choose a starter.
+Stand below the middle Poke Ball... Close the window to save."* Every result
+then rests on an artifact nobody else can reproduce, which is why routes have
+to carry the digest of the state they were recorded against.
+
+None of that is necessary. Yellow's entire intro -- Oak's speech, both name
+entries, the walk-on -- is cleared by pressing A, and from the bedroom a seeded
+random walk finds the way out. `scripts/bootstrap.py` presses A until the game
+hands over control, searches for a target, truncates at first arrival, and
+**replays the route from the start to check it lands in the same place** before
+saving. Same seed and the same dump give the same file on any machine.
+
+| target | from a bare ROM | result |
+|---|---|---|
+| `bedroom` | 74 A presses, **1.4 s** | controllable, map 38, party 0 |
+| `oaks_lab` | + 765 search steps, **17 s** | map 40 (2 of 6 seeds found it) |
+| `pikachu` | + 1,485 search steps, **25 s** | map 40, **party 1** (1 of 4 seeds) |
+
+```bash
+uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to pikachu
+```
+
+Two bugs this flushed out, both recorded in the code:
+
+- **B is backspace on the name-entry screen.** Pressing it speculatively to
+  clear a text box bounces between the name menu and the letter grid forever;
+  the first version burned 5,104 actions that way. Only A is ever committed,
+  and any experiment happens between a snapshot and a restore.
+- **The cutscene moves the player.** A probe that calls "position changed"
+  control reports control that does not exist during the walk-on. The probe now
+  runs a no-op of identical timing first, and requires the move to be
+  reversible -- no cutscene honours that.
+
+Snapshot fidelity was checked directly rather than assumed: position, screen
+and WRAM all come back identical, and replay from a restored state is
+deterministic.
+
+## Addresses, confirmed on the cartridge
+
+Yellow moved `wGBC` into HRAM, so WRAM above `$CF1A` sits one byte below
+Red/Blue. The shift rule predicted these; running the ROM confirmed them.
+
+| Yellow | Red | symbol | how it was confirmed |
+|---|---|---|---|
+| `0xD162` | `0xD163` | `party_count` | watched go 0 -> 1 when Pikachu arrives |
+| `0xD163` | `0xD164` | `party_species` | documented |
+| `0xD35D` | `0xD35E` | `cur_map` | reads 38 on a new game; 38 -> 37 -> 0 -> 40 along the route |
+| `0xD360` | `0xD361` | `wYCoord` | 6 <-> 7 on down/up |
+| `0xD361` | `0xD362` | `wXCoord` | 1 <-> 4 on left/right |
+| `0xD056` | `0xD057` | `wIsInBattle` | **still inferred** -- reads 0, which a wrong address also reads |
+
+Confirmed against ROM sha1 `cc7d0326...` (Yellow (UE) [C][!]), recorded in
+`games.CONFIRMED_ON` so a later disagreement points at a different dump rather
+than at the table.
+
+**Yellow is a dual-mode cart** (CGB flag `0x80`), so PyBoy boots it in colour:
+R, G and B differ. Every writer takes channel 0 and the encoder is
+`Conv2d(1, ...)`, so colour would quietly feed the model an arbitrary channel
+instead of luminance. `PokeEnv` forces DMG, giving the 4-shade grey screen the
+blog post trained on. Upstream never hit this -- a `.gb` Red ROM has no colour
+mode to pick.
+
+## The task had to be redefined, and the table says why
+
+The obvious framing -- start inside Oak's lab, acquire a Pokemon -- is not a
+hard task, it is an impossible one. The lab is enterable long before the story
+hands anything over; Oak has to stop the player north of Pallet first.
+Bootstrapping to map 40 and running the baselines there:
+
+| policy | hits |
+|---|---|
+| all seven constant buttons | 0/1 each |
+| uniform random | 0/50 |
+
+That reads like a brutally hard task and is really a start state the goal
+cannot be reached from. A table of zeros is a broken task, not a good result.
+
+Redefined from a new game, with a horizon matched to what random actually
+needs (525-2,600 actions across seeds):
+
+| policy | hits | rate |
+|---|---|---|
+| always noop / up / down / left / right / a / b | 0/1 each | 0.0% |
+| **uniform random** | **1/50** | **2.0%** |
+
+Reachable, but not by accident. That 2.0% is the floor any planner has to beat.
+
 ## Requirements
 
 - Python ≥ 3.12 and [uv](https://docs.astral.sh/uv/)
-- **Your own legally acquired Pokémon Yellow ROM**, as `pokeyellow.gb`. No ROM,
-  game asset or save state is included or distributed here, and `.gitignore`
-  blocks all three.
-- A graphical desktop for `capture_state` and `record_route`. A GPU is optional
-  — see the measured numbers below.
+- **Your own legally acquired Pokémon Yellow ROM.** No ROM, game asset or save
+  state is included or distributed here, and `.gitignore` blocks all three.
+  Either the `.gb` or the GBC-enhanced `.gbc` dump works; the env forces DMG
+  rendering either way.
+- No graphical desktop and no GPU required. `bootstrap` is headless, and the
+  measured numbers below are all from a laptop. `capture_state` and
+  `record_route` still exist for hand-made states, but nothing needs them.
 
 ## Run
 
 ```bash
 uv sync
-uv run pytest                                  # 59 tests, no ROM and no GPU needed
+uv run pytest                                  # 67 tests, no ROM and no GPU needed
 
-# Play to inside Oak's lab with an EMPTY party. Close the window to save.
-uv run python -m scripts.capture_state pokeyellow.gb
+# Bare ROM -> a verified, reproducible save state. No playing required.
+uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to bedroom
+uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to pikachu
 
 # Sanity check: detected game, RAM readings, and whether the task is already solved.
 uv run python -m scripts.smoke_test
@@ -143,24 +235,29 @@ freezes it — caching embeddings there is roughly 4× off the expensive phase.
 
 ## Status
 
-Everything that does not need a ROM is tested and passing: ROM header
-identification, the version RAM maps, the task predicates, route validation,
-the baseline policies against a scripted fake emulator, the HDF5 round trip,
-goal-frame selection, and the AUC against a brute-force pair count.
+**Run on the real cartridge:** ROM identification, DMG forcing, all six RAM
+addresses but `wIsInBattle`, the bootstrap to all three targets with replay
+verification, the map graph, and the baseline table for both the broken lab
+start and the working new-game start.
 
-**Nothing that touches a real ROM has been executed.** No cartridge dump was
-available while this was written, so the save state, the recorded route, the RAM
-calibration, data collection, training and planning are all unrun. Expect to fix
-things on the first pass. In particular `yellow_pikachu`'s default horizon of 40
-is a guess at how many actions the walk plus the dialogue takes; `record_route`
-reports the real number, and `calibrate_ram` is the first thing to run because
-Yellow's `cur_map` is still an inference.
+**Run against synthetic data only:** train, probe, rollout fine-tuning and CEM
+planning all work end to end on a dataset in the collector's h5 format, on MPS.
+They have not yet been run on frames from the game, because no dataset has been
+collected yet.
+
+**Not built yet:** the MPC play loop. Everything so far plans once, open-loop,
+to one goal. Playing needs replanning against the real screen, a chain of
+subgoals, data along the route, and a scripted policy for battles — see the
+roadmap.
+
+67 tests, none needing a ROM or a GPU.
 
 ## Roadmap
 
-1. Baseline table for `yellow_pikachu`, before any model exists.
-2. Reproduce the pipeline end to end on Yellow; report the planner beside every
-   constant-button policy.
+1. ~~Baseline table for `yellow_pikachu`, before any model exists.~~ Done:
+   constant buttons 0, random 1/50.
+2. Collect a dataset around the bootstrap states and train on real frames;
+   report the planner beside every constant-button policy.
 3. Rollout error as a curve, `MSE(k)` for `k = 1..H`, before and after
    fine-tuning. The post gives one number (step 12: 0.4224 → 0.3045) and says
    the first step got slightly worse without quantifying it. Cheap:
@@ -174,6 +271,11 @@ Yellow's `cur_map` is still an inference.
    planner on Red's `leave_room` with no retraining. Same engine, different
    sprites and palette — does the latent space encode game structure or pixel
    surface? Needs a second legal ROM.
+7. **Playing, properly.** Replace one open-loop plan with MPC: plan H, execute
+   1–3, re-encode the real screen, re-plan. Follow a chain of subgoal images
+   from the bootstrap states, hand control to a scripted policy while
+   `wIsInBattle` is set (which needs confirming first), and report how far
+   along the chain it gets against random, constant-A, and open-loop CEM.
 
 ## Licence
 

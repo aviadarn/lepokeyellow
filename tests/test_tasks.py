@@ -55,6 +55,16 @@ def test_leave_room_works_on_both_versions():
         assert task.goal(env, context)
 
 
+def test_the_pikachu_task_starts_from_a_new_game_not_the_lab():
+    """A lab start state is unreachable-by-construction: Oak has not stopped
+    the player north of Pallet yet, so nothing in the lab can be taken. All
+    seven constant buttons and 50 random seeds scored 0 there."""
+    task = get("yellow_pikachu", "yellow")
+    assert task.state == "states/bedroom.state"
+    # Random needs 525-2,600 actions, so a 40-step horizon would measure nothing.
+    assert task.horizon >= 500
+
+
 def test_every_task_declares_a_state_and_horizon():
     for task in TASKS.values():
         assert task.state.endswith(".state")

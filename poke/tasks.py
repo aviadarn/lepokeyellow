@@ -69,22 +69,32 @@ TASKS: dict[str, Task] = {
         state="states/red_pokeballs.state",
         route="routes/red_starter.json",
     ),
-    # Yellow's analogue. Pikachu arrives through the rival-takes-Eevee scene, so
-    # the player must walk to the desk first: a constant A policy cannot solve
-    # this from the lab entrance, which is the point.
+    # Yellow's analogue, defined from a NEW GAME rather than from inside the lab.
+    #
+    # The obvious framing -- start in Oak's lab, acquire a Pokemon -- is not a
+    # hard task, it is an impossible one. The lab is enterable long before the
+    # story will hand anything over: Oak has to stop the player north of Pallet
+    # first. Bootstrapping to map 40 and running the baselines there scored 0/1
+    # for all seven constant buttons and 0/50 for random, which reads like a
+    # brutally hard task and is really a start state the goal cannot be reached
+    # from. Measured, not assumed -- see results/.
+    #
+    # From the bootstrap state a random walk does reach it, so the floor is
+    # real and worth beating. The horizon has to be large to match: random
+    # needed 525-2,600 actions across seeds.
     "yellow_pikachu": Task(
         key="yellow_pikachu",
         games=("yellow",),
         description=(
-            "From inside Oak's lab with an empty party, end up holding a "
-            "Pokemon (Pikachu). Needs navigation to the desk plus dialogue, so "
-            "no single repeated button solves it."
+            "From a new game (controllable, in the bedroom, empty party), end "
+            "up holding a Pokemon. Covers the walk out of the house, the Oak "
+            "encounter north of Pallet, and the lab scene."
         ),
         goal=lambda env, _: has_pokemon(env),
         start_context=_no_context,
-        horizon=40,
-        state="states/yellow_lab.state",
-        route="routes/yellow_pikachu.json",
+        horizon=600,
+        state="states/bedroom.state",
+        route="routes/bootstrap_pikachu.json",
     ),
     # Version-independent navigation task. Success is a map transition, so it is
     # defined from any interior start state and in any Gen-1 game, which makes
@@ -100,7 +110,7 @@ TASKS: dict[str, Task] = {
         goal=_left_start_map,
         start_context=_map_context,
         horizon=24,
-        state="states/yellow_lab.state",
+        state="states/oaks_lab.state",
         route=None,
     ),
 }

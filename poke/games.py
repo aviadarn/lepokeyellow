@@ -30,6 +30,9 @@ class RamMap:
     party_count: int
     party_species: int
     cur_map: int
+    y_coord: int
+    x_coord: int
+    in_battle: int
     confidence: dict[str, str] = field(default_factory=dict)
 
     def verified(self, name: str) -> bool:
@@ -55,10 +58,16 @@ RED = Game(
         party_count=0xD163,
         party_species=0xD164,
         cur_map=0xD35E,
+        y_coord=0xD361,
+        x_coord=0xD362,
+        in_battle=0xD057,
         confidence={
             "party_count": "documented",
             "party_species": "documented",
             "cur_map": "documented",
+            "y_coord": "documented",
+            "x_coord": "documented",
+            "in_battle": "documented",
         },
     ),
 )
@@ -71,13 +80,30 @@ YELLOW = Game(
         party_count=0xD162,
         party_species=0xD163,
         cur_map=0xD35D,
+        y_coord=0xD360,
+        x_coord=0xD361,
+        in_battle=0xD056,
         confidence={
-            "party_count": "documented",
+            # Watched go 0 -> 1 on this cartridge when Pikachu arrives.
+            "party_count": "confirmed-on-rom",
+            # Confirmed by running the cartridge, not by the shift rule alone:
+            # cur_map reads 38 (REDS_HOUSE_2F) once the new game starts, y_coord
+            # moves 6<->7 on down/up and x_coord 1<->4 on left/right. See
+            # CONFIRMED_ON below.
             "party_species": "documented",
-            "cur_map": "inferred",  # Red 0xD35E minus the Yellow -1 WRAM shift
+            "cur_map": "confirmed-on-rom",
+            "y_coord": "confirmed-on-rom",
+            "x_coord": "confirmed-on-rom",
+            "in_battle": "inferred",  # Red 0xD057 minus the -1 shift; reads 0
         },
     ),
 )
+
+# ROM the Yellow addresses above were confirmed against, so a later
+# disagreement can be traced to a different dump rather than to the table.
+CONFIRMED_ON = {
+    "yellow": "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1",  # Yellow (UE) [C][!]
+}
 
 GAMES: dict[str, Game] = {game.key: game for game in (RED, YELLOW)}
 

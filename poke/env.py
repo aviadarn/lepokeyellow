@@ -11,10 +11,30 @@ class PokeEnv:
     Carries the resolved `Game` so RAM reads use this ROM's addresses.
     """
 
-    def __init__(self, rom, init_state, headless=True, act_frames=60, game=None):
+    def __init__(
+        self,
+        rom,
+        init_state,
+        headless=True,
+        act_frames=60,
+        game=None,
+        color=False,
+    ):
         self.game: Game = resolve(rom, game)
         self.rom = rom
-        self.pyboy = PyBoy(rom, window="null" if headless else "SDL2")
+        self.color = color
+        # Pokemon Yellow is a dual-mode cart (CGB flag 0x80), so PyBoy boots it
+        # in colour by default: R, G and B differ and the screen carries dozens
+        # of colours. Everything downstream takes channel 0 and the encoder is
+        # Conv2d(1, ...), so colour would silently feed the model an arbitrary
+        # channel instead of luminance. Forcing DMG gives the 4-shade grey
+        # screen the blog post trained on, where channel 0 is exact.
+        # Upstream never hit this: a .gb Red ROM has no CGB mode to pick.
+        self.pyboy = PyBoy(
+            rom,
+            window="null" if headless else "SDL2",
+            **({} if color else {"cgb": False}),
+        )
 
         self.init_state = init_state
         self.headless = headless
@@ -49,6 +69,7 @@ class PokeEnv:
         return bytes(self.pyboy.memory[start:stop])
 
     def screen(self) -> np.ndarray:
+        """RGB frame. In DMG mode R == G == B, so channel 0 is luminance."""
         return np.asarray(self.pyboy.screen.ndarray[:, :, :3]).copy()
 
     def close(self) -> None:

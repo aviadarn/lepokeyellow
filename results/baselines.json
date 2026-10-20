@@ -1,0 +1,66 @@
+{
+  "game": "yellow",
+  "task": "yellow_pikachu",
+  "horizon": 40,
+  "random_runs": 50,
+  "seed": 0,
+  "results": [
+    {
+      "name": "always noop",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "always up",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "always down",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "always left",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "always right",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "always a",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "always b",
+      "successes": 0,
+      "runs": 1,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    },
+    {
+      "name": "uniform random",
+      "successes": 0,
+      "runs": 50,
+      "rate": 0.0,
+      "mean_actions": 40.0
+    }
+  ],
+  "solved_by_constant_button": []
+}

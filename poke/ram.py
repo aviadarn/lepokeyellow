@@ -24,6 +24,21 @@ def cur_map(env) -> int | None:
     return None if value is None else int(value)
 
 
+def coords(env) -> tuple[int | None, int | None]:
+    """Player tile (y, x). Confirmed on the cartridge, not just the shift rule."""
+    return env.read_ram(env.game.ram.y_coord), env.read_ram(env.game.ram.x_coord)
+
+
+def in_battle(env) -> bool:
+    """True while a battle is running.
+
+    The planner has no business steering a battle menu, so `scripts/play.py`
+    hands control to a scripted policy while this is set.
+    """
+    value = env.read_ram(env.game.ram.in_battle)
+    return bool(value)
+
+
 def has_pokemon(env) -> bool:
     """True once the party holds at least one Pokemon.
 
