@@ -129,19 +129,38 @@ def main() -> None:
 
     believed = min(rows, key=lambda r: r["believed_distance"])
     truth = min(rows, key=lambda r: r["actual_distance"])
-    beats_baseline = sum(
-        r["prediction_error"] < r["no_change_baseline"] for r in rows
-    )
+
+    # Only actions that change the screen can be scored against "predict no
+    # change". Where the screen is byte-identical the baseline is exactly 0.0
+    # and unbeatable, and counting those as losses understates the model: on
+    # the first clean run it reported 4/7 while the predictor was beating the
+    # baseline on every action that did anything.
+    scored = [r for r in rows if r["no_change_baseline"] > 0.0]
+    beats = [r for r in scored if r["prediction_error"] < r["no_change_baseline"]]
     print(f"\nmodel would pick: {believed['action']}   "
           f"actually closest: {truth['action']}")
-    print(f"beats the no-change baseline on {beats_baseline}/{len(rows)} actions")
-    if believed["action"] == truth["action"] and not truth["moved"]:
-        print("VERDICT: the model is right and the greedy action does not move the "
-              "player. Goal distance is the wrong objective here, and more "
-              "training will not fix it.")
-    elif believed["action"] != truth["action"]:
+    print(f"beats the no-change baseline on {len(beats)}/{len(scored)} actions "
+          f"that change the screen "
+          f"({len(rows) - len(scored)} leave it byte-identical, where the "
+          f"baseline is exact)")
+    if scored:
+        ratios = [r["no_change_baseline"] / max(r["prediction_error"], 1e-12)
+                  for r in scored]
+        print(f"prediction error is {min(ratios):.0f}x to {max(ratios):.0f}x "
+              f"smaller than the baseline on those")
+
+    if believed["action"] != truth["action"]:
         print("VERDICT: the model picks an action that is not actually closest. "
-              "Prediction error is doing the damage.")
+              "Prediction error is doing the damage; more data or more training "
+              "is the lever.")
+    elif not truth["moved"]:
+        print("VERDICT: the model is right and the greedy action does not move "
+              "the player. Goal distance is the wrong objective here, and more "
+              "training will not fix it.")
+    else:
+        print("VERDICT: the model is right and the greedy action moves the "
+              "player. Neither the predictor nor the objective is at fault at "
+              "this state; a failure to play is the search's or the horizon's.")
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -154,7 +173,8 @@ def main() -> None:
         "rungs": len(ladder),
         "start_position": list(start_position),
         "goal_distance": base_distance,
-        "beats_no_change_baseline": beats_baseline,
+        "scored_actions": len(scored),
+        "beats_no_change_baseline": len(beats),
         "model_would_pick": believed["action"],
         "actually_closest": truth["action"],
         "rows": rows,

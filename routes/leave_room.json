@@ -2,7 +2,7 @@
   "schema": 1,
   "game": "yellow",
   "task": "leave_room",
-  "state_sha1": "0d7b128f9a3c7017a943387aa11d0f761f947e5d",
+  "state_sha1": "4b36efc964529459d11ecdd02860659b7f5c8600",
   "actions": [
     "b",
     "right",

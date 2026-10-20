@@ -1,0 +1,112 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "epoch": 10,
+  "state": "states/bedroom.state",
+  "warmup": 0,
+  "rung": 0,
+  "rungs": 46,
+  "start_position": [
+    38,
+    6,
+    3,
+    0
+  ],
+  "goal_distance": 1.708968997001648,
+  "scored_actions": 4,
+  "beats_no_change_baseline": 4,
+  "model_would_pick": "down",
+  "actually_closest": "down",
+  "rows": [
+    {
+      "action": "noop",
+      "prediction_error": 0.0031231045722961426,
+      "no_change_baseline": 0.0,
+      "believed_distance": 1.7190290689468384,
+      "actual_distance": 1.708968997001648,
+      "moved": false,
+      "position": [
+        38,
+        6,
+        3
+      ]
+    },
+    {
+      "action": "up",
+      "prediction_error": 0.0016579314833506942,
+      "no_change_baseline": 0.0,
+      "believed_distance": 1.72673761844635,
+      "actual_distance": 1.708968997001648,
+      "moved": false,
+      "position": [
+        38,
+        6,
+        3
+      ]
+    },
+    {
+      "action": "down",
+      "prediction_error": 0.011095099151134491,
+      "no_change_baseline": 1.5111862421035767,
+      "believed_distance": 1.5484375953674316,
+      "actual_distance": 1.5387024879455566,
+      "moved": true,
+      "position": [
+        38,
+        7,
+        3
+      ]
+    },
+    {
+      "action": "left",
+      "prediction_error": 0.0021026581525802612,
+      "no_change_baseline": 1.327501654624939,
+      "believed_distance": 1.5904744863510132,
+      "actual_distance": 1.5632085800170898,
+      "moved": true,
+      "position": [
+        38,
+        6,
+        2
+      ]
+    },
+    {
+      "action": "right",
+      "prediction_error": 0.03003987856209278,
+      "no_change_baseline": 1.3234654664993286,
+      "believed_distance": 1.5776338577270508,
+      "actual_distance": 1.5636993646621704,
+      "moved": true,
+      "position": [
+        38,
+        6,
+        4
+      ]
+    },
+    {
+      "action": "a",
+      "prediction_error": 0.001751094707287848,
+      "no_change_baseline": 0.1410742551088333,
+      "believed_distance": 1.9426435232162476,
+      "actual_distance": 1.9448941946029663,
+      "moved": false,
+      "position": [
+        38,
+        6,
+        3
+      ]
+    },
+    {
+      "action": "b",
+      "prediction_error": 0.002944132313132286,
+      "no_change_baseline": 0.0,
+      "believed_distance": 1.7233514785766602,
+      "actual_distance": 1.708968997001648,
+      "moved": false,
+      "position": [
+        38,
+        6,
+        3
+      ]
+    }
+  ]
+}

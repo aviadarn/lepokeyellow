@@ -118,11 +118,36 @@ class Player:
             cleared_now = distance <= self.args.approach * entry_distance
             gave_up = spent - rung_started >= self.args.rung_budget
             if cleared_now or gave_up:
-                rung += 1
                 cleared += int(cleared_now)
-                print(f"   rung {rung}/{len(rungs)} "
-                      f"{'cleared' if cleared_now else 'ABANDONED'} at action "
-                      f"{spent} (distance {distance:.4f} from {entry_distance:.4f})")
+                if cleared_now or not self.args.reanchor:
+                    rung += 1
+                    label = "cleared" if cleared_now else "ABANDONED"
+                else:
+                    # Advancing by one on every abandonment marches the ladder
+                    # past where the player actually is: a few in a row and
+                    # every remaining rung is far away, which showed up as a
+                    # flat 1.9-2.0 distance plateau for 20 rungs while the
+                    # player stood in Pallet Town. Re-anchor to the rung that
+                    # is genuinely closest instead.
+                    #
+                    # Forward-only, and never back past the furthest rung
+                    # cleared: one text box resembles another, so an
+                    # unconstrained nearest-rung rule would happily walk the
+                    # ladder backwards on a coincidental match.
+                    # Bounded, because latent distance turned out to be a poor
+                    # localiser: unbounded, it anchored to rung 44 of 46 while
+                    # the player was still in Pallet Town with an empty party,
+                    # matching a late-route rung to within 0.3787. A signal
+                    # that unreliable is not allowed to move the ladder far.
+                    horizon_rungs = rungs[rung : rung + self.args.anchor_span]
+                    ahead = (horizon_rungs - initial).square().mean(dim=1)
+                    jump = rung + int(ahead.argmin())
+                    label = (f"ABANDONED -> re-anchored to {jump + 1}"
+                             if jump != rung else "ABANDONED")
+                    rung = jump + 1 if jump == rung else jump
+                print(f"   rung {min(rung, len(rungs))}/{len(rungs)} {label} at "
+                      f"action {spent} (distance {distance:.4f} from "
+                      f"{entry_distance:.4f})")
                 entry_distance, rung_started = None, spent
                 continue
 
@@ -235,6 +260,18 @@ def main() -> None:
     parser.add_argument("--approach", type=float, default=0.3,
                         help="clear a rung once the distance has fallen to this "
                              "fraction of what it was on arrival (scale-free)")
+    # Off by default because it measured worse, twice. Advancing by one on an
+    # abandoned rung cleared 9 of 46 rungs, visited 83 tiles and reached Pallet
+    # Town; re-anchoring to the nearest rung cleared 5 and then 4, and the
+    # bounded version spent 855 actions oscillating between the bedroom and the
+    # ground floor 21 times. Latent distance is a poor localiser, so letting it
+    # choose the rung does more harm than marching blindly.
+    parser.add_argument("--reanchor", action="store_true",
+                        help="on an abandoned rung, jump to the nearest rung "
+                             "ahead instead of the next one (measured worse)")
+    parser.add_argument("--anchor-span", type=int, default=3,
+                        help="rungs ahead considered when re-anchoring after an "
+                             "abandoned rung")
     parser.add_argument("--rung-budget", type=int, default=30,
                         help="actions spent on one rung before abandoning it")
     parser.add_argument("--horizon", type=int, default=14)
@@ -300,7 +337,10 @@ def main() -> None:
                 ok = player.run_ladder(rungs, milestone, args.budget)
             else:
                 ok = player.run_milestone(milestone, args.budget)
-            spent = sum(1 for row in player.log if row["milestone"] == milestone.key)
+            spent = sum(
+                1 for row in player.log
+                if row["milestone"].split(":", 1)[0] == milestone.key
+            )
             print(f"   {'REACHED' if ok else 'failed'} after {spent} actions "
                   f"(map {cur_map(env)}, party {party_count(env)})\n")
             if not ok:
@@ -328,7 +368,7 @@ def main() -> None:
         "planner": {k: getattr(args, k) for k in
                     ("horizon", "commit", "samples", "elites", "iterations",
                      "budget", "stall", "seed", "ladder", "stride", "approach",
-                     "rung_budget")},
+                     "rung_budget", "reanchor", "anchor_span")},
         "rungs_cleared": player.history.get("rungs_cleared"),
         "rungs_total": player.history.get("rungs_total"),
         "milestones_reached": reached,

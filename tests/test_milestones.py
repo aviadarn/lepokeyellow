@@ -121,3 +121,16 @@ def test_every_goal_state_is_one_bootstrap_can_produce():
             f"{milestone.key} wants {milestone.goal_state}, but no bootstrap "
             f"target produces it (known: {sorted(TARGETS)})"
         )
+
+
+def test_ladder_actions_are_attributed_to_their_milestone():
+    """Ladder mode logs the milestone as "<key>:rung<N>", so counting by exact
+    key matched only the battle actions and reported 18 for a 702-action run."""
+    rows = [
+        {"milestone": "pikachu:rung0"},
+        {"milestone": "pikachu:rung1"},
+        {"milestone": "pikachu"},
+        {"milestone": "left_lab:rung0"},
+    ]
+    spent = sum(1 for r in rows if r["milestone"].split(":", 1)[0] == "pikachu")
+    assert spent == 3

@@ -176,7 +176,7 @@ Reachable, but not by accident. That 2.0% is the floor any planner has to beat.
 
 ```bash
 uv sync
-uv run pytest                                  # 67 tests, no ROM and no GPU needed
+uv run pytest                                  # 108 tests, no ROM and no GPU needed
 
 # Bare ROM -> a verified, reproducible save state. No playing required.
 uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to bedroom
@@ -247,6 +247,48 @@ The first scoped chain, which contains exactly one battle on purpose:
 because "not in a battle" is true *before* the fight too and the milestone would
 fire immediately.
 
+## What happens when it plays
+
+Trained on 31,699 real frames from the pruned 454-action route; best checkpoint
+epoch 10, validation prediction loss 0.0102. Four closed-loop runs on the
+`yellow_pikachu` chain:
+
+| run | actions | rungs | tiles | `a` share | furthest |
+|---|---|---|---|---|---|
+| start state mid-dialogue, advance +1 | 501 | 2/34 | 17 | 58 % | house |
+| **clean start, advance +1** | 702 | **9/46** | **83** | 12 % | **Pallet Town, Oak scene triggered** |
+| clean start, re-anchor unbounded | 231 | 5/46 | 38 | 6 % | Pallet Town |
+| clean start, re-anchor span 3 | 855 | 4/46 | 26 | 5 % | stuck on the stairs, 21 round trips |
+
+**None reached the goal.** The honest reading of why took three measurements.
+
+**The model is not at fault.** `scripts/action_check.py` scores every action
+from the start state against the real emulator. On the four actions that change
+the screen, prediction error is **44× to 631×** smaller than predicting no
+change at all; the three that leave the screen byte-identical cannot be scored,
+since the baseline is exactly 0.0 and already correct. The model's greedy
+action is `down`, `down` really is closest, and `down` moves the player. It
+also correctly believes `a` makes things *worse* (1.9426 against 1.7090).
+
+**The embedding is a poor localiser.** One-step dynamics are excellent and
+long-range comparisons are not. Latent MSE between consecutive rungs has a
+median of 0.0017 while the start frame sits 1.82 from the first rung — three
+orders of magnitude — and with unbounded re-anchoring the planner matched
+**Pallet Town to rung 44 of 46**, to within 0.3787, while holding no Pokémon.
+Minimising latent distance to a goal is therefore not a sound progress signal at
+range, however good the one-step predictor is.
+
+**Both attempts to exploit that signal made things worse.** Re-anchoring an
+abandoned rung to the nearest rung ahead cleared fewer rungs than marching
+blindly, and the bounded version trapped the player in a stairs loop for 855
+actions. `--reanchor` is off by default because of this, not on principle.
+
+What did work: the clean run walked out of the bedroom, downstairs, out of the
+house, across Pallet Town to the north edge, and triggered Oak's scripted
+encounter — at which point `wIsInBattle` read 1 and the battle controller took
+over, correctly, with an empty party. Yellow genuinely enters a battle state
+with zero Pokémon during that cutscene.
+
 ## Cost
 
 Measured on an Apple M5 (32 GB) with torch 2.13 on MPS, on this architecture at
@@ -287,7 +329,7 @@ collected yet.
 **Built, not yet run on a trained model:** `scripts/play.py`, the closed-loop
 play loop. See below.
 
-67 tests, none needing a ROM or a GPU.
+108 tests, none needing a ROM or a GPU.
 
 ## Roadmap
 
