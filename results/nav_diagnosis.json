@@ -1,0 +1,115 @@
+{
+  "question": "why can the planner not cross Pallet Town?",
+  "start": [
+    0,
+    6,
+    5
+  ],
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "true_bfs_distance": 6,
+  "per_action": {
+    "note": "model's predicted tile vs the real one, from the same state",
+    "rows": [
+      {
+        "action": "noop",
+        "predicted": [
+          5.8,
+          7.2
+        ],
+        "real": [
+          6,
+          5
+        ],
+        "pred_field": 7,
+        "real_field": 6
+      },
+      {
+        "action": "up",
+        "predicted": [
+          5.3,
+          7.2
+        ],
+        "real": "map 37",
+        "pred_field": 60,
+        "real_field": 60
+      },
+      {
+        "action": "down",
+        "predicted": [
+          7.1,
+          7.1
+        ],
+        "real": [
+          8,
+          5
+        ],
+        "pred_field": 7,
+        "real_field": 7
+      },
+      {
+        "action": "left",
+        "predicted": [
+          6.1,
+          6.8
+        ],
+        "real": [
+          6,
+          4
+        ],
+        "pred_field": 7,
+        "real_field": 6
+      },
+      {
+        "action": "right",
+        "predicted": [
+          6.6,
+          7.5
+        ],
+        "real": [
+          6,
+          6
+        ],
+        "pred_field": 7,
+        "real_field": 5
+      },
+      {
+        "action": "a",
+        "predicted": [
+          5.5,
+          7.3
+        ],
+        "real": [
+          6,
+          5
+        ],
+        "pred_field": 60,
+        "real_field": 6
+      },
+      {
+        "action": "b",
+        "predicted": [
+          6.0,
+          7.2
+        ],
+        "real": [
+          6,
+          5
+        ],
+        "pred_field": 7,
+        "real_field": 6
+      }
+    ]
+  },
+  "finding": "Predicted x is ~7.2 for every action while the truth is 5, and varies only 6.8-7.5 across all seven. Adjacent BFS levels differ by one tile; the probe's error in Pallet Town is 1.44-1.88 tiles. The signal the planner needs is below the noise floor of the instrument reading it. Map classification is fine -- `up` is correctly predicted to enter map 37.",
+  "ruled_out": [
+    "horizon: 14 vs 30 made no difference (0/3 either way)",
+    "action repeats: 1, 2 and 4 made no difference (0/3)",
+    "Manhattan vs BFS-over-observed-transitions: identical results",
+    "the dynamics model: one-step prediction beats no-change by 44x-631x"
+  ],
+  "next": "Raw downsampled pixels probe Pallet position better than the encoder (R^2 0.912/0.803 vs 0.760/0.655), so more signal exists than a linear readout extracts. A non-linear head, or more Pallet data (3,233 of 31,759 frames; the bedroom is 76%), are the cheap tests."
+}

@@ -327,17 +327,29 @@ class Player:
                 seed=self.args.seed + spent,
                 verbose=False,
                 score_fn=lambda m, i, seq: coords_probe.plan_costs(
-                    m, i, seq, probe, lookup, map_index, target.y, target.x
+                    m, i, seq, probe, lookup, map_index, target.y, target.x,
+                    repeat=self.args.action_repeat,
                 ),
             )
+            committed = False
             for action_index in sequence.tolist()[: self.args.commit]:
-                self.step(action_index, "planner",
-                          f"{milestone.key}:node{at}", cost)
-                spent += 1
-                since_furthest += 1
-                if milestone.reached(self.env, self.history):
-                    self.history["pursuit_furthest"] = furthest + 1
-                    return True
+                for _ in range(self.args.action_repeat):
+                    self.step(action_index, "planner",
+                              f"{milestone.key}:node{at}", cost)
+                    spent += 1
+                    since_furthest += 1
+                    if milestone.reached(self.env, self.history):
+                        self.history["pursuit_furthest"] = furthest + 1
+                        return True
+                    # Stop repeating the moment it stops helping: walking into
+                    # a wall for the rest of the run is pure waste.
+                    if self.here_tile() != here:
+                        here = self.here_tile()
+                    elif self.args.action_repeat > 1:
+                        break
+                committed = True
+            if not committed:
+                break
 
         self.history["pursuit_furthest"] = furthest + 1
         self.history["pursuit_total"] = len(points)
@@ -597,6 +609,11 @@ def main() -> None:
     parser.add_argument("--annotations",
                         help="route annotations from scripts/annotate_route.py; "
                              "scripted steps are excluded from waypoints")
+    parser.add_argument("--action-repeat", type=int, default=1,
+                        help="emulator actions per planned slot. CEM samples "
+                             "slots independently, so without this a plan "
+                             "draws 10 consecutive presses with probability "
+                             "7^-10 and cannot propose crossing an open map.")
     parser.add_argument("--lookahead", type=int, default=2,
                         help="nodes ahead of the projection to steer at")
     parser.add_argument("--waypoint-tolerance", type=int, default=1,
@@ -785,7 +802,7 @@ def main() -> None:
                      "waypoint_budget", "waypoint_stride",
                      "waypoint_tolerance", "waypoint_lookahead",
                      "controller", "lookahead", "control_check",
-                     "control_probe", "dialogue_after")},
+                     "control_probe", "dialogue_after", "action_repeat")},
         "pursuit_furthest": player.history.get("pursuit_furthest"),
         "pursuit_total": player.history.get("pursuit_total"),
         "waypoints_reached": player.history.get("waypoints_reached"),

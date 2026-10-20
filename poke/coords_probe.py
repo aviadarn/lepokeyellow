@@ -129,19 +129,39 @@ def decode(states: t.Tensor, probe: dict) -> tuple[t.Tensor, t.Tensor, t.Tensor]
 
 def plan_costs(model, initial, action_sequences, probe, lookup,
                target_map_index: int, target_y: float, target_x: float,
-               wrong_map_penalty: float = 50.0):
-    """Cost = tiles from the target at the closest point of the rollout.
+               wrong_map_penalty: float = 50.0, repeat: int = 1,
+               field: t.Tensor | None = None):
+    """Cost at the closest point of the rollout: BFS hops, or tiles.
 
     Mirrors the goal objective's "best state anywhere in the rollout" rule, but
     in tiles rather than in a latent norm, so the number has units and a plan
     that lands on the wrong map is penalised outright instead of being compared
     on coordinates that are not commensurate between rooms.
     """
+    # Each sampled slot becomes `repeat` emulator actions. CEM samples each
+    # slot independently, so a 14-slot plan draws 10 consecutive "up" presses
+    # with probability about 7^-10 -- it cannot even PROPOSE walking across an
+    # open map, which is exactly where the planner stalls. Repeats make a run
+    # of identical actions the unit of search instead of a coincidence, and
+    # multiply the lookahead without multiplying the number of decisions.
+    if repeat > 1:
+        action_sequences = action_sequences.repeat_interleave(repeat, dim=1)
     actions = lookup[action_sequences]
     initial_states = initial.expand(action_sequences.size(0), -1)
     with t.inference_mode():
         states = model.rollout(initial_states, actions)
     map_index, y, x = decode(states, probe)
-    distance = (y - target_y).abs() + (x - target_x).abs()
+    if field is None:
+        distance = (y - target_y).abs() + (x - target_x).abs()
+    else:
+        # Walls. Manhattan distance assumes an empty room, and Pallet Town is
+        # not one: the tile due north of the start is the doorway back into the
+        # player's house, so a greedy "reduce |dy| + |dx|" walks inside and
+        # stays. `field` is BFS hop count to the target over transitions
+        # actually observed in the data, so it routes around what is in the way.
+        rows, cols = field.shape
+        yi = y.round().long().clamp(0, rows - 1)
+        xi = x.round().long().clamp(0, cols - 1)
+        distance = field[yi, xi]
     distance = distance + wrong_map_penalty * (map_index != target_map_index).float()
     return distance.min(dim=1).values

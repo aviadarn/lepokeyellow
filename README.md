@@ -245,15 +245,54 @@ The first step of each scripted run is kept.
 
 ## What stops it
 
-**The planner never gets north of y=5 in Pallet Town, and the Oak trigger is at
-y=0.**
+**The planner cannot cross Pallet Town, and the reason is resolution.**
 
-Not the representation, not the dynamics model, not cutscenes. A 14-action
-horizon sampled from independent uniform buttons will not reliably find a
-10-tile northward traverse across an open map. The fixes are ordinary — a longer
-horizon, action repeats in the sampling distribution, or a coarse search over
-known-walkable tiles with the model used only locally — and none needs
-retraining.
+`scripts/nav_bench.py` asks that one question in isolation — start outside the
+player's house, reach the tile that triggers Oak's encounter — with no
+dialogue, battles or waypoint bookkeeping to confound it. The true path is
+**6 hops**. Nothing reached it, 0/3 seeds, under every setting tried.
+
+Three plausible causes, all ruled out by measurement:
+
+| suspect | test | result |
+|---|---|---|
+| horizon too short | 14 vs 30 | identical, 0/3 |
+| CEM cannot propose a run of one button | action repeats 1, 2, 4 | identical, 0/3 |
+| Manhattan distance ignores walls | BFS over observed transitions | identical, 0/3 |
+
+The walls objection was real — the tile due north of the start is the doorway
+back into the player's own house, so a greedy "reduce |dy| + |dx|" walks inside
+— and `poke/walkmap.py` fixes it properly, building a graph from the 31,759
+recorded positions and scoring on BFS hops. It changed nothing, which is how
+the actual cause surfaced.
+
+Comparing the model's predicted tile against the real one, per action, from the
+same state:
+
+| action | model thinks | its BFS cost | real tile | real BFS cost |
+|---|---|---|---|---|
+| noop | (5.8, 7.2) | 7 | (6, 5) | 6 |
+| up | (5.3, 7.2) | 60 | **map 37** | 60 |
+| down | (7.1, 7.1) | 7 | (8, 5) | 7 |
+| left | (6.1, 6.8) | 7 | (6, 4) | 6 |
+| **right** | (6.6, 7.5) | 7 | (6, 6) | **5** |
+| b | (6.0, 7.2) | 7 | (6, 5) | 6 |
+
+Predicted `x` is about 7.2 for every action while the truth is 5, and varies
+only between 6.8 and 7.5 across all seven. `right` genuinely improves the
+distance from 6 to 5; the model scores it 7, the same as standing still.
+
+**Adjacent BFS levels differ by one tile. The probe's error in Pallet Town is
+1.44–1.88 tiles.** The signal the planner needs is below the noise floor of the
+instrument reading it. Map classification is unaffected — `up` is correctly
+predicted to enter map 37 — which is why map-to-map progress worked and
+within-map navigation does not.
+
+The encoder is not the ceiling either: raw downsampled pixels probe Pallet
+position better than it does (R² 0.912/0.803 against 0.760/0.655), so more
+signal exists than a linear readout extracts. A non-linear head, or more Pallet
+data — it is 3,233 of 31,759 frames while the bedroom is 76 % — are the cheap
+next tests.
 
 Two things that did **not** help, recorded because the measurement is the point:
 
