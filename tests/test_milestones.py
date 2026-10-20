@@ -98,11 +98,26 @@ def test_frame_to_tensor_scaling_matches_the_dataset():
     assert abs(float(to_tensor(frame, t.device("cpu")).min()) + 1.0) < 1e-6
 
 
-def test_every_plannable_milestone_has_its_goal_state_on_disk():
-    """A milestone pointing at a state file nobody bootstrapped would make
-    play.py fail halfway through a run instead of at startup."""
+def test_every_goal_state_is_one_bootstrap_can_produce():
+    """A milestone pointing at a path no bootstrap target writes would make
+    play.py fail halfway through a run.
+
+    Checked against bootstrap's target names rather than the filesystem: the
+    state files are ROM-derived and gitignored, so asserting they exist passes
+    locally and fails in CI -- which is exactly what it did.
+    """
     from pathlib import Path
 
+    from scripts.bootstrap import TARGETS
+
     for milestone in CHAIN:
-        if milestone.is_plannable():
-            assert Path(milestone.goal_state).exists(), milestone.goal_state
+        if not milestone.is_plannable():
+            continue
+        path = Path(milestone.goal_state)
+        assert path.parent.name == "states", milestone.goal_state
+        assert path.suffix == ".state", milestone.goal_state
+        # bootstrap --to <stem> writes states/<stem>.state by default.
+        assert path.stem in TARGETS, (
+            f"{milestone.key} wants {milestone.goal_state}, but no bootstrap "
+            f"target produces it (known: {sorted(TARGETS)})"
+        )

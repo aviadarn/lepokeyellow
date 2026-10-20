@@ -172,6 +172,22 @@ def main() -> None:
     model.load_state_dict(checkpoint["jepa"])
     model.eval()
 
+    # Every goal image this run needs, checked before the emulator starts. The
+    # files are ROM-derived so tests cannot assert they exist; this is where a
+    # missing one has to be caught, and it has to be here rather than at the
+    # milestone that needs it, 300 actions in.
+    chain = chain_from(args.from_milestone)
+    missing = [
+        m.goal_state for m in chain
+        if m.is_plannable() and not Path(m.goal_state).exists()
+    ]
+    if missing:
+        raise SystemExit(
+            "missing goal state(s): " + ", ".join(missing) + "\nProduce them with "
+            + " ".join(f"\n  uv run python -m scripts.bootstrap --to {Path(p).stem}"
+                       for p in missing)
+        )
+
     env = PokeEnv(args.rom, args.state, headless=True,
                   act_frames=args.act_frames, game=args.game)
     player = Player(model, env, device, args)
@@ -183,7 +199,7 @@ def main() -> None:
               f"({map_name(cur_map(env))}), party={party_count(env)}")
         print(f"replan every {args.commit} of {args.horizon} planned actions\n")
 
-        for milestone in chain_from(args.from_milestone):
+        for milestone in chain:
             print(f"-> {milestone.key}: {milestone.description}")
             ok = player.run_milestone(milestone, args.budget)
             spent = sum(1 for row in player.log if row["milestone"] == milestone.key)
@@ -200,7 +216,7 @@ def main() -> None:
     for row in player.log:
         by_controller[row["controller"]] = by_controller.get(row["controller"], 0) + 1
 
-    print(f"milestones reached: {len(reached)}/{len(chain_from(args.from_milestone))}"
+    print(f"milestones reached: {len(reached)}/{len(chain)}"
           f"  {reached}")
     print(f"actions by controller: {by_controller}")
     print(f"{elapsed:.1f}s for {len(player.log)} actions")
@@ -215,7 +231,7 @@ def main() -> None:
                     ("horizon", "commit", "samples", "elites", "iterations",
                      "budget", "stall", "seed")},
         "milestones_reached": reached,
-        "milestones_total": len(chain_from(args.from_milestone)),
+        "milestones_total": len(chain),
         "actions_by_controller": by_controller,
         "wall_clock_s": elapsed,
         "log": player.log,
