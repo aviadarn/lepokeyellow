@@ -1,0 +1,69 @@
+{
+  "start": [
+    0,
+    5,
+    5
+  ],
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "budget": 120,
+  "rows": [
+    {
+      "horizon": 2,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 2,
+      "reached": 3,
+      "seeds": 3,
+      "best_y": 0,
+      "median_y": 0.0,
+      "best_cost": 1.0,
+      "median_cost": 1.0,
+      "on_tile": 0,
+      "actions_when_reached": [
+        25,
+        18,
+        32
+      ]
+    },
+    {
+      "horizon": 8,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 8,
+      "reached": 3,
+      "seeds": 3,
+      "best_y": 0,
+      "median_y": 0.0,
+      "best_cost": 1.0,
+      "median_cost": 2.0,
+      "on_tile": 0,
+      "actions_when_reached": [
+        26,
+        28,
+        35
+      ]
+    },
+    {
+      "horizon": 14,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 14,
+      "reached": 3,
+      "seeds": 3,
+      "best_y": 0,
+      "median_y": 0.0,
+      "best_cost": 2.0,
+      "median_cost": 2.0,
+      "on_tile": 0,
+      "actions_when_reached": [
+        19,
+        30,
+        26
+      ]
+    }
+  ]
+}

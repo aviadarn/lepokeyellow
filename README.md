@@ -9,16 +9,16 @@ which builds on [LeWorldModel](https://arxiv.org/abs/2603.19312) and
 
 Everything here runs on a laptop. No cloud GPU, no ROM included.
 
-**Where it stands:** the world model predicts embeddings well — one-step
-prediction beats a no-change baseline by 44× to 631× in embedding MSE — and
-that turned out not to be the same thing as predicting the game. Decoded into
-tiles, the same one-step prediction is **worse than assuming the player never
-moved**, which is why the planner gets about 60 % of the way to Pikachu and
-then cannot cross one open map. [What stops it](#what-stops-it) is the chain of
-measurements that found it. Several confident conclusions along the way turned
-out to be wrong; those are kept in
-[Wrong answers](#wrong-answers-and-what-caught-them) because the controls that
-caught them are the useful part.
+**Where it stands:** the planner crosses Pallet Town and triggers the Pikachu
+encounter, 3/3 seeds, where the same planner on the previous checkpoint managed
+0/3 and barely left the doorstep. What changed is the training objective, not
+the planner: predicting embeddings well turned out not to be the same thing as
+predicting the game, and until the objective asked for the player's position it
+did not keep it. [What stopped it](#what-stopped-it) is the chain of
+measurements that found that, including two fixes that were correct, measurable
+and useless. Several confident conclusions along the way were wrong; those are
+kept in [Wrong answers](#wrong-answers-and-what-caught-them) because the
+controls that caught them are the useful part.
 
 ## What it looks like
 
@@ -29,21 +29,24 @@ the player is on: dark is closer to the goal, white is ground never walked on
 in the dataset, the ring is the target, the square is the player and the dots
 are where they have already been.
 
-| the recorded human route | the planner | one-step greedy |
+| before: MSE + SIGReg | after: + the coordinate loss | the recorded human route |
 |---|---|---|
-| ![route](media/route.gif) | ![planner](media/planner.gif) | ![greedy](media/greedy.gif) |
-| crosses Pallet Town, 18 → 11 hops | walks back **into the house** | bumps an NPC, then presses `up` into the text box for 27 actions |
+| ![before](media/planner_before.gif) | ![after](media/planner_after.gif) | ![route](media/route.gif) |
+| walks back **into the house** | crosses Pallet Town and **triggers the Pikachu encounter** | the human doing the same thing |
 
 The panel is not decoration. Without it these runs are hard to read at all: the
 camera is centred on the player, so walking shows up only as the background
-scrolling, and a stuck run looks exactly like a still image. With it, the first
-recording immediately showed something the frames alone hid — the greedy run is
-not oscillating, it is **stuck in a conversation**. `scripts/play.py` mashes A
-to clear dialogue; `nav_bench.py` and `nav_decisions.py` have no such rule, so
-any run that walks into an NPC is over.
+scrolling, and a stuck run looks exactly like a still image. It has already
+earned itself twice. It showed that a run described here as "oscillating
+between two tiles" was actually **stuck in a conversation** — `play.py` mashes
+A to clear dialogue, `nav_bench.py` has no such rule, so a run that walks into
+an NPC is over. And it showed the fixed planner reaching the Pikachu encounter,
+which the benchmark was scoring as a failure because it tested for a tile
+rather than for the event.
 
 Reproduce any of them with `scripts/record_gif.py`, which also has `--policy
-random` and a `--skip` for jumping an opening stretch of dialogue.
+greedy`, `--policy random` and a `--skip` for jumping an opening stretch of
+dialogue.
 
 ---
 
@@ -288,56 +291,110 @@ One trap: control is lost **on** the trigger tile, so the counterfactual marks
 it scripted. Dropping it removes the only waypoint that starts the encounter.
 The first step of each scripted run is kept.
 
-## What stops it
+## What stopped it
 
-**The planner cannot cross Pallet Town, and the reason is resolution.**
+**The planner could not cross Pallet Town. The cause was that nothing in the
+training objective ever asked a predicted embedding to say where the player is.**
 
 `scripts/nav_bench.py` asks that one question in isolation — start outside the
 player's house, reach the tile that triggers Oak's encounter — with no
-dialogue, battles or waypoint bookkeeping to confound it. The true path is
-**6 hops**. Nothing reached it, 0/3 seeds, under every setting tried.
+dialogue, battles or waypoint bookkeeping to confound it. Under one protocol,
+three seeds, 120 actions, replanning after every action:
 
-Three plausible causes, all ruled out by measurement:
-
-| suspect | test | result |
+| model | reaches the Pikachu encounter | closest it got (from 12 hops) |
 |---|---|---|
-| horizon too short | 14 vs 30 | identical, 0/3 |
-| CEM cannot propose a run of one button | action repeats 1, 2, 4 | identical, 0/3 |
-| Manhattan distance ignores walls | BFS over observed transitions | identical, 0/3 |
+| `L_pred + 0.1 · L_reg` | **0/3** | 11 hops — it barely leaves the doorstep |
+| the same plus the coordinate loss | **3/3**, in 25–28 actions | 1 hop |
 
-The walls objection was real — the tile due north of the start is the doorway
-back into the player's own house, so a greedy "reduce |dy| + |dx|" walks inside
-— and `poke/walkmap.py` fixes it properly, building a graph from the 31,759
-recorded positions and scoring on BFS hops. It changed nothing, which is how
-the actual cause surfaced.
+Getting there took ruling out four plausible causes by measurement, and two of
+the rejected fixes were more informative than the accepted one.
 
-Comparing the model's predicted tile against the real one, per action, from the
-same state:
+**Not the horizon, the action repeats, or the walls.** 14 against 30: identical,
+0/3. Action repeats of 1, 2 and 4, on the theory that CEM sampling slots
+independently draws ten consecutive presses with probability 7⁻¹⁰: identical.
+Manhattan distance ignoring walls: the objection was real — the tile due north
+of the start is the doorway back into the player's own house — and
+`poke/walkmap.py` fixes it properly with BFS over the 31,759 recorded
+positions. Identical.
 
-| action | model thinks | its BFS cost | real tile | real BFS cost |
-|---|---|---|---|---|
-| noop | (5.8, 7.2) | 7 | (6, 5) | 6 |
-| up | (5.3, 7.2) | 60 | **map 37** | 60 |
-| down | (7.1, 7.1) | 7 | (8, 5) | 7 |
-| left | (6.1, 6.8) | 7 | (6, 4) | 6 |
-| **right** | (6.6, 7.5) | 7 | (6, 6) | **5** |
-| b | (6.0, 7.2) | 7 | (6, 5) | 6 |
+**Not the read-out's resolution,** which is what the previous version of this
+section concluded. A linear probe placed the player to 1.44–1.88 tiles in
+Pallet Town while adjacent levels of the cost field differ by one hop, so the
+signal was genuinely under the instrument's noise floor. `poke/probe_mlp.py`
+fixed exactly that — two hidden layers on the same frozen embeddings, Pallet
+error to **0.53 and 0.48 tiles**, shuffled-label control at −0.02 — and
+navigation did not improve at all.
 
-Predicted `x` is about 7.2 for every action while the truth is 5, and varies
-only between 6.8 and 7.5 across all seven. `right` genuinely improves the
-distance from 6 to 5; the model scores it 7, the same as standing still.
+**Because the planner never reads a real screen.** It decodes the predictor's
+output. Held out, in tiles (`scripts/rollout_tiles.py`):
 
-**Adjacent BFS levels differ by one tile. The probe's error in Pallet Town is
-1.44–1.88 tiles.** The signal the planner needs is below the noise floor of the
-instrument reading it. Map classification is unaffected — `up` is correctly
-predicted to enter map 37 — which is why map-to-map progress worked and
-within-map navigation does not.
+| what is decoded | before | after |
+|---|---|---|
+| the real frame | 0.22 | 0.03 |
+| assume the player never moved | 0.69 | 0.52 |
+| **one-step rollout** | **2.42** | **0.27** |
 
-The encoder is not the ceiling either: raw downsampled pixels probe Pallet
-position better than it does (R² 0.912/0.803 against 0.760/0.655), so more
-signal exists than a linear readout extracts. A non-linear head, or more Pallet
-data — it is 3,233 of 31,759 frames while the bedroom is 76 % — are the cheap
-next tests.
+The predictor was three and a half times worse than assuming nothing moved,
+while its embedding MSE beat a no-change baseline by 44× to 631×. Those are not
+the same quantity and only one of them is what a planner uses. Seeding the
+rollout with three real frames the way training does changes nothing (2.32
+against 2.34), so it is not a train/test context mismatch.
+
+**And fitting the read-out on predicted embeddings makes it worse.** The
+obvious response is to fit the head where it is actually used. That works —
+one-step error 2.42 → 0.78 tiles — and the decisions get worse: the share where
+the lowest predicted cost belongs to an action that genuinely helps goes from
+47.5 % to **0 %**. Calibrating on blurred predictions teaches the conditional
+mean of position, which is the part that discards the differences *between*
+actions, and ranking is the only thing a planner uses.
+
+So the fix is in the objective. `poke/coord_head.py` reads (y, x) from an
+embedding and is trained against the recorded tile on the predictor's output as
+well as the encoder's, making the player's position something the prediction
+has to carry. `--coord-weight 0.05 --select-on tiles`. Validation tile error on
+predicted embeddings reached 0.24 at epoch 6, and the prediction loss improved
+too, so it costs nothing it was previously buying.
+
+### Three real defects in the cost field, found on the way
+
+- A flat `unknown` plateau turned a half-tile read-out error into a 60-hop cost
+  error whenever rounding landed one cell outside the observed region. Three of
+  seven actions scored identically catastrophically. Unvisited cells now cost
+  the nearest observed cell plus a penalty per tile of extrapolation, capped.
+- The field covered one map, so every tile in another was worth the same
+  nothing — the planner walked into the house and sat there for 38 straight
+  actions because every option inside looked equally terrible. `WalkMap` now
+  records doors and searches across them, which retires the wrong-map penalty.
+- BFS over recorded transitions does not count in units of anything: one step
+  holds a button for 20 frames and settles for 40, long enough to cross more
+  than one tile, so the graph contains two-tile jumps and the field was not
+  monotone — (5,5) at 6 hops, (6,6) at 5, (5,6) at 7. Four-adjacency over
+  observed tiles gives one hop per tile.
+
+And `min` over the rollout, inherited from the goal objective, scores a plan by
+the single most optimistic tile decoded anywhere along 28 actions — a search
+for the head's largest mistake. `discounted` is the default now.
+
+### What still stops it
+
+**Committing more than one action at a time.** Attributed directly: with
+`--commit 1` the planner reaches the encounter 3/3 at every horizon tried; with
+`--commit 2` it is 1/3 at horizon 2 and 0/3 at 8 and 14. The second action of a
+plan is chosen from a predicted state, and one emulator step can cross more
+than one tile. `play.py` used to commit 3.
+
+**Standing on the exact trigger tile.** 0/3 across every setting, though all
+three seeds get within one hop and all three reach the encounter from the tile
+beside it. Inspecting the last decision, the model picks `up` correctly and
+scores it 0 — and also scores `right` 0, which really costs 2. The remaining
+failure is a tie between the right action and a mispredicted one, not a missing
+gradient. An oracle that scores actions on the emulator's own coordinates walks
+it in 7 actions, so the path is there.
+
+**Dialogue, in the benchmarks.** `play.py` mashes A to clear a text box;
+`nav_bench.py` and `nav_decisions.py` have no such rule, so a run that walks
+into an NPC is finished. Checked rather than assumed on the runs reported here:
+1 of 60 decisions had no button that could change the cost.
 
 Two things that did **not** help, recorded because the measurement is the point:
 
@@ -375,7 +432,7 @@ Each of these looked clean and was published before the check that killed it.
    head cut Pallet Town error from 1.88 to 0.53 tiles, below the one-tile
    granularity the cost field needs, and navigation did not improve at all —
    because the planner never reads a real screen. See
-   [What stops it](#what-stops-it).
+   [What stopped it](#what-stopped-it).
 6. **"So fit the read-out on predicted embeddings instead."** It works, and it
    makes the planner worse: one-step error 2.42 → 0.78 tiles, while the share of
    decisions that pick a genuinely helpful action goes 47.5 % → **0 %**. Fitting

@@ -669,8 +669,14 @@ def main() -> None:
     parser.add_argument("--rung-budget", type=int, default=30,
                         help="actions spent on one rung before abandoning it")
     parser.add_argument("--horizon", type=int, default=14)
-    parser.add_argument("--commit", type=int, default=3,
-                        help="actions executed per plan before re-encoding")
+    parser.add_argument("--commit", type=int, default=1,
+                        help="actions executed per plan before re-encoding. "
+                             "Measured on scripts/nav_bench.py, this is the "
+                             "whole difference between crossing Pallet Town "
+                             "and not: 3/3 seeds at every horizon tried with "
+                             "1, and 0/3 with 2. The second action of a plan "
+                             "is chosen from a predicted state, and one "
+                             "emulator step can cross more than one tile.")
     parser.add_argument("--samples", type=int, default=512)
     parser.add_argument("--elites", type=int, default=64)
     parser.add_argument("--iterations", type=int, default=8)

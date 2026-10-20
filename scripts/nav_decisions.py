@@ -85,6 +85,7 @@ def main() -> None:
     decisions = []
     try:
         env.reset()
+        env.settle()
         for step in range(args.steps):
             here = (cur_map(env), *coords(env))
             start_cost = cost_of(*here)

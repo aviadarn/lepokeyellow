@@ -88,6 +88,7 @@ def main() -> None:
     env = PokeEnv(args.rom, args.state, headless=True)
     try:
         env.reset()
+        env.settle()
         for name in args.prefix:
             env.step(ACTIONS.index(name))
         here = (cur_map(env), *coords(env))

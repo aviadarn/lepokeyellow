@@ -341,7 +341,7 @@ def main() -> None:
                                 ACTIONS[action_index], predicted),
                         font, panel_for(here),
                     ))
-                if here[0] == TARGET[0] and here[1] == TARGET[1]:
+                if (here[0], here[1], here[2]) == TARGET:
                     arrived = True
                     break
 

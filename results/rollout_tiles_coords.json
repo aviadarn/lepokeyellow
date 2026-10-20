@@ -1,0 +1,71 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v3_coords/best.pt",
+  "data": "episodes/yellow_v3.h5",
+  "head": "mlp",
+  "fitted_on": "real",
+  "holdout_episodes": 104,
+  "samples": 512,
+  "maps": null,
+  "probe_holdout_tile_mae": {
+    "map0_y": 0.09758370773267552,
+    "map0_x": 0.25487396203672374,
+    "map37_y": 0.03379565286637421,
+    "map37_x": 0.03950041906592047,
+    "map38_y": 0.0075254113070028035,
+    "map38_x": 0.009730876215176253,
+    "map40_y": 0.027550904473654443,
+    "map40_x": 0.020868575733132576
+  },
+  "results": {
+    "context1": [
+      {
+        "k": 1,
+        "n": 510,
+        "head_tiles": 0.033532917499542236,
+        "stay_tiles": 0.5232040286064148,
+        "rollout_tiles": 0.2682141959667206,
+        "map_accuracy": 0.9901960492134094
+      },
+      {
+        "k": 2,
+        "n": 509,
+        "head_tiles": 0.031009679660201073,
+        "stay_tiles": 0.9366145730018616,
+        "rollout_tiles": 0.42081010341644287,
+        "map_accuracy": 0.990176796913147
+      },
+      {
+        "k": 3,
+        "n": 505,
+        "head_tiles": 0.03154054284095764,
+        "stay_tiles": 1.2071343660354614,
+        "rollout_tiles": 0.5104780197143555,
+        "map_accuracy": 0.9900990128517151
+      },
+      {
+        "k": 4,
+        "n": 501,
+        "head_tiles": 0.029064198955893517,
+        "stay_tiles": 1.4487258195877075,
+        "rollout_tiles": 0.5489150285720825,
+        "map_accuracy": 0.9920159578323364
+      },
+      {
+        "k": 5,
+        "n": 497,
+        "head_tiles": 0.04426344484090805,
+        "stay_tiles": 1.6939444541931152,
+        "rollout_tiles": 0.6207898855209351,
+        "map_accuracy": 0.9939637780189514
+      },
+      {
+        "k": 6,
+        "n": 493,
+        "head_tiles": 0.028962809592485428,
+        "stay_tiles": 1.773233413696289,
+        "rollout_tiles": 0.6838073134422302,
+        "map_accuracy": 0.993914783000946
+      }
+    ]
+  }
+}

@@ -27,7 +27,7 @@ from poke import coords_probe
 from poke.env import PokeEnv
 from poke.goals import default_device
 from poke.jepa import JEPA
-from poke.ram import coords, cur_map
+from poke.ram import NO_BATTLE, battle_kind, coords, cur_map
 from poke.walkmap import build as build_walkmap, lookup as field_cost
 from scripts.plan_cem import action_lookup, cem_plan
 from scripts.play import to_tensor
@@ -37,11 +37,15 @@ TARGET = (0, 0, 10)
 
 def run(model, env, probe, lookup, device, horizon, repeat, samples,
         iterations, budget, seed, field=None, how="discounted",
-        discount=0.9, costs=None):
+        discount=0.9, costs=None, commit=2):
     """One MPC run. `costs` is the dense cost field as numpy, for reporting:
     `min y` only says how far north the player got, and the route turns east
     before it turns north, so distance to the target is the honest number."""
     env.reset()
+    # A save state can be captured mid-fade and `reset` renders one frame, so
+    # without this the planner's first observation is a black screen. Every
+    # measurement here used to start that way.
+    env.settle()
     maps = probe["maps"].tolist()
     map_index = maps.index(TARGET[0])
     index_of = {map_id: index for index, map_id in enumerate(maps)}
@@ -54,11 +58,24 @@ def run(model, env, probe, lookup, device, horizon, repeat, samples,
                 costs, index_of.get(int(here[0])), here[1], here[2],
                 float(costs.max()),
             ))
+        # Two success tests, because the tile and the task are not the same
+        # thing. (0, 0, 10) is the trigger: stand on it, press A, and the wild
+        # Pikachu encounter starts -- verified by walking there with an oracle
+        # that scores actions on the emulator's own coordinates. But the scene
+        # also fires from the tile beside it when the player keeps walking
+        # north, so a run can reach the encounter without ever standing on the
+        # tile the cost field is built around. `on_tile` is the navigation
+        # result; `encounter` is the one the task cares about.
+        if battle_kind(env) != NO_BATTLE:
+            return {"reached": True, "on_tile": False, "encounter": True,
+                    "actions": spent, "min_y": 0, "min_cost": best_cost,
+                    "trace": trace}
         if here[0] == TARGET[0] and here[1] is not None:
             best_y = min(best_y, here[1])
-            if here[1] == TARGET[1]:
-                return {"reached": True, "actions": spent, "min_y": 0,
-                        "min_cost": 0.0, "trace": trace}
+            if (here[1], here[2]) == (TARGET[1], TARGET[2]):
+                return {"reached": True, "on_tile": True, "encounter": False,
+                        "actions": spent, "min_y": 0, "min_cost": 0.0,
+                        "trace": trace}
         with t.inference_mode():
             initial = model.encode(to_tensor(env.screen(), device))
         sequence, _, _ = cem_plan(
@@ -70,13 +87,14 @@ def run(model, env, probe, lookup, device, horizon, repeat, samples,
                 repeat=repeat, field=field, how=how, discount=discount,
             ),
         )
-        for action_index in sequence.tolist()[:2]:
+        for action_index in sequence.tolist()[:commit]:
             for _ in range(repeat):
                 env.step(action_index)
                 spent += 1
         trace.append((cur_map(env), *coords(env)))
-    return {"reached": False, "actions": spent, "min_y": best_y,
-            "min_cost": best_cost, "trace": trace[-5:]}
+    return {"reached": False, "on_tile": False, "encounter": False,
+            "actions": spent, "min_y": best_y, "min_cost": best_cost,
+            "trace": trace[-5:]}
 
 
 def main() -> None:
@@ -110,6 +128,9 @@ def main() -> None:
                         choices=("min", "final", "discounted"),
                         help="how a plan's cost trace collapses to one number")
     parser.add_argument("--discount", type=float, default=0.9)
+    parser.add_argument("--commit", type=int, default=1,
+                        help="actions taken before replanning; 2 was the "
+                             "old behaviour and it fails where 1 succeeds")
     parser.add_argument("--out", default="results/nav_bench.json")
     parser.add_argument("--device", default=default_device())
     args = parser.parse_args()
@@ -144,7 +165,8 @@ def main() -> None:
     print(f"start {start} -> target {TARGET}; budget {args.budget} actions, "
           f"{args.seeds} seeds\n")
     print(f"{'horizon':>8}{'repeat':>8}{'how':>12}{'lookahead':>11}"
-          f"{'reached':>9}{'best y':>8}{'median y':>10}{'best':>9}{'med cost':>11}")
+          f"{'reached':>9}{'best y':>8}{'median y':>10}{'best':>9}"
+          f"{'med cost':>11}{'actions':>9}{'on tile':>9}")
 
     rows = []
     try:
@@ -154,21 +176,27 @@ def main() -> None:
             results = [
                 run(model, env, probe, lookup, device, horizon, repeat,
                     args.samples, args.iterations, args.budget, seed * 1000,
-                    field, how, args.discount, grids)
+                    field, how, args.discount, grids, args.commit)
                 for seed in range(args.seeds)
             ]
             ys = [r["min_y"] for r in results]
             cs = [r["min_cost"] for r in results]
             hits = sum(r["reached"] for r in results)
+            tiles = sum(r["on_tile"] for r in results)
+            spent = [r["actions"] for r in results if r["reached"]]
             rows.append({"horizon": horizon, "repeat": repeat, "how": how,
                          "lookahead": horizon * repeat,
                          "reached": hits, "seeds": args.seeds,
                          "best_y": int(min(ys)), "median_y": float(np.median(ys)),
                          "best_cost": float(min(cs)),
-                         "median_cost": float(np.median(cs))})
+                         "median_cost": float(np.median(cs)),
+                         "on_tile": tiles,
+                         "actions_when_reached": spent})
             print(f"{horizon:>8}{repeat:>8}{how:>12}{horizon * repeat:>11}"
                   f"{f'{hits}/{args.seeds}':>9}{min(ys):>8}{np.median(ys):>10.1f}"
-                  f"{min(cs):>9.0f}{np.median(cs):>11.1f}")
+                  f"{min(cs):>9.0f}{np.median(cs):>11.1f}"
+                  f"{(f'{np.median(spent):.0f}' if spent else '-'):>9}"
+                  f"{f'{tiles}/{args.seeds}':>9}")
     finally:
         env.close()
 
