@@ -1,517 +1,348 @@
 # lepokeyellow
 
-A JEPA world model and latent-space planner for **Pokémon Yellow**, ported and
-extended from [stmonty/lePokeRed](https://github.com/stmonty/lePokeRed)
+A JEPA world model that learns Pokémon Yellow from pixels, and a planner that
+tries to play it. Ported and extended from
+[stmonty/lePokeRed](https://github.com/stmonty/lePokeRed)
 ([blog post](https://nostalgia.dev/posts/teaching-a-world-model-to-play-pokemon/)),
-which builds on
-[LeWorldModel](https://arxiv.org/abs/2603.19312) and
+which builds on [LeWorldModel](https://arxiv.org/abs/2603.19312) and
 [LeJEPA](https://arxiv.org/abs/2511.08544).
 
-The model is unchanged: a 12.5M-parameter ViT encoder to a 192-dim embedding, a
-button-conditioned causal predictor, MSE on the next embedding plus
-`0.1 · SIGReg` to stop the representation collapsing. No rewards, no labels.
-Planning is categorical CEM over button sequences, scored by distance to a goal
-embedding.
+Everything here runs on a laptop. No cloud GPU, no ROM included.
 
-What changed is everything around it, because **Yellow has no three-starter
-choice.** Oak's lab holds a single Poké Ball, the rival takes it, and Oak then
-hands you Pikachu through dialogue — nothing you do changes which Pokémon you
+**Where it stands:** the world model is good — one-step prediction beats a
+no-change baseline by 44× to 631×. The planner gets about 60 % of the way to
+Pikachu and then stalls on a navigation problem, described honestly in
+[What stops it](#what-stops-it). Several confident conclusions along the way
+turned out to be wrong; those are kept in
+[Four wrong answers](#four-wrong-answers-and-what-caught-them) because the
+controls that caught them are the useful part.
+
+---
+
+## The model
+
+Unchanged from upstream: a 12.5M-parameter ViT encoder mapping a 144×160
+greyscale screen to a 192-dim embedding, a button-conditioned causal predictor,
+and MSE on the next embedding plus `0.1 · SIGReg` to stop the representation
+collapsing. No rewards, no labels.
+
+What changed is everything around it.
+
+## Why Yellow is not a re-skin of Red
+
+Oak's lab in Yellow holds a single Poké Ball, the rival takes it, and Oak then
+hands you Pikachu through dialogue. Nothing you do changes which Pokémon you
 get. Upstream encodes its task by naming episodes `charmander` / `squirtle` /
-`bulbasaur` and scanning the party count, in the collector, the planner and the
-evaluator. None of that ports.
+`bulbasaur` and scanning the party count — in the collector, the planner *and*
+the evaluator. None of that ports.
 
-## Why the port needed a different task
+Yellow also moved `wGBC` into HRAM, so every WRAM symbol above `$CF1A` sits one
+byte lower than Red/Blue. A wrong address does not raise; it returns the
+neighbouring byte. Read with Red's map, Yellow's *species index* looks like a
+party count.
 
-Red's start state has the player already facing the middle ball, and upstream's
-own training data ships the solution: `TAKE = ["a"] * 12`. The blog post reports
-52/100 planner successes against controls of uniform random (0/100) and an
-untrained predictor (1/100) — and then notes in passing that pressing A
-repeatedly already works from that state. That row is not in its table.
-
-So this repo makes tasks explicit, and ships the table:
-
-| task | games | goal (read from RAM) | solvable by one repeated button? |
+| Yellow | Red | symbol | how it was confirmed on the cartridge |
 |---|---|---|---|
-| `red_starter` | red | party count ≥ 1 | **yes** — `always a`. Kept only so Red numbers stay comparable. |
-| `yellow_pikachu` | yellow | party count ≥ 1 | no — the desk must be walked to before any dialogue starts |
-| `leave_room` | red, yellow | current map ≠ starting map | no — pure navigation |
+| `0xD162` | `0xD163` | `party_count` | 0 → 1 when Pikachu arrives |
+| `0xD163` | `0xD164` | `party_species` | reads 84 — Pikachu's Gen-1 index |
+| `0xD35D` | `0xD35E` | `cur_map` | 38 on a new game; 38 → 37 → 0 → 40 along the route |
+| `0xD360` | `0xD361` | `wYCoord` | 6 ↔ 7 on down/up |
+| `0xD361` | `0xD362` | `wXCoord` | 1 ↔ 4 on left/right |
+| `0xD056` | `0xD057` | `wIsInBattle` | reads 2 in the rival fight while Red's `0xD057` stays 0 |
 
-`scripts/eval_baselines.py` runs all seven constant-button policies plus uniform
-random and prints a warning if any constant button solves the task. Run it
-before believing a planner number.
+Addresses carry a provenance field and the ROM sha1 they were checked against,
+so a later disagreement points at a different dump rather than at the table.
 
-## What is new here
-
-| file | why |
-|---|---|
-| `poke/games.py` | Per-version WRAM map, selected from the ROM header title. Yellow moved `wGBC` into HRAM, so every WRAM symbol above `$CF1A` sits one byte lower than Red/Blue: `party_count` is `0xD163` in Red and `0xD162` in Yellow. A wrong address does not raise — it returns the neighbouring byte, so Red-addressed code reads a Yellow *species index* and calls it a count. Addresses carry a `confidence` field; Yellow's `cur_map` is marked `inferred` because it comes from the shift rule, not from a disassembly. |
-| `poke/tasks.py` | A task is a goal predicate, a horizon and a start state. The planner and evaluator take a task name, so Yellow needs no forked copies. |
-| `poke/baselines.py` | Every constant-button policy plus uniform random, run in the emulator. The missing row. |
-| `poke/routes.py`, `scripts/record_route.py` | Yellow's path across the lab depends on where the save state was made, so the demonstration cannot be written blind. Record it once by hand in the env's own action space (one keypress = one action), stored with the digest of the state it was recorded against. `collect.py` refuses a route whose digest does not match, because replaying a route from the wrong state produces confidently mislabelled episodes. |
-| `scripts/calibrate_ram.py` | Confirms `party_count` on a real ROM by diffing all of WRAM across the demonstration and reporting every byte that went 0→1 once and never above 6. Needed because one Yellow address is inferred. |
-| `poke/goals.py` | Start and goal frames come from a per-step goal flag written by the collector, not from starter names and not from `party_counts` — `leave_room` succeeds without the party changing at all. |
-| `scripts/sweep_seeds.py` | The post's 100-seed repeatability test, keeping CEM's **predicted** cost beside the **actual** emulator outcome, and reporting the AUC between them. 0.5 means the planner cannot tell its good plans from its bad ones, i.e. CEM is exploiting model error rather than using model knowledge. |
-
-Two fixes carried into the vendored code:
-
-- **Device selection.** Upstream picks `cuda` or `cpu`, so training on an Apple
-  box silently lands on CPU. Now resolves MPS too.
-- **`probe.py` labels.** Labelled on `party_counts > 0`, which is constant for
-  `leave_room`; now uses the goal flag.
-- **`PokeDataset` error message.** An episode set with no window long enough
-  raised numpy's "need at least one array to concatenate", which names neither
-  the file nor the knob. `finetune_rollout --max-horizon` is the usual cause.
-- **`train.py` flags.** `DefaultConfig` was edit-the-source-only; its fields
-  are now CLI flags, along with `--checkpoint-dir` and `--device`.
-- **`plan_cem.py` needs no ROM.** Planning never touches the emulator, and the
-  dataset records its own game and task, so `--rom` is optional and only
-  cross-checks.
-
-One upstream behaviour deliberately dropped: `eval_plan.py --runs N`. The
-emulator is deterministic from a save state and the plan is fixed, so N runs are
-N identical episodes. Varying anything means varying the planner seed, which is
-what `sweep_seeds.py` does.
+**Yellow is a dual-mode cart** (CGB flag `0x80`), so PyBoy boots it in colour
+and R, G and B differ. Every writer takes channel 0 and the encoder is
+`Conv2d(1, …)`, so colour would quietly feed the model an arbitrary channel
+instead of luminance. The env forces DMG. Upstream never hit this — a `.gb` Red
+ROM has no colour mode to pick.
 
 ## No hand-made save state
 
-Upstream needs you to play the game: *"Play until you can choose a starter.
-Stand below the middle Poke Ball... Close the window to save."* Every result
-then rests on an artifact nobody else can reproduce, which is why routes have
-to carry the digest of the state they were recorded against.
+Upstream asks you to play the game and close the window, which makes every
+result rest on an artifact nobody else can reproduce. It is unnecessary.
+Yellow's whole intro — Oak's speech, both name entries, the walk-on — is cleared
+by pressing A, and from the bedroom a seeded random walk finds the way out.
 
-None of that is necessary. Yellow's entire intro -- Oak's speech, both name
-entries, the walk-on -- is cleared by pressing A, and from the bedroom a seeded
-random walk finds the way out. `scripts/bootstrap.py` presses A until the game
-hands over control, searches for a target, truncates at first arrival, and
-**replays the route from the start to check it lands in the same place** before
-saving. Same seed and the same dump give the same file on any machine.
+`scripts/bootstrap.py` presses A until the game hands over control, searches for
+a target, truncates at first arrival, and **replays the route from the start to
+check it lands in the same place** before saving.
 
 | target | from a bare ROM | result |
 |---|---|---|
-| `bedroom` | 74 A presses, **1.4 s** | controllable, map 38, party 0 |
-| `oaks_lab` | + 765 search steps, **17 s** | map 40 (2 of 6 seeds found it) |
-| `pikachu` | + 1,485 search steps, **25 s** | map 40, **party 1** (1 of 4 seeds) |
+| `bedroom` | 76 A presses, 2.7 s | controllable, map 38, party 0 |
+| `oaks_lab` | + 765 search steps, 17 s | map 40 |
+| `pikachu` | + 928 search steps, 30 s | map 40, **party 1** |
 
-```bash
-uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to pikachu
-```
-
-Two bugs this flushed out, both recorded in the code:
-
-- **B is backspace on the name-entry screen.** Pressing it speculatively to
-  clear a text box bounces between the name menu and the letter grid forever;
-  the first version burned 5,104 actions that way. Only A is ever committed,
-  and any experiment happens between a snapshot and a restore.
-- **The cutscene moves the player.** A probe that calls "position changed"
-  control reports control that does not exist during the walk-on. The probe now
-  runs a no-op of identical timing first, and requires the move to be
-  reversible -- no cutscene honours that.
-
-Snapshot fidelity was checked directly rather than assumed: position, screen
-and WRAM all come back identical, and replay from a restored state is
-deterministic.
-
-## Addresses, confirmed on the cartridge
-
-Yellow moved `wGBC` into HRAM, so WRAM above `$CF1A` sits one byte below
-Red/Blue. The shift rule predicted these; running the ROM confirmed them.
-
-| Yellow | Red | symbol | how it was confirmed |
-|---|---|---|---|
-| `0xD162` | `0xD163` | `party_count` | watched go 0 -> 1 when Pikachu arrives |
-| `0xD163` | `0xD164` | `party_species` | documented |
-| `0xD35D` | `0xD35E` | `cur_map` | reads 38 on a new game; 38 -> 37 -> 0 -> 40 along the route |
-| `0xD360` | `0xD361` | `wYCoord` | 6 <-> 7 on down/up |
-| `0xD361` | `0xD362` | `wXCoord` | 1 <-> 4 on left/right |
-| `0xD056` | `0xD057` | `wIsInBattle` | **still inferred** -- reads 0, which a wrong address also reads |
-
-Confirmed against ROM sha1 `cc7d0326...` (Yellow (UE) [C][!]), recorded in
-`games.CONFIRMED_ON` so a later disagreement points at a different dump rather
-than at the table.
-
-**Yellow is a dual-mode cart** (CGB flag `0x80`), so PyBoy boots it in colour:
-R, G and B differ. Every writer takes channel 0 and the encoder is
-`Conv2d(1, ...)`, so colour would quietly feed the model an arbitrary channel
-instead of luminance. `PokeEnv` forces DMG, giving the 4-shade grey screen the
-blog post trained on. Upstream never hit this -- a `.gb` Red ROM has no colour
-mode to pick.
-
-## The task had to be redefined, and the table says why
-
-The obvious framing -- start inside Oak's lab, acquire a Pokemon -- is not a
-hard task, it is an impossible one. The lab is enterable long before the story
-hands anything over; Oak has to stop the player north of Pallet first.
-Bootstrapping to map 40 and running the baselines there:
-
-| policy | hits |
-|---|---|
-| all seven constant buttons | 0/1 each |
-| uniform random | 0/50 |
-
-That reads like a brutally hard task and is really a start state the goal
-cannot be reached from. A table of zeros is a broken task, not a good result.
-
-Redefined from a new game, with a horizon matched to what random actually
-needs (525-2,600 actions across seeds):
-
-| policy | hits | rate |
-|---|---|---|
-| always noop / up / down / left / right / a / b | 0/1 each | 0.0% |
-| **uniform random** | **1/50** | **2.0%** |
-
-Reachable, but not by accident. That 2.0% is the floor any planner has to beat.
+A random walk is an existence proof, not a demonstration, so
+`scripts/prune_route.py` cuts the loops out and replays to verify every cut:
+**1,485 → 336** actions on one route, **928 → 454** on another. Most candidate
+cuts are rejected, because the `(map, y, x, party, battle)` signature omits
+story flags.
 
 ## Requirements
 
 - Python ≥ 3.12 and [uv](https://docs.astral.sh/uv/)
 - **Your own legally acquired Pokémon Yellow ROM.** No ROM, game asset or save
   state is included or distributed here, and `.gitignore` blocks all three.
-  Either the `.gb` or the GBC-enhanced `.gbc` dump works; the env forces DMG
-  rendering either way.
-- No graphical desktop and no GPU required. `bootstrap` is headless, and the
-  measured numbers below are all from a laptop. `capture_state` and
-  `record_route` still exist for hand-made states, but nothing needs them.
+  Either a `.gb` or the GBC-enhanced `.gbc` dump works.
+- No graphical desktop and no GPU required.
 
 ## Run
 
 ```bash
 uv sync
-uv run pytest                                  # 108 tests, no ROM and no GPU needed
+uv run pytest                      # 142 tests, no ROM and no GPU needed
 
-# Bare ROM -> a verified, reproducible save state. No playing required.
-uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to bedroom
+# Bare ROM -> verified, reproducible save states. No playing required.
 uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to pikachu
 
-# Sanity check: detected game, RAM readings, and whether the task is already solved.
-uv run python -m scripts.smoke_test
+# Shorten the route it found, verifying every cut.
+uv run python -m scripts.prune_route --task yellow_pikachu
 
-# Demonstrate the route once, by hand. One keypress = one action.
-#   w a s d = up left down right   j = A   k = B   . = noop   u = undo   q = save
-uv run python -m scripts.record_route
+# Mark which steps are walked and which are a cutscene.
+uv run python -m scripts.annotate_route --task yellow_pikachu
 
-# Confirm the RAM address against this ROM rather than trusting the table.
-uv run python -m scripts.calibrate_ram
-
-# The baseline table. Do this before training anything.
+# The baseline table. Do this before believing any planner number.
 uv run python -m scripts.eval_baselines
 
-# Collect, train, probe, fine-tune on longer rollouts.
-uv run python -m scripts.collect --random 800 --random-steps 48 --noisy 200
-uv run python -m scripts.train
-uv run python -m scripts.probe checkpoints/best.pt
-uv run python -m scripts.finetune_rollout checkpoints/best.pt
+# Collect with locations, then train.
+uv run python -m scripts.collect --out episodes/yellow_v3.h5 \
+    --demos 4 --noisy 12 --random 400 --random-steps 60 --post-goal 12
+uv run python -m scripts.train --data-path episodes/yellow_v3.h5
 
-# Plan, execute, then repeat over 100 planner seeds with cost/outcome calibration.
-uv run python -m scripts.plan_cem checkpoints/rollout/best.pt --out plans/yellow.json
-uv run python -m scripts.eval_plan --plan plans/yellow.json --show
-uv run python -m scripts.sweep_seeds checkpoints/rollout/best.pt --seeds 100
-uv run python -m scripts.sweep_seeds checkpoints/rollout/best.pt --seeds 100 --untrained
+# Is the model wrong, or is the objective? Per-action, against the emulator.
+uv run python -m scripts.action_check checkpoints/yellow_v2/best.pt
+
+# What does the frozen encoder actually know about position?
+uv run python -m scripts.probe_location checkpoints/yellow_v2/best.pt
+
+# Play.
+uv run python -m scripts.play checkpoints/yellow_v2/best.pt \
+    --objective coords --controller pursuit \
+    --annotations routes/yellow_pikachu.annotations.json
 ```
 
-## Playing: closed-loop, along a chain
+## Measure the trivial baseline first
 
-Everything else here plans once, open-loop, to one goal — which is what the blog
-post does, and it is why 14 actions is the ceiling. Latent rollouts compound
-error, so a 40-action blind plan is hopeless however good the model is.
-`scripts/play.py` replaces it with:
+The blog post reports 52/100 planner successes against uniform random (0/100)
+and an untrained predictor (1/100) — then notes in passing that pressing A
+repeatedly already works from its start state. That row is not in its table. It
+is row one of its own training data: upstream ships `TAKE = ["a"] * 12` as a
+scripted route and asserts it reaches a starter.
 
-> plan H actions, execute the first few, **re-encode the real screen**, plan again
+So `scripts/eval_baselines.py` runs all seven constant-button policies plus
+uniform random, and warns if any constant button solves the task.
 
-Affordable because CEM is cheap: 173 ms per round, so replanning every 3 actions
-costs under half a second of planning per action, against one second of emulated
-game time.
+It also caught a broken task. Starting the Pikachu task inside Oak's lab scores
+**0/1 for all seven constant buttons and 0/50 for random** — which reads as
+brutally hard and is really impossible: the lab is enterable long before the
+story hands anything over. **A table of zeros is a broken task, not a good
+result.** Redefined from a new game with a horizon matched to what random needs:
 
-Three controllers share the pad and every action records which one chose it:
-
-| controller | when | why |
+| policy | hits | rate |
 |---|---|---|
-| `planner` | overworld | CEM in latent space towards the milestone's goal image |
-| `battle` | `wIsInBattle` set | the planner has no business in a battle menu, and the fight is unavoidable — the rival challenges you the moment Oak hands over Pikachu. Mashing A cleared it on the cartridge in **43 presses**, Pikachu intact |
-| `fallback` | milestone has no goal image | so a run reports "no goal image" instead of quietly steering at nothing |
+| every constant button | 0/1 each | 0.0 % |
+| uniform random | 1/50 | 2.0 % |
 
-**Goal images need no extra collection.** `bootstrap` already writes a verified
-state for each point in the story, and the screen of that state is exactly the
-frame to steer towards. So a milestone is a RAM predicate (did we get there)
-plus the state file that says what getting there looks like.
+## What the model learned
 
-The first scoped chain, which contains exactly one battle on purpose:
+31,759 frames, 2 minutes to collect, trained in ~70 minutes on an M5 via MPS.
+Best checkpoint epoch 10, validation prediction loss 0.0102.
 
-| milestone | reached when | goal image |
-|---|---|---|
-| `pikachu` | party ≥ 1 | `states/pikachu.state` |
-| `rival_beaten` | a trainer battle was seen, is over, party survived | — scripted |
-| `left_lab` | party ≥ 1 and map ≠ 40 | `states/pallet.state` |
-| `left_pallet` | map outside {0, 37, 38, 40} | — no state yet |
+`scripts/action_check.py` scores every action from a state against the real
+emulator:
 
-`rival_beaten` consults a history flag rather than just "not in a battle",
-because "not in a battle" is true *before* the fight too and the milestone would
-fire immediately.
+| action | prediction error | no-change baseline | moves the player |
+|---|---|---|---|
+| down | 0.0111 | 1.5112 | yes |
+| left | 0.0021 | 1.3275 | yes |
+| right | 0.0300 | 1.3235 | yes |
+| a | 0.0018 | 0.1411 | no |
+| noop / up / b | ~0.002 | 0.0000 | no |
 
-## What happens when it plays
+On the four actions that change the screen the predictor beats "predict no
+change" by **44× to 631×**. It picks `down`, `down` really is closest, `down`
+moves the player, and it correctly believes `a` makes things worse. The three
+that leave the screen byte-identical cannot be scored — the baseline is exactly
+0.0 and already right.
 
-Trained on 31,699 real frames from the pruned 454-action route; best checkpoint
-epoch 10, validation prediction loss 0.0102. Four closed-loop runs on the
-`yellow_pikachu` chain:
+**The dynamics model is not the problem.**
 
-| run | actions | rungs | tiles | `a` share | furthest |
-|---|---|---|---|---|---|
-| start state mid-dialogue, advance +1 | 501 | 2/34 | 17 | 58 % | house |
-| **clean start, advance +1** | 702 | **9/46** | **83** | 12 % | **Pallet Town, Oak scene triggered** |
-| clean start, re-anchor unbounded | 231 | 5/46 | 38 | 6 % | Pallet Town |
-| clean start, re-anchor span 3 | 855 | 4/46 | 26 | 5 % | stuck on the stairs, 21 round trips |
+## What the encoder knows about position
 
-**None reached the goal.** The honest reading of why took three measurements.
-
-**The model is not at fault.** `scripts/action_check.py` scores every action
-from the start state against the real emulator. On the four actions that change
-the screen, prediction error is **44× to 631×** smaller than predicting no
-change at all; the three that leave the screen byte-identical cannot be scored,
-since the baseline is exactly 0.0 and already correct. The model's greedy
-action is `down`, `down` really is closest, and `down` moves the player. It
-also correctly believes `a` makes things *worse* (1.9426 against 1.7090).
-
-**The embedding is a poor localiser.** One-step dynamics are excellent and
-long-range comparisons are not. Latent MSE between consecutive rungs has a
-median of 0.0017 while the start frame sits 1.82 from the first rung — three
-orders of magnitude — and with unbounded re-anchoring the planner matched
-**Pallet Town to rung 44 of 46**, to within 0.3787, while holding no Pokémon.
-Minimising latent distance to a goal is therefore not a sound progress signal at
-range, however good the one-step predictor is.
-
-**Both attempts to exploit that signal made things worse.** Re-anchoring an
-abandoned rung to the nearest rung ahead cleared fewer rungs than marching
-blindly, and the bounded version trapped the player in a stairs loop for 855
-actions. `--reanchor` is off by default because of this, not on principle.
-
-What did work: the clean run walked out of the bedroom, downstairs, out of the
-house, across Pallet Town to the north edge, and triggered Oak's scripted
-encounter — at which point `wIsInBattle` read 1 and the battle controller took
-over, correctly, with an empty party. Yellow genuinely enters a battle state
-with zero Pokémon during that cutscene.
-
-## Why it fails — and a wrong answer I published first
-
-A linear probe on the frozen encoder, with the controls that make a probe score
-mean anything — blocked and purged splits, a raw-pixel arm, a shuffled-label
-arm, a swept ridge strength — said route position was recoverable at R² 0.697,
-±55 actions. Splitting that by map then said something sharper: map id was
-93.6 % recoverable while position *within* map 40 scored R² −0.297. I concluded
-the encoder was **a map detector with no within-room sense of place**, and that
-the fix had to be a training-signal change.
-
-**That was wrong.** It rested on 235 frames from a single route through one
-room, where the player walks a near-fixed path and position barely varies.
-
-Recording `(map, y, x)` for every frame — the emulator knows it for free —
-allows the question to be asked properly, on 31,759 frames:
+`(map, y, x)` is recorded for every frame; the emulator knows it for free.
+Linear probes on the frozen encoder, split by episode, with raw-pixel and
+shuffled-label controls and a swept ridge strength:
 
 | map | axis | encoder R² | MAE (tiles) | raw pixels R² | shuffled R² |
 |---|---|---|---|---|---|
-| Pallet Town | y / x | 0.760 / 0.655 | 1.88 / 1.44 | 0.912 / 0.803 | −0.003 / −0.001 |
-| house, ground floor | y / x | 0.767 / 0.765 | 0.69 / 0.78 | 0.982 / 0.992 | −0.000 / −0.002 |
-| bedroom | y / x | 0.972 / 0.876 | 0.22 / 0.47 | 1.000 / 1.000 | −0.002 / −0.002 |
-| Oak's lab | y / x | 0.856 / 0.875 | 0.36 / 0.59 | 0.998 / 0.996 | −0.002 / −0.006 |
+| bedroom | y / x | 0.972 / 0.876 | 0.22 / 0.47 | 1.000 / 1.000 | −0.002 |
+| Oak's lab | y / x | 0.856 / 0.875 | 0.36 / 0.59 | 0.998 / 0.996 | −0.002 |
+| house, ground floor | y / x | 0.767 / 0.765 | 0.69 / 0.78 | 0.982 / 0.992 | −0.001 |
+| Pallet Town | y / x | 0.760 / 0.655 | 1.88 / 1.44 | 0.912 / 0.803 | −0.002 |
 
-**Within-room position is recoverable on all eight map-axis pairs**, to within
-half a tile in three of the four rooms. The encoder knows where the player is.
+Position is recoverable on all eight pairs, to within half a tile in three of
+four rooms. The encoder is **lossy** — raw downsampled pixels beat it
+everywhere — but the information survives.
 
-So why did route position only reach ±55 actions? Because that question is
-ill-posed, not because the encoder is deficient. **95 % of the demonstration's
-frames sit on a tile the route visits more than once**, and a revisited tile's
-route positions are up to 229 actions apart. One screenshot genuinely does not
-determine how far through the route you are. The ±55 is the ambiguity of the
-question.
+## Planning on tiles, not on a latent norm
 
-What the table does show is that the encoder is **lossy**: raw downsampled
-pixels beat it on every single pair, reaching R² 1.000 in the bedroom. The
-information survives, but the representation discards some of it.
+Two ridge heads on the frozen encoder — one-vs-rest for the map, then a per-map
+regressor for `y` and `x` — read the player's tile out of an embedding at
+**99.5 % map accuracy, ±1.51 tiles**. A plan is then scored on *where the model
+thinks the player will end up*, in tiles, rather than on a distance in a space
+where position is only one of several things varying.
 
-So the planning failure is *not* missing information, and the earlier
-"change the training signal" conclusion does not follow. The live suspects are
-the objective and the search: latent Euclidean distance is dominated by things
-that are not position — text boxes, palette, screen transitions — which is also
-why the progress objective below walks to the highest-scoring map and stays
-there.
+Waypoints come from the demonstration's own recorded positions, which splits the
+two jobs cleanly: **whether we have arrived is read from RAM, and only the
+button choice is the model's imagination.** A failure can then only be the
+planner's.
 
-## Planning on tiles instead of on a latent norm
+The controller is pure pursuit, borrowed from path following: project the real
+tile onto the route, aim a couple of nodes further on, repeat. No timer to tune,
+nothing abandoned.
 
-Recording `(map, y, x)` makes a different objective possible. Two ridge heads on
-the frozen encoder — one-vs-rest for the map, then a per-map regressor for `y`
-and `x` — read the player's tile straight out of an embedding:
-
-> **map id 99.5 % accurate over 4 maps, position ±1.51 tiles**
-
-So a plan can be scored on *where the model thinks the player will end up*, in
-tiles, rather than on a distance in a space where position is only one of many
-things varying. Waypoints come from the demonstration's own recorded positions,
-which separates the two jobs cleanly: **whether we have arrived is read from
-RAM, and only the button choice is the model's imagination.** A failure can then
-only be the planner's.
-
-Same model, same start state, three objectives:
-
-| objective | controller | progress | actions to get there |
+| objective | controller | progress | actions |
 |---|---|---|---|
 | latent goal distance | ladder | 9/46 rungs | 702 |
 | latent progress probe | — | oscillated through a door 15× | — |
 | coordinates | advance/abandon | 15/38 waypoints | 198 |
 | **coordinates** | **pure pursuit** | **22/38 nodes** | **81** |
 
-Pure pursuit gets further and does it roughly 2.4× faster. Progress counts only
-nodes the player has genuinely **stood on**, within a tile — an earlier version
-scored "nearest node at any distance" and claimed node 22 while the player was
-8 tiles away and had never entered the lab.
+Progress counts only nodes the player has genuinely **stood on**, within a tile.
 
-The coordinate objective navigates bedroom → house → Pallet Town and gets about
-40 % along the route before stalling. It is the first objective that makes
-sustained, checkable forward progress.
+Three controllers share the pad and every action records which one chose it:
+the planner in the overworld, a scripted A-masher while `wIsInBattle` is set
+(43 presses cleared the forced rival fight with Pikachu intact), and the same
+masher for dialogue.
 
-Pure pursuit removes the controller problem rather than trading between its
-failure modes: project the real tile onto the route, aim `lookahead` nodes
-further on, repeat. There is no timer to tune and nothing is abandoned.
-
-Two structural fixes it needed, both found by running it:
+Two structural fixes pure pursuit needed, both found by running it:
 
 - **A target in another room gives no gradient.** The wrong-map penalty swamps
-  the tile distance, every plan that stays in the room ties, and CEM has
-  nothing to follow — pursuit stalled in the house with the next nodes in
-  Pallet Town. Aiming at the route's exit from the *current* room fixes it.
-- **Dialogue and cutscenes ignore the d-pad.** At the north edge of Pallet all
-  seven buttons give the identical result, because Oak stops the player and
-  walks them to the lab. Planning a path through a scene that ignores paths is
-  hopeless, so the tile standing still for N actions hands over to the text
-  masher, exactly as a battle does.
+  tile distance, every plan that stays in the room ties, CEM has nothing to
+  follow. Aim at the route's exit from the *current* room instead.
+- **Dialogue ignores the d-pad.** At the north edge of Pallet all seven buttons
+  give the identical result, because Oak stops the player and walks them to the
+  lab.
 
-### Which steps of a route are a movie
+## Which steps of a route are a movie
 
 Waypoints from a demonstration cannot tell "somewhere you walked to" from
-"somewhere you were carried", and the emulator can answer that exactly: at each
-step, snapshot, try all seven buttons, and compare. If every button gives the
-same screen, nothing the planner chooses matters there.
-
-`scripts/annotate_route.py` does it in seconds, and the answer is larger than
-expected:
+"somewhere you were carried", and the emulator answers that exactly: at each
+step, snapshot, try all seven buttons, compare. If every button gives the same
+screen, nothing the planner chooses matters there.
 
 > **42 % of this route is scripted** — 189 of 455 steps. Oak's encounter alone
 > is a **116-step** scene starting at map 0 `(0,10)`, the north edge of Pallet.
 > The Pikachu handover is another 39.
 
-That relocates the goal. The planner should aim at `(0,0,10)` — the tile you
-*walk to*, where control is then taken away — and mash from there. The tile the
-earlier run reached, `(0,10,9)`, is 52 steps *inside* the scene: somewhere the
-game carried the player, which is why arriving there under your own power does
-nothing.
+One trap: control is lost **on** the trigger tile, so the counterfactual marks
+it scripted. Dropping it removes the only waypoint that starts the encounter.
+The first step of each scripted run is kept.
 
-One trap in filtering by this: control is lost **on** the trigger tile, so the
-counterfactual marks it scripted. Dropping it removes the only waypoint that
-starts the encounter. The first step of each scripted run is kept.
+## What stops it
 
-**Filtering the waypoints changed nothing end to end**, because the run stalls
-before it ever reaches that region. Kept anyway — it is correct, and it matters
-as soon as navigation improves.
+**The planner never gets north of y=5 in Pallet Town, and the Oak trigger is at
+y=0.**
 
-A more principled cutscene detector — comparing two buttons' screens live,
-the same test bootstrap uses — **measured worse**: 17/38 nodes against 22/38.
-The cruder "tile has not moved" rule is the better *policy* precisely because
-it mashes A more, which advances text the planner would otherwise sit through.
-It stays the default; `--control-probe` switches.
+Not the representation, not the dynamics model, not cutscenes. A 14-action
+horizon sampled from independent uniform buttons will not reliably find a
+10-tile northward traverse across an open map. The fixes are ordinary — a longer
+horizon, action repeats in the sampling distribution, or a coarse search over
+known-walkable tiles with the model used only locally — and none needs
+retraining.
 
-So the real blocker is plain long-range navigation: **the planner never gets
-north of y=5 in Pallet Town, and the trigger is at y=0.** A 14-action horizon
-and a ±1.5-tile readout are not enough to cross an open map.
+Two things that did **not** help, recorded because the measurement is the point:
 
-The earlier advance/abandon controller is kept behind `--controller waypoints`,
-because the three rules tried for it each failed differently and the
-comparison is the point:
+- Filtering waypoints by the cutscene annotations changed nothing end to end,
+  because the run stalls long before that region. Kept because it is correct.
+- A principled cutscene detector — comparing two buttons' screens live —
+  measured **worse**, 17/38 against 22/38. The cruder "tile has not moved" rule
+  is the better *policy* because it mashes A more, advancing text the planner
+  would otherwise sit through. `--control-probe` switches.
 
-- **advance to the next** stranded the plan — by waypoint 23 it wanted Oak's lab
-  while the player had wandered back to the bedroom. The same bug as the latent
-  ladder, rebuilt by hand.
-- **re-target forwards on the current map** cannot recover from walking into the
-  wrong room, because no upcoming waypoint is on that map, so it falls through
-  to advancing anyway.
-- **re-target anywhere on the current map** recovers but oscillates: one run
-  bounced between waypoints 14 and 15 for 1,200 actions.
+## Four wrong answers, and what caught them
 
-The run above uses the third rule with a stall detector on **furthest waypoint
-actually stood on**, which is a ground-truth quantity and ends the run honestly
-rather than tuning a fourth heuristic.
+Each of these looked clean and was published before the check that killed it.
+
+1. **"The planner just mashes A."** It did — 291 of 501 actions. But the start
+   state was mid-dialogue, where any button merely dismisses a text box. The
+   control probe that cleared it asked whether a direction moved the player;
+   a text box swallows every button, so nothing moves and every button gives
+   the *same screen*. Comparing **two** buttons fixes it. With a clean start the
+   `a` share fell to 12 % and tiles visited went 17 → 83.
+2. **"Route position is recoverable, so swap the planner's cost."** R² 0.697
+   looked convincing. Splitting by map showed it was carried by map identity.
+3. **"The encoder is a map detector with no sense of place."** Wrong too — that
+   rested on 235 frames of one route through one room where position barely
+   varies. With 31,759 frames and recorded coordinates, within-room position is
+   recoverable everywhere. Route position was only ±55 actions because the
+   question is ill-posed: **95 % of the route's frames sit on a tile it
+   revisits**, up to 229 actions apart. One screenshot cannot say how far
+   through a route you are.
+4. **"22/38 nodes."** The first version scored the *nearest* node at any
+   distance, claiming node 22 while the player stood 8 tiles away and had never
+   entered the lab. Progress now requires arrival.
+
+Two methodology notes from the same stretch: contiguous blocked CV over a
+monotonic target is extrapolation, not interpolation — it reported R² −25 while
+the same features beat the mean on absolute error — and a single arbitrary ridge
+strength flipped a conclusion, α=1.0 giving −0.100 where α=100 gives 0.697.
 
 ## Cost
 
-Measured on an Apple M5 (32 GB) with torch 2.13 on MPS, on this architecture at
-`batch_size=16, num_frames=4`. No cloud GPU is needed for any of it.
+Measured on an Apple M5 (32 GB), torch on MPS.
 
 | step | measured |
 |---|---|
-| parameters | 12,515,136 (encoder 5.41M, predictor 6.96M, action encoder 0.15M) |
-| training throughput | 403 frames/s, flat from batch 16 to 64 — compute-bound |
-| default 10-epoch run | **64 min** |
-| encoder share of a training step | 146 of 155 ms = **94 %** |
-| SIGReg share | 2.4 ms = **1.5 %** |
-| inference | 1,758 frames/s |
+| parameters | 12,515,136 |
+| training throughput | 403 frames/s, flat from batch 16 to 64 |
+| 10-epoch run | ~70 min |
+| encoder share of a training step | 94 % |
+| SIGReg share | 1.5 % |
 | CEM, 512 plans, horizon 14 | 173 ms per round |
-| 100 planner seeds, 15 rounds each | **~4 min** of GPU time |
-| same at horizon 112 | ~20 min |
+| bare ROM → verified Pikachu state | 30 s |
+| collect 31,759 frames | 2 min |
 
-CEM cost is **linear** in the horizon, so testing the post's unverified claim
-that difficulty grows exponentially with plan length is cheap. Swapping
-`nn.MultiheadAttention` for SDPA is only a 1.17× win here (53.7 vs 62.8 ms per
-12 blocks), so the encoder is genuinely the cost. The lever that works: the
-4-frame windows overlap, so each frame is re-encoded about four times. That
-cannot be cached while the encoder is still learning, but `finetune_rollout.py`
-freezes it — caching embeddings there is roughly 4× off the expensive phase.
+CEM cost is linear in the horizon, so longer-horizon planning is affordable.
 
-## Status
+## Upstream fixes
 
-**Run on the real cartridge:** ROM identification, DMG forcing, all six RAM
-addresses but `wIsInBattle`, the bootstrap to all three targets with replay
-verification, the map graph, and the baseline table for both the broken lab
-start and the working new-game start.
+Carried into the vendored code, each with a header saying what changed:
 
-**Run against synthetic data only:** train, probe, rollout fine-tuning and CEM
-planning all work end to end on a dataset in the collector's h5 format, on MPS.
-They have not yet been run on frames from the game, because no dataset has been
-collected yet.
-
-**Built, not yet run on a trained model:** `scripts/play.py`, the closed-loop
-play loop. See below.
-
-108 tests, none needing a ROM or a GPU.
+- **Device selection ignored MPS**, so training on an Apple box silently ran on
+  CPU.
+- **Best-checkpoint selection was driven by the regulariser.** Total validation
+  loss is `pred + 0.1 · SIGReg`, and SIGReg dominated it — epochs with strictly
+  better prediction were rejected. `--select-on pred` is now the default, and it
+  changed which model we plan with.
+- `probe.py` labelled frames on `party_counts > 0`, constant for a navigation
+  task.
+- `PokeDataset` raised numpy's "need at least one array to concatenate" when no
+  window fit, naming neither the file nor the knob.
+- `train.py`'s config was edit-the-source-only.
+- `plan_cem.py` demanded a ROM it never emulates.
+- Dropped `eval_plan.py --runs N`: the emulator is deterministic from a save
+  state and the plan is fixed, so N runs are N identical episodes.
 
 ## Roadmap
 
-1. ~~Baseline table for `yellow_pikachu`, before any model exists.~~ Done:
-   constant buttons 0, random 1/50.
-2. Collect a dataset around the bootstrap states and train on real frames;
-   report the planner beside every constant-button policy.
-3. Rollout error as a curve, `MSE(k)` for `k = 1..H`, before and after
-   fine-tuning. The post gives one number (step 12: 0.4224 → 0.3045) and says
-   the first step got slightly worse without quantifying it. Cheap:
-   `finetune_rollout` already prints per-horizon validation MSE, so this is a
-   plot and a before/after column, not new machinery.
-4. Success against horizon on `leave_room` from start states at increasing
-   distance from a door — the post's exponential-difficulty claim, measured.
-5. Does the planner know when it is wrong? `sweep_seeds` already records it;
-   if the AUC is near 0.5, try an ensemble disagreement penalty.
-6. Cross-version transfer: train on Yellow, score the frozen encoder and
-   planner on Red's `leave_room` with no retraining. Same engine, different
-   sprites and palette — does the latent space encode game structure or pixel
-   surface? Needs a second legal ROM.
-7. **Plan on coordinates, not on latent distance.** `(map, y, x)` is now
-   recorded for every frame and is recoverable from the encoder to within half
-   a tile in most rooms, so a planner can be scored on "did this plan move the
-   player towards that tile" instead of on a latent norm dominated by text
-   boxes and palette. That is the next experiment, and it needs no retraining.
-8. **Close the lossiness gap.** Raw downsampled pixels out-predict the encoder
-   on position in every room, reaching R² 1.000 in the bedroom against 0.972.
-   Worth knowing whether an auxiliary coordinate head recovers that without
-   hurting the dynamics.
-9. **Playing, properly.** Replace one open-loop plan with MPC: plan H, execute
-   1–3, re-encode the real screen, re-plan. Follow a chain of subgoal images
-   from the bootstrap states, hand control to a scripted policy while
-   `wIsInBattle` is set (which needs confirming first), and report how far
-   along the chain it gets against random, constant-A, and open-loop CEM.
+1. ~~Baseline table before any model exists.~~ Done.
+2. ~~Train on real frames.~~ Done.
+3. ~~Separate "is the model wrong" from "is the objective wrong".~~ Done.
+4. ~~Plan on coordinates rather than a latent norm.~~ Done.
+5. **Cross Pallet Town.** Longer horizon, action repeats in the CEM proposal, or
+   a coarse walkable-tile search with the model used locally.
+6. Rollout error as a curve, `MSE(k)` for `k = 1..H`, before and after
+   fine-tuning. `finetune_rollout` already prints per-horizon validation MSE.
+7. Close the lossiness gap: raw pixels out-predict the encoder on position
+   everywhere. Does an auxiliary coordinate head recover it without hurting the
+   dynamics?
+8. Cross-version transfer: train on Yellow, score the frozen encoder on Red's
+   `leave_room` with no retraining. Needs a second legal ROM.
 
 ## Licence
 
