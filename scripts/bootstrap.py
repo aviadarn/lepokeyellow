@@ -59,6 +59,17 @@ TARGETS = {
     "pikachu": _has_pokemon,
 }
 
+# Which task each target produces a demonstration for. The route is stored under
+# that task's name, because routes.check refuses a route recorded for a
+# different task -- a guard that caught this exact mix-up.
+TARGET_TASK = {
+    "bedroom": None,
+    "house": "leave_room",
+    "pallet": "leave_room",
+    "oaks_lab": "leave_room",
+    "pikachu": "yellow_pikachu",
+}
+
 # Buttons the search may use. "start" is excluded: the menu is a trap a random
 # walk never escapes, and the model's action space does not contain it either.
 WALK_BUTTONS = ("up", "down", "left", "right", "a", "b")
@@ -195,6 +206,7 @@ def main() -> None:
     parser.add_argument("--to", default="oaks_lab", choices=sorted(TARGETS))
     parser.add_argument("--out")
     parser.add_argument("--route")
+    parser.add_argument("--task", help="task the route is a demonstration for")
     parser.add_argument("--seeds", type=int, default=8,
                         help="search seeds to try; the shortest route wins")
     parser.add_argument("--max-steps", type=int, default=1500)
@@ -204,7 +216,8 @@ def main() -> None:
 
     reached = TARGETS[args.to]
     out = Path(args.out or f"states/{args.to}.state")
-    route_path = Path(args.route or f"routes/bootstrap_{args.to}.json")
+    route_task = args.task or TARGET_TASK[args.to] or f"bootstrap_{args.to}"
+    route_path = Path(args.route or f"routes/{route_task}.json")
 
     driver = Driver(args.rom, args.game, args.act_frames)
     started = time.perf_counter()
@@ -214,6 +227,11 @@ def main() -> None:
         print(f"intro cleared in {len(intro)} A presses; now at {driver.position} "
               f"-- {name(driver.position[0])}")
         bedroom = driver.snapshot()
+        # Always write the post-intro state, whatever the target. The search
+        # route replays FROM it, so it has to exist on disk for the route's
+        # digest to mean anything.
+        bedroom_path = Path("states/bedroom.state")
+        driver.save(bedroom_path)
 
         if reached(driver):
             best, best_seed = [], None
@@ -253,19 +271,28 @@ def main() -> None:
     finally:
         driver.close()
 
-    Route(
-        schema=SCHEMA,
-        game=driver.game.key,
-        task=f"bootstrap_{args.to}",
-        state_sha1=state_digest(out),
-        actions=intro + best,
-        reached_goal=True,
-        goal_step=len(intro) + len(best),
-    ).save(route_path)
+    # The route carries the digest of the state its actions START from, not the
+    # one they end at. The intro is not part of it: those presses run from a
+    # bare boot, and their result is bedroom.state itself.
+    if best:
+        Route(
+            schema=SCHEMA,
+            game=driver.game.key,
+            task=args.task or TARGET_TASK[args.to] or f"bootstrap_{args.to}",
+            state_sha1=state_digest(bedroom_path),
+            actions=best,
+            reached_goal=True,
+            goal_step=len(best),
+        ).save(route_path)
 
     elapsed = time.perf_counter() - started
-    print(f"\nwrote {out}  ({state_digest(out)[:12]})")
-    print(f"wrote {route_path}  {len(intro) + len(best)} actions total")
+    print(f"\nwrote {bedroom_path}  ({state_digest(bedroom_path)[:12]})  "
+          f"{len(intro)} intro actions from boot")
+    if out != bedroom_path:
+        print(f"wrote {out}  ({state_digest(out)[:12]})")
+    if best:
+        print(f"wrote {route_path}  {len(best)} actions, replayed from "
+              f"{bedroom_path.name}")
     print(f"{elapsed:.1f}s. Same seed and ROM reproduce this exactly.")
     unknown = [a for a in intro + best if a not in ACTIONS]
     assert not unknown, unknown

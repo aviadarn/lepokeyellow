@@ -73,10 +73,14 @@ def test_confirmed_addresses_are_not_flagged_as_inferred():
         assert YELLOW.ram.verified(field), field
 
 
-def test_in_battle_is_still_only_inferred():
-    """It reads 0 out of battle, which is what a wrong address also reads. Not
-    confirmed until something has been observed while a battle runs."""
-    assert not YELLOW.ram.verified("in_battle")
+def test_every_yellow_address_is_confirmed_on_the_cartridge():
+    """A wrong address reads a plausible byte rather than raising, so each one
+    was checked by watching it move on the real ROM: party_count 0->1 on
+    Pikachu, party_species 84, cur_map 38 then 37/0/40, the coords on
+    down/up and left/right, and in_battle 2 during the forced rival fight."""
+    for field in ("party_count", "party_species", "cur_map", "y_coord",
+                  "x_coord", "in_battle"):
+        assert YELLOW.ram.confidence[field] == "confirmed-on-rom", field
 
 
 def test_confirmed_addresses_name_the_rom_they_were_checked_against():

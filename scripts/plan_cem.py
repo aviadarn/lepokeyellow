@@ -10,6 +10,7 @@ from poke.games import resolve
 from poke.goals import (
     check_dataset,
     dataset_task,
+    describe_goals,
     default_device,
     goal_indices,
     load_frame,
@@ -178,6 +179,8 @@ def main() -> None:
         if args.goal_indices is None
         else args.goal_indices
     )
+
+    print(f"goals: {describe_goals(args.data, list(goals_at))}")
 
     with t.inference_mode():
         initial = model.encode(load_frame(args.data, start).to(device))

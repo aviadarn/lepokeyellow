@@ -94,7 +94,7 @@ TASKS: dict[str, Task] = {
         start_context=_no_context,
         horizon=600,
         state="states/bedroom.state",
-        route="routes/bootstrap_pikachu.json",
+        route="routes/yellow_pikachu.json",
     ),
     # Version-independent navigation task. Success is a map transition, so it is
     # defined from any interior start state and in any Gen-1 game, which makes

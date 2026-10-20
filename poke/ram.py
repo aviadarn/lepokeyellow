@@ -29,14 +29,32 @@ def coords(env) -> tuple[int | None, int | None]:
     return env.read_ram(env.game.ram.y_coord), env.read_ram(env.game.ram.x_coord)
 
 
+# wIsInBattle. Confirmed on the cartridge: it read 2 through the forced rival
+# fight in Oak's lab and cleared to 0 the moment the fight ended.
+NO_BATTLE, WILD_BATTLE, TRAINER_BATTLE = 0, 1, 2
+
+BATTLE_NAMES = {
+    NO_BATTLE: "none",
+    WILD_BATTLE: "wild",
+    TRAINER_BATTLE: "trainer",
+}
+
+
+def battle_kind(env) -> int:
+    value = env.read_ram(env.game.ram.in_battle)
+    return NO_BATTLE if value is None else int(value)
+
+
 def in_battle(env) -> bool:
     """True while a battle is running.
 
-    The planner has no business steering a battle menu, so `scripts/play.py`
-    hands control to a scripted policy while this is set.
+    The planner has no business steering a battle menu -- it is a different
+    dynamics problem from walking, and unavoidable: the rival challenges the
+    player the moment Oak hands over Pikachu. So a scripted policy takes over
+    while this is set. Mashing A is enough for that first fight: 43 A presses
+    cleared it with Pikachu intact.
     """
-    value = env.read_ram(env.game.ram.in_battle)
-    return bool(value)
+    return battle_kind(env) != NO_BATTLE
 
 
 def has_pokemon(env) -> bool:

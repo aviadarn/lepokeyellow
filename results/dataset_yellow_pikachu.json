@@ -1,0 +1,44 @@
+{
+  "path": "episodes/yellow_pikachu.h5",
+  "bytes_on_disk": 19350986,
+  "frames": 48195,
+  "episodes": 416,
+  "pixel_values": [
+    0,
+    85,
+    153,
+    255
+  ],
+  "provenance": {
+    "act_frames": 60,
+    "game": "yellow",
+    "pyboy_version": "2.8.1",
+    "rom_sha1": "cc7d03262ebfaf2f06772c1a480c7d9d5f4a38e1",
+    "route_sha1": "e3cf49185f0323970ed51133d8b684c448a14569",
+    "schema": 2,
+    "seed": 0,
+    "state_sha1": "0d7b128f9a3c7017a943387aa11d0f761f947e5d",
+    "task": "yellow_pikachu"
+  },
+  "by_kind": {
+    "demo": {
+      "episodes": 4,
+      "frames": 5944,
+      "successes": 4
+    },
+    "noisy": {
+      "episodes": 12,
+      "frames": 17851,
+      "successes": 0
+    },
+    "random": {
+      "episodes": 400,
+      "frames": 24400,
+      "successes": 0
+    }
+  },
+  "goal_frames": [
+    1485
+  ],
+  "goal_note": "4 goal frame(s), 1 distinct  (a single screen: the planner is aiming at one exact frame. Collect demonstrations from different search seeds for more.)"
+}

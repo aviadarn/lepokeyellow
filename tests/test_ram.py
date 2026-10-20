@@ -52,3 +52,22 @@ def test_cur_map_passthrough():
     env = FakeEnv(YELLOW, {YELLOW.ram.cur_map: 40})
     assert cur_map(env) == 40
     assert cur_map(FakeEnv(YELLOW)) is None
+
+
+def test_battle_kind_distinguishes_wild_from_trainer():
+    """Gen 1 stores 1 for a wild battle and 2 for a trainer; the rival fight in
+    Oak's lab reads 2."""
+    from poke.ram import NO_BATTLE, TRAINER_BATTLE, WILD_BATTLE, battle_kind, in_battle
+
+    env = FakeEnv(YELLOW, {YELLOW.ram.in_battle: NO_BATTLE})
+    assert battle_kind(env) == NO_BATTLE and not in_battle(env)
+    for kind in (WILD_BATTLE, TRAINER_BATTLE):
+        env.write(YELLOW.ram.in_battle, kind)
+        assert battle_kind(env) == kind and in_battle(env)
+
+
+def test_unreadable_battle_flag_is_not_a_battle():
+    from poke.ram import battle_kind, in_battle
+
+    env = FakeEnv(YELLOW)
+    assert battle_kind(env) == 0 and not in_battle(env)

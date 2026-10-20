@@ -35,12 +35,24 @@ def start_index(data_path: str) -> int:
         return int(file["episodes"][0, 0])
 
 
-def goal_indices(data_path: str, limit: int = 8, kinds=(b"demo", b"noisy")) -> list[int]:
-    """First goal-satisfying frame of each successful episode.
+def goal_indices(
+    data_path: str,
+    limit: int = 8,
+    kinds=(b"demo", b"noisy"),
+    dedupe: bool = True,
+) -> list[int]:
+    """First goal-satisfying frame of each successful episode, deduplicated.
 
     Prefers demonstrations and their perturbations over lucky random episodes:
     a random walk that stumbled into the goal tends to arrive in an unusual
     screen state, and a goal set is only as tight as its worst member.
+
+    Deduplication is not an optimisation. Replaying one demonstration route N
+    times from one save state gives N byte-identical goal frames, because the
+    emulator is deterministic -- so a goal set that reads as "4 goals" is one
+    screen counted four times, and the planner is aiming at a single point
+    while appearing to have choices. Measured on the first real dataset: 4
+    goal frames, 1 distinct screen.
     """
     with h5py.File(data_path, "r") as file:
         episodes = file["episodes"][:]
@@ -69,9 +81,36 @@ def goal_indices(data_path: str, limit: int = 8, kinds=(b"demo", b"noisy")) -> l
             f"{data_path} contains no successful episode, so there is no goal "
             "embedding to plan towards. Check that the route reaches the goal."
         )
+
+    if dedupe:
+        chosen = _distinct_frames(data_path, chosen)
+
     # Spread the picks across episodes rather than taking the first few.
     step = max(1, len(chosen) // limit)
     return chosen[::step][:limit]
+
+
+def _distinct_frames(data_path: str, indices: list[int]) -> list[int]:
+    """Drop indices whose frame is byte-identical to an earlier one."""
+    seen: set[bytes] = set()
+    keep: list[int] = []
+    with h5py.File(data_path, "r") as file:
+        for index in indices:
+            key = file["frames"][index, :, :, 0].tobytes()
+            if key not in seen:
+                seen.add(key)
+                keep.append(index)
+    return keep
+
+
+def describe_goals(data_path: str, indices: list[int]) -> str:
+    """One line on how much choice the goal set actually gives the planner."""
+    distinct = len(_distinct_frames(data_path, indices))
+    note = ""
+    if distinct == 1:
+        note = ("  (a single screen: the planner is aiming at one exact frame. "
+                "Collect demonstrations from different search seeds for more.)")
+    return f"{len(indices)} goal frame(s), {distinct} distinct{note}"
 
 
 def load_frame(data_path: str, index: int) -> t.Tensor:

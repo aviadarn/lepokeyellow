@@ -90,11 +90,14 @@ YELLOW = Game(
             # cur_map reads 38 (REDS_HOUSE_2F) once the new game starts, y_coord
             # moves 6<->7 on down/up and x_coord 1<->4 on left/right. See
             # CONFIRMED_ON below.
-            "party_species": "documented",
+            # Read 84 (0x54, Pikachu's Gen-1 internal index) in the dataset.
+            "party_species": "confirmed-on-rom",
             "cur_map": "confirmed-on-rom",
             "y_coord": "confirmed-on-rom",
             "x_coord": "confirmed-on-rom",
-            "in_battle": "inferred",  # Red 0xD057 minus the -1 shift; reads 0
+            # Read 2 (trainer battle) during the forced rival fight in Oak's
+            # lab while Red's 0xD057 stayed 0, and cleared to 0 when it ended.
+            "in_battle": "confirmed-on-rom",
         },
     ),
 )

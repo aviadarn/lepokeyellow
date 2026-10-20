@@ -28,10 +28,13 @@ def h5_path(tmp_path):
 def write_episodes(h5_path, episodes, game="yellow", task="yellow_pikachu"):
     out, rom, state, route = h5_path
     with EpisodeWriter(out, rom, state, 60, 0, game=game, task=task, route=route) as w:
-        for kind, name, steps in episodes:
+        # Frames vary by episode as well as by step, so goal-frame
+        # deduplication is exercised rather than accidentally triggered.
+        for episode, (kind, name, steps) in enumerate(episodes):
             goal_step = -1
             for index, goal in enumerate(steps, start=1):
                 frame = np.full((144, 160), index, dtype=np.uint8)
+                frame[0, 0] = episode
                 w.add_step(frame, np.zeros(6, np.uint8), int(goal), goal)
                 if goal and goal_step < 0:
                     goal_step = index
@@ -109,8 +112,9 @@ def test_load_frame_scales_to_minus_one_one(h5_path):
     out = write_episodes(h5_path, [("demo", "d", [0, 1])])
     frame = load_frame(str(out), 0)
     assert frame.shape == (1, 1, 144, 160)
+    # pixel (0, 0) carries the episode marker, so read the one beside it:
     # raw value 1 -> 1/127.5 - 1
-    assert abs(float(frame[0, 0, 0, 0]) - (1 / 127.5 - 1.0)) < 1e-6
+    assert abs(float(frame[0, 0, 0, 1]) - (1 / 127.5 - 1.0)) < 1e-6
 
 
 def test_dataset_names_the_problem_when_no_window_fits(h5_path):
@@ -122,3 +126,29 @@ def test_dataset_names_the_problem_when_no_window_fits(h5_path):
     with pytest.raises(ValueError, match="no episode is long enough"):
         PokeDataset(out, num_frames=9)
     assert len(PokeDataset(out, num_frames=3)) == 1
+
+
+def test_identical_goal_frames_collapse_to_one(h5_path):
+    """Replaying one route N times from one save state gives N byte-identical
+    goal frames. Counting them as N goals makes a planner aiming at a single
+    screen look like it has choices. Measured on the real dataset: 4 -> 1."""
+    out, rom, state, route = h5_path
+    with EpisodeWriter(out, rom, state, 60, 0, game="yellow", task="yellow_pikachu",
+                       route=route) as w:
+        for episode in range(4):
+            for step, goal in enumerate([0, 0, 1], start=1):
+                # Same pixels every episode, exactly as a deterministic replay.
+                w.add_step(np.full((144, 160), step, np.uint8),
+                           np.zeros(6, np.uint8), int(goal), goal)
+            w.end_episode("demo", f"demo{episode}", True, -1, 3)
+
+    assert len(goal_indices(str(out), dedupe=False)) == 4
+    assert len(goal_indices(str(out))) == 1
+
+
+def test_describe_goals_flags_a_single_screen(h5_path):
+    from poke.goals import describe_goals
+
+    out = write_episodes(h5_path, [("demo", "d0", [0, 1]), ("demo", "d1", [0, 1])])
+    text = describe_goals(str(out), goal_indices(str(out), dedupe=False))
+    assert "distinct" in text
