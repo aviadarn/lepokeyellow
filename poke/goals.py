@@ -40,6 +40,7 @@ def goal_indices(
     limit: int = 8,
     kinds=(b"demo", b"noisy"),
     dedupe: bool = True,
+    window: int = 0,
 ) -> list[int]:
     """First goal-satisfying frame of each successful episode, deduplicated.
 
@@ -53,6 +54,18 @@ def goal_indices(
     screen counted four times, and the planner is aiming at a single point
     while appearing to have choices. Measured on the first real dataset: 4
     goal frames, 1 distinct screen.
+
+    More demonstrations do not help, and it took a second dataset to see why.
+    yellow_pikachu's goal fires when party_count flips during Oak's SCRIPTED
+    dialogue, so the screen at that instant is the same however the player got
+    there: five successful episodes across two collection runs still gave one
+    distinct screen. A goal defined by a RAM event has exactly one goal frame
+    by construction.
+
+    `window` is the way out. The goal flag stays set for the rest of an
+    episode, so frames shortly after the trigger also satisfy the goal while
+    showing different screens -- the remainder of the dialogue. Those are
+    genuine alternatives to steer towards rather than copies of one frame.
     """
     with h5py.File(data_path, "r") as file:
         episodes = file["episodes"][:]
@@ -68,12 +81,19 @@ def goal_indices(
     for (start, length), row in zip(episodes, meta):
         if not row["success"]:
             continue
-        window = flags[int(start) : int(start) + int(length)]
-        positive = np.flatnonzero(window)
+        span = flags[int(start) : int(start) + int(length)]
+        positive = np.flatnonzero(span)
         if not len(positive):
             continue
-        index = int(start) + int(positive[0])
-        (preferred if row["kind"] in kinds else fallback).append(index)
+        first = int(positive[0])
+        # Frames from the trigger onwards all satisfy the goal, so `window`
+        # extra ones give real alternatives instead of copies of one screen.
+        taken = [
+            int(start) + offset
+            for offset in positive[: 1 + max(window, 0)]
+            if offset >= first
+        ]
+        (preferred if row["kind"] in kinds else fallback).extend(taken)
 
     chosen = preferred or fallback
     if not chosen:
@@ -109,7 +129,9 @@ def describe_goals(data_path: str, indices: list[int]) -> str:
     note = ""
     if distinct == 1:
         note = ("  (a single screen: the planner is aiming at one exact frame. "
-                "Collect demonstrations from different search seeds for more.)")
+                "More demonstrations will not help when the goal is a scripted "
+                "RAM event -- the trigger frame is the same however you arrive. "
+                "Use goal_indices(window=N) to take frames after the trigger.)")
     return f"{len(indices)} goal frame(s), {distinct} distinct{note}"
 
 

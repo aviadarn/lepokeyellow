@@ -29,7 +29,19 @@ from poke.writer import EpisodeWriter
 NOOP = ACTIONS.index("noop")
 
 
-def record(env, writer, task, action_idxs, kind, name):
+def record(env, writer, task, action_idxs, kind, name, post_goal=0, filler="a"):
+    """Replay `action_idxs`, optionally continuing past the goal.
+
+    Without `post_goal` an episode whose route ends at the goal records exactly
+    one goal-flagged frame -- the flag is written as the state before each
+    action, so a goal reached on the final action only marks the one appended
+    frame. That makes the goal set a single screen no matter how many
+    demonstrations are collected, and for a goal that is a scripted RAM event
+    the trigger frame is identical however the player arrived. Continuing a few
+    actions past the trigger records the rest of the dialogue, which still
+    satisfies the goal and looks different, so goal_indices(window=N) has
+    something to offer the planner.
+    """
     frame = env.reset()
     context = task.start_context(env)
     reached = task.goal(env, context)
@@ -42,6 +54,13 @@ def record(env, writer, task, action_idxs, kind, name):
             reached, goal_step = True, step
 
     writer.add_step(frame[..., 0], to_multihot(NOOP), party_count(env), reached)
+
+    filler_index = ACTIONS.index(filler)
+    for _ in range(post_goal if reached else 0):
+        frame = env.step(filler_index)
+        writer.add_step(frame[..., 0], to_multihot(filler_index),
+                        party_count(env), True)
+
     species = party_species(env)
     writer.end_episode(kind, name, reached, -1 if species is None else species, goal_step)
     return reached, species
@@ -80,6 +99,9 @@ def main() -> None:
     p.add_argument("--random", type=int, default=800)
     p.add_argument("--random-steps", type=int, default=48)
     p.add_argument("--act-frames", type=int, default=60)
+    p.add_argument("--post-goal", type=int, default=0,
+                   help="actions recorded after the goal fires, to give the "
+                        "goal set more than one screen")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--game")
     args = p.parse_args()
@@ -110,7 +132,7 @@ def main() -> None:
     ) as w:
         hits = 0
         for i in range(args.demos):
-            ok, species = record(env, w, task, route_indices, "demo", f"demo{i}")
+            ok, species = record(env, w, task, route_indices, "demo", f"demo{i}", post_goal=args.post_goal)
             hits += ok
             if not ok:
                 raise SystemExit(
@@ -124,14 +146,14 @@ def main() -> None:
         for name, plan in noisy_variants(
             route_indices, args.noisy, args.noisy_prefix, args.noisy_substitutions, rng
         ):
-            ok, _ = record(env, w, task, plan, "noisy", name)
+            ok, _ = record(env, w, task, plan, "noisy", name, post_goal=args.post_goal)
             hits += ok
         print(f"noisy    {args.noisy} episodes  goal_hits={hits}")
 
         hits = 0
         for i in range(args.random):
             idxs = rng.integers(0, len(ACTIONS), size=args.random_steps).tolist()
-            ok, _ = record(env, w, task, idxs, "random", f"random{i}")
+            ok, _ = record(env, w, task, idxs, "random", f"random{i}", post_goal=args.post_goal)
             hits += ok
             if (i + 1) % 100 == 0:
                 print(f"random   {i + 1}/{args.random}")

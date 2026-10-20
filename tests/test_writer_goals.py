@@ -152,3 +152,22 @@ def test_describe_goals_flags_a_single_screen(h5_path):
     out = write_episodes(h5_path, [("demo", "d0", [0, 1]), ("demo", "d1", [0, 1])])
     text = describe_goals(str(out), goal_indices(str(out), dedupe=False))
     assert "distinct" in text
+
+
+def test_window_takes_frames_after_the_trigger(h5_path):
+    """A goal defined by a RAM event has one trigger frame however you arrive,
+    so diversity has to come from after it. The flag stays set, so those frames
+    satisfy the goal while showing different screens."""
+    out = write_episodes(h5_path, [("demo", "d0", [0, 0, 1, 1, 1])])
+    assert goal_indices(str(out), window=0) == [2]
+    assert goal_indices(str(out), window=2) == [2, 3, 4]
+
+
+def test_window_cannot_exceed_the_flagged_frames(h5_path):
+    out = write_episodes(h5_path, [("demo", "d0", [0, 1])])
+    assert goal_indices(str(out), window=10) == [1]
+
+
+def test_negative_window_behaves_like_zero(h5_path):
+    out = write_episodes(h5_path, [("demo", "d0", [0, 1, 1])])
+    assert goal_indices(str(out), window=-5) == [1]
