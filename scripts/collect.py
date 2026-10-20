@@ -21,7 +21,7 @@ import numpy as np
 from poke.actions import ACTIONS, to_multihot
 from poke.env import PokeEnv
 from poke.games import resolve
-from poke.ram import party_count, party_species
+from poke.ram import coords, cur_map, party_count, party_species
 from poke.routes import Route
 from poke.tasks import get as get_task
 from poke.writer import EpisodeWriter
@@ -47,19 +47,24 @@ def record(env, writer, task, action_idxs, kind, name, post_goal=0, filler="a"):
     reached = task.goal(env, context)
     goal_step = 0 if reached else -1
 
+    def location():
+        return (cur_map(env), *coords(env))
+
     for step, idx in enumerate(action_idxs, start=1):
-        writer.add_step(frame[..., 0], to_multihot(idx), party_count(env), reached)
+        writer.add_step(frame[..., 0], to_multihot(idx), party_count(env),
+                        reached, location())
         frame = env.step(idx)
         if not reached and task.goal(env, context):
             reached, goal_step = True, step
 
-    writer.add_step(frame[..., 0], to_multihot(NOOP), party_count(env), reached)
+    writer.add_step(frame[..., 0], to_multihot(NOOP), party_count(env),
+                    reached, location())
 
     filler_index = ACTIONS.index(filler)
     for _ in range(post_goal if reached else 0):
         frame = env.step(filler_index)
         writer.add_step(frame[..., 0], to_multihot(filler_index),
-                        party_count(env), True)
+                        party_count(env), True, location())
 
     species = party_species(env)
     writer.end_episode(kind, name, reached, -1 if species is None else species, goal_step)

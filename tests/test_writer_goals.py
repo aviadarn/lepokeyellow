@@ -171,3 +171,34 @@ def test_window_cannot_exceed_the_flagged_frames(h5_path):
 def test_negative_window_behaves_like_zero(h5_path):
     out = write_episodes(h5_path, [("demo", "d0", [0, 1, 1])])
     assert goal_indices(str(out), window=-5) == [1]
+
+
+def test_location_is_recorded_per_frame(h5_path):
+    """The emulator knows where the player is for free. Not recording it is why
+    the encoder could only ever be probed against route index, which turned out
+    to measure which room you are in rather than where in the room."""
+    out, rom, state, route = h5_path
+    with EpisodeWriter(out, rom, state, 60, 0, game="yellow", task="yellow_pikachu",
+                       route=route) as w:
+        for step, loc in enumerate([(38, 6, 3), (38, 7, 3), (37, 1, 2)], start=1):
+            w.add_step(np.full((144, 160), step, np.uint8),
+                       np.zeros(6, np.uint8), 0, False, loc)
+        w.end_episode("demo", "d0", False, -1, -1)
+
+    with h5py.File(out, "r") as f:
+        assert f.attrs["schema"] == SCHEMA
+        assert f["location"][:].tolist() == [[38, 6, 3], [38, 7, 3], [37, 1, 2]]
+
+
+def test_unreadable_location_is_minus_one_not_zero(h5_path):
+    """Zero is a real coordinate, so it cannot double as "unknown"."""
+    out, rom, state, route = h5_path
+    with EpisodeWriter(out, rom, state, 60, 0, game="yellow", task="yellow_pikachu",
+                       route=route) as w:
+        w.add_step(np.zeros((144, 160), np.uint8), np.zeros(6, np.uint8), 0,
+                   False, (38, None, None))
+        w.add_step(np.zeros((144, 160), np.uint8), np.zeros(6, np.uint8), 0, False)
+        w.end_episode("demo", "d0", False, -1, -1)
+
+    with h5py.File(out, "r") as f:
+        assert f["location"][:].tolist() == [[38, -1, -1], [-1, -1, -1]]

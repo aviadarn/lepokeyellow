@@ -1,0 +1,77 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "data": "episodes/yellow_v3.h5",
+  "folds": 5,
+  "alpha_sweep": [
+    1.0,
+    10.0,
+    100.0,
+    1000.0
+  ],
+  "results": {
+    "map0_y": {
+      "frames": 3233,
+      "encoder_r2": 0.7595196020809961,
+      "encoder_mae_tiles": 1.8849735865964667,
+      "pixels_r2": 0.9119472011988216,
+      "shuffled_r2": -0.0028507134673299017,
+      "target_std": 5.121354836048613
+    },
+    "map0_x": {
+      "frames": 3233,
+      "encoder_r2": 0.6552928632614845,
+      "encoder_mae_tiles": 1.4366902467950067,
+      "pixels_r2": 0.8026065219013379,
+      "shuffled_r2": -0.0008610525464030072,
+      "target_std": 3.5380705745079517
+    },
+    "map37_y": {
+      "frames": 3305,
+      "encoder_r2": 0.7672324306892278,
+      "encoder_mae_tiles": 0.6915005492941569,
+      "pixels_r2": 0.9818643187123617,
+      "shuffled_r2": -4.272256220860804e-05,
+      "target_std": 1.9441446421013429
+    },
+    "map37_x": {
+      "frames": 3305,
+      "encoder_r2": 0.7647110037942251,
+      "encoder_mae_tiles": 0.7821434877703476,
+      "pixels_r2": 0.9916798684481253,
+      "shuffled_r2": -0.0017011744946118235,
+      "target_std": 2.345410326485403
+    },
+    "map38_y": {
+      "frames": 8000,
+      "encoder_r2": 0.971540985144228,
+      "encoder_mae_tiles": 0.22303058263577766,
+      "pixels_r2": 0.9999934798081275,
+      "shuffled_r2": -0.002453199589643962,
+      "target_std": 1.860151165732237
+    },
+    "map38_x": {
+      "frames": 8000,
+      "encoder_r2": 0.8759002273963651,
+      "encoder_mae_tiles": 0.4656726664822235,
+      "pixels_r2": 0.9999992867321078,
+      "shuffled_r2": -0.0021374975994916667,
+      "target_std": 1.9509593753779189
+    },
+    "map40_y": {
+      "frames": 1217,
+      "encoder_r2": 0.8560267744464269,
+      "encoder_mae_tiles": 0.35726069538911526,
+      "pixels_r2": 0.9980678829031557,
+      "shuffled_r2": -0.0015322151156038633,
+      "target_std": 1.3669405507829882
+    },
+    "map40_x": {
+      "frames": 1217,
+      "encoder_r2": 0.8751868107018476,
+      "encoder_mae_tiles": 0.5931396941143673,
+      "pixels_r2": 0.9962005346353568,
+      "shuffled_r2": -0.005516930246450169,
+      "target_std": 2.642552950100239
+    }
+  }
+}

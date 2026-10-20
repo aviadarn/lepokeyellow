@@ -289,56 +289,49 @@ encounter — at which point `wIsInBattle` read 1 and the battle controller took
 over, correctly, with an empty party. Yellow genuinely enters a battle state
 with zero Pokémon during that cutscene.
 
-## Why it fails: the encoder is a map detector
+## Why it fails — and a wrong answer I published first
 
 A linear probe on the frozen encoder, with the controls that make a probe score
-mean anything — blocked and purged splits (adjacent frames are nearly
-identical), a raw-pixel arm, a shuffled-label arm, and a swept ridge strength:
+mean anything — blocked and purged splits, a raw-pixel arm, a shuffled-label
+arm, a swept ridge strength — said route position was recoverable at R² 0.697,
+±55 actions. Splitting that by map then said something sharper: map id was
+93.6 % recoverable while position *within* map 40 scored R² −0.297. I concluded
+the encoder was **a map detector with no within-room sense of place**, and that
+the fix had to be a training-signal change.
 
-| probe | R² | MAE (actions) | best α |
-|---|---|---|---|
-| **encoder** | **0.697** | **55.2** | 100 |
-| raw pixels | 0.105 | 87.1 | 1000 |
-| encoder, shuffled labels | −0.031 | 117.7 | 1000 |
-| predict the mean | 0.000 | 116.7 | — |
+**That was wrong.** It rested on 235 frames from a single route through one
+room, where the player walks a near-fixed path and position barely varies.
 
-Route position looks linearly recoverable. It is not what it appears:
+Recording `(map, y, x)` for every frame — the emulator knows it for free —
+allows the question to be asked properly, on 31,759 frames:
 
-| question | answer |
-|---|---|
-| map id from the embedding | **93.6 %** (majority-class baseline 50.3 %, 4 maps) |
-| position *within* map 40 alone, 235 frames | **R² −0.297**, ±63 actions — at or below chance |
+| map | axis | encoder R² | MAE (tiles) | raw pixels R² | shuffled R² |
+|---|---|---|---|---|---|
+| Pallet Town | y / x | 0.760 / 0.655 | 1.88 / 1.44 | 0.912 / 0.803 | −0.003 / −0.001 |
+| house, ground floor | y / x | 0.767 / 0.765 | 0.69 / 0.78 | 0.982 / 0.992 | −0.000 / −0.002 |
+| bedroom | y / x | 0.972 / 0.876 | 0.22 / 0.47 | 1.000 / 1.000 | −0.002 / −0.002 |
+| Oak's lab | y / x | 0.856 / 0.875 | 0.36 / 0.59 | 0.998 / 0.996 | −0.002 / −0.006 |
 
-**The encoder knows which room you are in and not where in the room.** The
-0.697 is carried entirely by map identity, and ±55 actions is about the length
-of one within-map stretch. That single fact explains every failure above:
-latent distance mislocalises because within a map there is no geometry;
-consecutive ladder rungs sit 0.0017 apart for the same reason; and Pallet Town
-matches a late-route rung because both are "not the bedroom".
+**Within-room position is recoverable on all eight map-axis pairs**, to within
+half a tile in three of the four rooms. The encoder knows where the player is.
 
-Planning on that progress signal does exactly what the mechanism predicts.
-Measured over the planner's own trajectory:
+So why did route position only reach ±55 actions? Because that question is
+ill-posed, not because the encoder is deficient. **95 % of the demonstration's
+frames sit on a tile the route visits more than once**, and a revisited tile's
+route positions are up to 229 actions apart. One screenshot genuinely does not
+determine how far through the route you are. The ±55 is the ambiguity of the
+question.
 
-| map | probe score | transition | mean Δ |
-|---|---|---|---|
-| 38 bedroom | 10.7 | 37 → 0 | **+99.2** |
-| 37 house | 82.4 | 0 → 37 | **−111.4** |
-| 0 Pallet Town | 208.3 | | |
+What the table does show is that the encoder is **lossy**: raw downsampled
+pixels beat it on every single pair, reaching R² 1.000 in the bedroom. The
+information survives, but the representation discards some of it.
 
-The planner walks to the highest-scoring map and harvests the door crossing —
-**15 round trips through the front door**, reporting "progress 234 of 467"
-while never entering map 40, which is where action 234 actually is. The probe
-is an excellent *passive* predictor and a terrible *optimisation target*.
-
-Worth noting what is not at fault: the probe survives the predictor almost
-unchanged (±48.2 actions on predicted embeddings against ±47.2 on encoded
-ones), so this is not rollout drift. And one-step prediction remains 44× to
-631× better than a no-change baseline. The dynamics model is fine; the
-representation has no within-room metric for anything to plan against.
-
-The fix is a training-signal change, not a planner change — the encoder is
-never asked to distinguish two positions in the same room, because predicting
-the next frame does not require it.
+So the planning failure is *not* missing information, and the earlier
+"change the training signal" conclusion does not follow. The live suspects are
+the objective and the search: latent Euclidean distance is dominated by things
+that are not position — text boxes, palette, screen transitions — which is also
+why the progress objective below walks to the highest-scoring map and stays
+there.
 
 ## Cost
 
@@ -401,7 +394,16 @@ play loop. See below.
    planner on Red's `leave_room` with no retraining. Same engine, different
    sprites and palette — does the latent space encode game structure or pixel
    surface? Needs a second legal ROM.
-7. **Playing, properly.** Replace one open-loop plan with MPC: plan H, execute
+7. **Plan on coordinates, not on latent distance.** `(map, y, x)` is now
+   recorded for every frame and is recoverable from the encoder to within half
+   a tile in most rooms, so a planner can be scored on "did this plan move the
+   player towards that tile" instead of on a latent norm dominated by text
+   boxes and palette. That is the next experiment, and it needs no retraining.
+8. **Close the lossiness gap.** Raw downsampled pixels out-predict the encoder
+   on position in every room, reaching R² 1.000 in the bedroom against 0.972.
+   Worth knowing whether an auxiliary coordinate head recovers that without
+   hurting the dynamics.
+9. **Playing, properly.** Replace one open-loop plan with MPC: plan H, execute
    1–3, re-encode the real screen, re-plan. Follow a chain of subgoal images
    from the bootstrap states, hand control to a scripted policy while
    `wIsInBattle` is set (which needs confirming first), and report how far

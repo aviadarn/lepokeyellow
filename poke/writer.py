@@ -16,7 +16,7 @@ import numpy as np
 from poke.actions import BUTTON_ORDER
 
 H, W = 144, 160
-SCHEMA = 2
+SCHEMA = 3
 
 EPISODE_DTYPE = np.dtype([
     ("kind", "S8"),
@@ -74,6 +74,15 @@ class EpisodeWriter:
         self.goal = self.h5.create_dataset(
             "goal_flags", shape=(0,), maxshape=(None,), dtype=np.uint8,
         )
+        # Where the player is, per frame. The emulator knows it for free and
+        # not recording it is why the encoder was only ever measured against
+        # route index: probing showed it recovers which ROOM you are in (93.6%)
+        # and not where in the room (worse than chance), which is the reason
+        # nothing can plan with it. int16 so -1 can mean "unreadable" rather
+        # than colliding with a real coordinate.
+        self.location = self.h5.create_dataset(
+            "location", shape=(0, 3), maxshape=(None, 3), dtype=np.int16,
+        )
         self.episodes = self.h5.create_dataset(
             "episodes", shape=(0, 2), maxshape=(None, 2), dtype=np.int64,
         )
@@ -84,8 +93,10 @@ class EpisodeWriter:
         self.n = 0
         self._buf = []
 
-    def add_step(self, frame, action, party_count, goal=False):
-        self._buf.append((frame, action, party_count, bool(goal)))
+    def add_step(self, frame, action, party_count, goal=False, location=None):
+        self._buf.append((frame, action, party_count, bool(goal),
+                          tuple(-1 if v is None else int(v)
+                                for v in (location or (None, None, None)))))
 
     def end_episode(self, kind="", name="", success=False, species=-1, goal_step=-1):
         if not self._buf:
@@ -95,12 +106,14 @@ class EpisodeWriter:
         actions = np.stack([b[1] for b in self._buf]).astype(np.uint8)
         party = np.array([b[2] for b in self._buf], dtype=np.uint8)
         goals = np.array([b[3] for b in self._buf], dtype=np.uint8)
+        location = np.array([b[4] for b in self._buf], dtype=np.int16)
 
         for ds, data in (
             (self.frames, frames),
             (self.actions, actions),
             (self.party, party),
             (self.goal, goals),
+            (self.location, location),
         ):
             ds.resize(self.n + t, axis=0)
             ds[self.n:] = data
