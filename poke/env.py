@@ -42,7 +42,7 @@ class PokeEnv:
         self.headless = headless
         self.act_frames = act_frames
         self.hold = act_frames // 3
-        self.settle = act_frames - self.hold
+        self.settle_frames = act_frames - self.hold
 
     def reset(self) -> np.ndarray:
         with open(self.init_state, "rb") as f:
@@ -57,7 +57,18 @@ class PokeEnv:
         self.pyboy.tick(self.hold, render=False)
         if button:
             self.pyboy.button_release(button)
-        self.pyboy.tick(self.settle, render=True)
+        self.pyboy.tick(self.settle_frames, render=True)
+        return self.screen()
+
+    def settle(self, frames: int = 20) -> np.ndarray:
+        """Let the screen finish drawing, without spending an action.
+
+        A save state can be captured mid-fade, and `reset` renders a single
+        frame, so the first screen after a load is sometimes black -- which for
+        a recording means the first frame of the GIF is black and for the model
+        means its first observation is of nothing.
+        """
+        self.pyboy.tick(frames, True)
         return self.screen()
 
     def read_ram(self, addr: int) -> int | None:

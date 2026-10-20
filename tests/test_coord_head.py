@@ -35,8 +35,8 @@ def test_unreadable_positions_are_masked_out():
     masked = location.clone()
     masked[:, 1:, 0] = -1
     none_left, tiles = coord_loss(head, predictions, targets, masked)
-    assert float(none_left) == 0.0 and float(tiles) == 0.0
-    assert float(full) > 0.0
+    assert float(none_left.detach()) == 0.0 and float(tiles) == 0.0
+    assert float(full.detach()) > 0.0
 
 
 def test_reported_tiles_are_the_predicted_error_not_the_loss():

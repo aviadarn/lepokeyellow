@@ -159,9 +159,11 @@ def _predicted_features(model, file, rows, steps, location, owner, device,
     actions = file["actions"][:].astype(np.float32)
     features, labels, groups = [], [], []
     for k in range(1, steps + 1):
-        keep = np.flatnonzero(
-            (rows + k < end_of) & (location[rows + k, 0] >= 0)
-        )
+        # Bound the index before reading it: `rows + k` runs past the end of
+        # the dataset for the last frames of the last episode, and an `&` does
+        # not stop numpy evaluating both sides.
+        inside = np.flatnonzero(rows + k < end_of)
+        keep = inside[location[rows[inside] + k, 0] >= 0]
         if not len(keep):
             continue
         starts = rows[keep]

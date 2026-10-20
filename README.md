@@ -9,13 +9,32 @@ which builds on [LeWorldModel](https://arxiv.org/abs/2603.19312) and
 
 Everything here runs on a laptop. No cloud GPU, no ROM included.
 
-**Where it stands:** the world model is good — one-step prediction beats a
-no-change baseline by 44× to 631×. The planner gets about 60 % of the way to
-Pikachu and then stalls on a navigation problem, described honestly in
-[What stops it](#what-stops-it). Several confident conclusions along the way
-turned out to be wrong; those are kept in
-[Four wrong answers](#four-wrong-answers-and-what-caught-them) because the
-controls that caught them are the useful part.
+**Where it stands:** the world model predicts embeddings well — one-step
+prediction beats a no-change baseline by 44× to 631× in embedding MSE — and
+that turned out not to be the same thing as predicting the game. Decoded into
+tiles, the same one-step prediction is **worse than assuming the player never
+moved**, which is why the planner gets about 60 % of the way to Pikachu and
+then cannot cross one open map. [What stops it](#what-stops-it) is the chain of
+measurements that found it. Several confident conclusions along the way turned
+out to be wrong; those are kept in
+[Wrong answers](#wrong-answers-and-what-caught-them) because the controls that
+caught them are the useful part.
+
+## What it looks like
+
+Same save state, same cost field, 2× scale. The caption under each frame is the
+emulator's own truth — which map, which tile, how many hops from the target —
+and for the planner, the tile it predicted it would land on.
+
+| the recorded human route | the planner | one-step greedy |
+|---|---|---|
+| ![route](media/route.gif) | ![planner](media/planner.gif) | ![greedy](media/greedy.gif) |
+| 120 actions, bedroom → Pallet Town | 30 actions, ends **inside the house** | 50 actions, oscillates on two tiles |
+
+The middle one is the failure this README is mostly about, and it is easier to
+watch than to argue about: the planner leaves the doorstep, walks back through
+the door it came out of, and the caption shows it predicting a tile it is not
+on. Reproduce any of them with `scripts/record_gif.py`.
 
 ---
 
@@ -94,7 +113,7 @@ story flags.
 
 ```bash
 uv sync
-uv run pytest                      # 142 tests, no ROM and no GPU needed
+uv run pytest                      # 196 tests, no ROM and no GPU needed
 
 # Bare ROM -> verified, reproducible save states. No playing required.
 uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to pikachu
@@ -111,13 +130,30 @@ uv run python -m scripts.eval_baselines
 # Collect with locations, then train.
 uv run python -m scripts.collect --out episodes/yellow_v3.h5 \
     --demos 4 --noisy 12 --random 400 --random-steps 60 --post-goal 12
-uv run python -m scripts.train --data-path episodes/yellow_v3.h5
+uv run python -m scripts.train --data-path episodes/yellow_v3.h5 \
+    --coord-weight 0.05 --select-on tiles
 
 # Is the model wrong, or is the objective? Per-action, against the emulator.
 uv run python -m scripts.action_check checkpoints/yellow_v2/best.pt
 
 # What does the frozen encoder actually know about position?
 uv run python -m scripts.probe_location checkpoints/yellow_v2/best.pt
+
+# Does a non-linear head read it better than ridge does?
+uv run python -m scripts.probe_nonlinear checkpoints/yellow_v2/best.pt
+
+# The measurement that matters: predicted position, in tiles, against the
+# emulator's own record, with "assume nothing moved" as the baseline.
+uv run python -m scripts.rollout_tiles checkpoints/yellow_v2/best.pt
+
+# Navigation, at three levels of zoom: one state, many decisions, a whole run.
+uv run python -m scripts.nav_resolution checkpoints/yellow_v2/best.pt
+uv run python -m scripts.nav_decisions checkpoints/yellow_v2/best.pt
+uv run python -m scripts.nav_bench checkpoints/yellow_v2/best.pt
+
+# Watch it, instead of reading a number: route | cem | greedy | random.
+uv run python -m scripts.record_gif checkpoints/yellow_v2/best.pt \
+    --policy cem --out media/planner.gif
 
 # Play.
 uv run python -m scripts.play checkpoints/yellow_v2/best.pt \
@@ -303,7 +339,7 @@ Two things that did **not** help, recorded because the measurement is the point:
   is the better *policy* because it mashes A more, advancing text the planner
   would otherwise sit through. `--control-probe` switches.
 
-## Four wrong answers, and what caught them
+## Wrong answers, and what caught them
 
 Each of these looked clean and was published before the check that killed it.
 
@@ -325,6 +361,20 @@ Each of these looked clean and was published before the check that killed it.
 4. **"22/38 nodes."** The first version scored the *nearest* node at any
    distance, claiming node 22 while the player stood 8 tiles away and had never
    entered the lab. Progress now requires arrival.
+5. **"Navigation is blocked by the read-out's resolution."** The previous commit
+   measured that correctly and drew the wrong conclusion from it. A non-linear
+   head cut Pallet Town error from 1.88 to 0.53 tiles, below the one-tile
+   granularity the cost field needs, and navigation did not improve at all —
+   because the planner never reads a real screen. See
+   [What stops it](#what-stops-it).
+6. **"So fit the read-out on predicted embeddings instead."** It works, and it
+   makes the planner worse: one-step error 2.42 → 0.78 tiles, while the share of
+   decisions that pick a genuinely helpful action goes 47.5 % → **0 %**. Fitting
+   on predicted features teaches the conditional mean of position given a
+   blurred prediction, which is the part that throws away the differences
+   *between* actions — and ranking is the only thing a planner uses. Accuracy
+   and usefulness pointed in opposite directions, and only the decision-level
+   metric showed it.
 
 Two methodology notes from the same stretch: contiguous blocked CV over a
 monotonic target is extrapolation, not interpolation — it reported R² −25 while
