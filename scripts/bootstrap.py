@@ -99,6 +99,9 @@ class Driver:
     def read(self, addr: int) -> int:
         return self.pyboy.memory[addr]
 
+    def screen_digest(self) -> bytes:
+        return np.asarray(self.pyboy.screen.ndarray)[:, :, 0].tobytes()
+
     @property
     def position(self) -> tuple[int, int, int]:
         ram = self.game.ram
@@ -123,29 +126,48 @@ class Driver:
 
 
 def responds_to_direction(driver: Driver) -> bool:
-    """True only if a direction moves the player and the reverse brings it back.
+    """True only if two different directions produce two different screens.
 
-    Two traps this guards against. During Yellow's walk-on the cutscene moves
-    the sprite with no input at all, so "position changed" alone reports
-    control that does not exist -- hence the no-op with identical timing first.
-    And a scripted walk could coincidentally match one direction, so the move
-    has to be reversible, which no cutscene will honour.
+    Position alone cannot answer this. Three things look identical through it:
+
+      a cutscene moves the sprite with no input, so "position changed" reports
+      control that does not exist -- and if the scripted motion happens to go
+      down during a down-press and back during the up-press, even a
+      reversibility check passes by coincidence;
+
+      a text box swallows every button, so each one produces the SAME next
+      screen while the position never moves;
+
+      a wall also refuses to move the player, but turning to face it does
+      change the screen.
+
+    The discriminator is that under real control, `down` and `right` differ:
+    the player ends up facing differently, or somewhere else, and the screen
+    says so. Under a cutscene or an open text box, both buttons advance the
+    same thing and the two screens come out byte-identical.
+
+    This is what the earlier version got wrong. It cleared a state whose screen
+    still read "with POKeMON awaits! Let's go!" -- Oak's speech, overworld not
+    yet drawn -- and every save state, dataset and play run downstream started
+    mid-dialogue, where any button merely dismisses the box.
 
     Presses real buttons; the caller sandboxes it.
     """
-    before = driver.position
-    driver.act(None)
-    if driver.position != before:
-        return False  # something else is driving the sprite
+    blob = driver.snapshot()
+    outcomes = []
+    try:
+        for button in ("down", "right"):
+            driver.restore(blob)
+            before = driver.position
+            driver.act(button)
+            outcomes.append((driver.position, driver.screen_digest(), before))
+    finally:
+        driver.restore(blob)
 
-    for button, reverse in (("down", "up"), ("right", "left")):
-        driver.act(button)
-        if driver.position == before:
-            continue
-        driver.act(reverse)
-        if driver.position == before:
-            return True
-    return False
+    (pos_down, screen_down, before), (pos_right, screen_right, _) = outcomes
+    if screen_down == screen_right:
+        return False  # both buttons fed the same text box or cutscene
+    return pos_down != before or pos_right != before
 
 
 def has_control(driver: Driver) -> bool:
@@ -160,6 +182,7 @@ def has_control(driver: Driver) -> bool:
         return responds_to_direction(driver)
     finally:
         driver.restore(blob)
+
 
 
 def start_new_game(driver: Driver, max_presses: int = 400) -> list[str]:
@@ -267,7 +290,13 @@ def main() -> None:
         print(f"replay verified: {driver.position} -- {name(driver.position[0])}, "
               f"party={driver.read(driver.game.ram.party_count)}")
 
-        driver.save(out)
+        # Only write `out` when it is not the post-intro state we already
+        # saved. Saving it twice means the second write happens after a
+        # restore, which ticks one extra frame, so `--to bedroom` and
+        # `--to pikachu` produced bedroom.state files with different digests --
+        # and routes carry that digest.
+        if out != bedroom_path:
+            driver.save(out)
     finally:
         driver.close()
 
