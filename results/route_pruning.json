@@ -1,0 +1,14 @@
+{
+  "task": "yellow_pikachu",
+  "start_state": "states/bedroom.state",
+  "original_actions": 1485,
+  "after_first_pass": 347,
+  "final_actions": 336,
+  "reduction": "77.4%",
+  "cuts_accepted": 22,
+  "cuts_rejected": 362,
+  "one_pass_shortcut_proposed": 33,
+  "one_pass_shortcut_verified": false,
+  "note": "The signature (map, y, x, party, battle) omits story flags, so most candidate cuts skip a scripted trigger and are rejected on replay. The one-pass shortcut proposed 33 actions and broke the route. Every accepted cut was verified by replaying to the goal.",
+  "verified_independently": "336 actions from states/bedroom.state reach party_count>=1 at map 40"
+}

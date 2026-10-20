@@ -167,14 +167,25 @@ def parse_config() -> tuple[DefaultConfig, Path, str]:
             default=value,
         )
     parser.add_argument("--checkpoint-dir", default="checkpoints")
+    # Upstream picks the best checkpoint on total validation loss, which is
+    # pred + 0.1 * SIGReg. Measured on the first real run, SIGReg dominates it
+    # completely: val total was 0.7200 with reg 7.0741, so the regulariser is
+    # 0.707 of 0.720. Epochs 3 and 4 had strictly better val PREDICTION
+    # (0.0103, 0.0097 vs 0.0125) and were both rejected because reg ticked up.
+    # The checkpoint you plan with is then selected on the anti-collapse
+    # penalty rather than on how well it predicts, which is the wrong criterion
+    # for a model whose only job is to predict. Default changed to "pred".
+    parser.add_argument("--select-on", default="pred", choices=("pred", "total"),
+                        help="validation metric that decides the best checkpoint")
     parser.add_argument("--device", default=default_device())
     args = parser.parse_args()
     fields = {name: getattr(args, name) for name in asdict(defaults)}
-    return DefaultConfig(**fields), Path(args.checkpoint_dir), args.device
+    return (DefaultConfig(**fields), Path(args.checkpoint_dir), args.device,
+            args.select_on)
 
 
 def main() -> None:
-    config, checkpoint_dir, device_name = parse_config()
+    config, checkpoint_dir, device_name, select_on = parse_config()
     t.manual_seed(config.seed)
     device = t.device(device_name)
     train_loader, val_loader = make_loaders(data_path=config.data_path, num_frames=config.num_frames, batch_size=config.batch_size, seed=config.seed)
@@ -187,6 +198,7 @@ def main() -> None:
     print(f"train windows: {len(train_loader.dataset)}")
     print(f"validation windows: {len(val_loader.dataset)}")
     print(f"parameters: {sum(p.numel() for p in model.parameters()):,}")
+    print(f"selecting best checkpoint on validation {select_on}")
 
     best_val_loss = float("inf")
 
@@ -233,8 +245,10 @@ def main() -> None:
             val_losses,
         )
 
-        if val_losses[0] < best_val_loss:
-            best_val_loss = val_losses[0]
+        # val_losses is (total, pred, reg); index 1 is the prediction loss.
+        selected = val_losses[0] if select_on == "total" else val_losses[1]
+        if selected < best_val_loss:
+            best_val_loss = selected
             save_checkpoint(
                 checkpoint_dir / "best.pt",
                 model,

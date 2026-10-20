@@ -35,6 +35,9 @@ import torch as t
 
 from poke.actions import ACTIONS
 from poke.env import PokeEnv
+from poke.ladder import build as build_ladder
+from poke.ladder import dedupe as dedupe_ladder
+from poke.ladder import load_frames as load_ladder_frames
 from poke.games import resolve
 from poke.goals import default_device
 from poke.jepa import JEPA
@@ -67,6 +70,81 @@ class Player:
         frame = self.env.screen_of_state(state_path)
         with t.inference_mode():
             return self.model.encode(to_tensor(frame, self.device))
+
+    def embed_frames(self, frames: np.ndarray) -> t.Tensor:
+        """Encode greyscale [N, H, W] rungs into [N, D]."""
+        with t.inference_mode():
+            return t.cat([
+                self.model.encode(
+                    t.from_numpy(frame.astype(np.float32) / 127.5 - 1.0)
+                    .unsqueeze(0).unsqueeze(0).to(self.device)
+                )
+                for frame in frames
+            ])
+
+    def run_ladder(self, rungs: t.Tensor, milestone, budget: int) -> bool:
+        """Climb a ladder of subgoals towards one milestone.
+
+        Clearing a rung is relative, not absolute. Measured on this dataset,
+        latent MSE from the start frame to the first rung is 1.82 while the
+        median distance between consecutive rungs is 0.0017 -- three orders of
+        magnitude apart, because 20 actions of dialogue barely move the screen
+        while a map transition moves it enormously. No fixed threshold can span
+        that, so a rung is cleared when the distance has fallen to `approach`
+        of whatever it was when that rung became current, and a per-rung action
+        cap stops the climb stalling on a rung it cannot reach.
+
+        The ladder never steps backwards: one text box resembles another, so a
+        distance dip alone is not evidence of progress.
+        """
+        rung, spent, cleared = 0, 0, 0
+        entry_distance: float | None = None
+        rung_started = 0
+
+        while spent < budget and rung < len(rungs):
+            if milestone.reached(self.env, self.history):
+                self.history["rungs_cleared"] = cleared
+                return True
+            if in_battle(self.env):
+                self.step(A, "battle", milestone.key)
+                spent += 1
+                continue
+
+            initial = self.observe()
+            distance = float((initial - rungs[rung]).square().mean())
+            if entry_distance is None:
+                entry_distance = distance
+
+            cleared_now = distance <= self.args.approach * entry_distance
+            gave_up = spent - rung_started >= self.args.rung_budget
+            if cleared_now or gave_up:
+                rung += 1
+                cleared += int(cleared_now)
+                print(f"   rung {rung}/{len(rungs)} "
+                      f"{'cleared' if cleared_now else 'ABANDONED'} at action "
+                      f"{spent} (distance {distance:.4f} from {entry_distance:.4f})")
+                entry_distance, rung_started = None, spent
+                continue
+
+            sequence, cost, _ = cem_plan(
+                self.model, initial, rungs[rung : rung + 1],
+                horizon=self.args.horizon,
+                samples=self.args.samples,
+                elites=self.args.elites,
+                iterations=self.args.iterations,
+                seed=self.args.seed + spent,
+                verbose=False,
+            )
+            for action_index in sequence.tolist()[: self.args.commit]:
+                self.step(action_index, "planner", f"{milestone.key}:rung{rung}", cost)
+                spent += 1
+                if milestone.reached(self.env, self.history):
+                    self.history["rungs_cleared"] = cleared
+                    return True
+
+        self.history["rungs_cleared"] = cleared
+        self.history["rungs_total"] = len(rungs)
+        return milestone.reached(self.env, self.history)
 
     def step(self, action_index: int, controller: str, milestone: str, cost=None) -> None:
         self.env.step(action_index)
@@ -149,6 +227,16 @@ def main() -> None:
     parser.add_argument("--rom", default="pokeyellow.gbc")
     parser.add_argument("--state", default="states/bedroom.state")
     parser.add_argument("--from-milestone")
+    parser.add_argument("--ladder", action="store_true",
+                        help="climb subgoals taken from the demonstration route "
+                             "instead of steering straight at the milestone")
+    parser.add_argument("--data", default="episodes/yellow_pikachu.h5")
+    parser.add_argument("--stride", type=int, default=20)
+    parser.add_argument("--approach", type=float, default=0.3,
+                        help="clear a rung once the distance has fallen to this "
+                             "fraction of what it was on arrival (scale-free)")
+    parser.add_argument("--rung-budget", type=int, default=30,
+                        help="actions spent on one rung before abandoning it")
     parser.add_argument("--horizon", type=int, default=14)
     parser.add_argument("--commit", type=int, default=3,
                         help="actions executed per plan before re-encoding")
@@ -199,9 +287,19 @@ def main() -> None:
               f"({map_name(cur_map(env))}), party={party_count(env)}")
         print(f"replan every {args.commit} of {args.horizon} planned actions\n")
 
+        rungs = None
+        if args.ladder:
+            ladder = dedupe_ladder(args.data, build_ladder(args.data, args.stride))
+            rungs = player.embed_frames(load_ladder_frames(args.data, ladder))
+            print(f"ladder: {len(ladder)} rungs from demo {ladder.episode!r} "
+                  f"at stride {ladder.stride}\n")
+
         for milestone in chain:
             print(f"-> {milestone.key}: {milestone.description}")
-            ok = player.run_milestone(milestone, args.budget)
+            if rungs is not None and milestone is chain[0]:
+                ok = player.run_ladder(rungs, milestone, args.budget)
+            else:
+                ok = player.run_milestone(milestone, args.budget)
             spent = sum(1 for row in player.log if row["milestone"] == milestone.key)
             print(f"   {'REACHED' if ok else 'failed'} after {spent} actions "
                   f"(map {cur_map(env)}, party {party_count(env)})\n")
@@ -229,7 +327,10 @@ def main() -> None:
         "start_state": args.state,
         "planner": {k: getattr(args, k) for k in
                     ("horizon", "commit", "samples", "elites", "iterations",
-                     "budget", "stall", "seed")},
+                     "budget", "stall", "seed", "ladder", "stride", "approach",
+                     "rung_budget")},
+        "rungs_cleared": player.history.get("rungs_cleared"),
+        "rungs_total": player.history.get("rungs_total"),
         "milestones_reached": reached,
         "milestones_total": len(chain),
         "actions_by_controller": by_controller,
