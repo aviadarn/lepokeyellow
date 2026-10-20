@@ -350,19 +350,49 @@ only be the planner's.
 
 Same model, same start state, three objectives:
 
-| objective | progress | distinct tiles | maps |
+| objective | controller | progress | actions to get there |
 |---|---|---|---|
-| latent goal distance (ladder) | 9/46 rungs | 83 | 38, 37, 0 |
-| latent progress probe | oscillated through a door 15× | 24 | 38, 37, 0 |
-| **coordinates + waypoints** | **15/38 waypoints** | 43 | 38, 37, 0 |
+| latent goal distance | ladder | 9/46 rungs | 702 |
+| latent progress probe | — | oscillated through a door 15× | — |
+| coordinates | advance/abandon | 15/38 waypoints | 198 |
+| **coordinates** | **pure pursuit** | **22/38 nodes** | **81** |
+
+Pure pursuit gets further and does it roughly 2.4× faster. Progress counts only
+nodes the player has genuinely **stood on**, within a tile — an earlier version
+scored "nearest node at any distance" and claimed node 22 while the player was
+8 tiles away and had never entered the lab.
 
 The coordinate objective navigates bedroom → house → Pallet Town and gets about
 40 % along the route before stalling. It is the first objective that makes
 sustained, checkable forward progress.
 
-It still does not finish, and the limiting factor has moved. Three controller
-rules were tried for what to do when a waypoint is not reached in time, and all
-three failed differently:
+Pure pursuit removes the controller problem rather than trading between its
+failure modes: project the real tile onto the route, aim `lookahead` nodes
+further on, repeat. There is no timer to tune and nothing is abandoned.
+
+Two structural fixes it needed, both found by running it:
+
+- **A target in another room gives no gradient.** The wrong-map penalty swamps
+  the tile distance, every plan that stays in the room ties, and CEM has
+  nothing to follow — pursuit stalled in the house with the next nodes in
+  Pallet Town. Aiming at the route's exit from the *current* room fixes it.
+- **Dialogue and cutscenes ignore the d-pad.** At the north edge of Pallet all
+  seven buttons give the identical result, because Oak stops the player and
+  walks them to the lab. Planning a path through a scene that ignores paths is
+  hopeless, so the tile standing still for N actions hands over to the text
+  masher, exactly as a battle does.
+
+It still does not finish. The remaining blocker is **not navigation**: the
+player genuinely reaches (0, 10, 9), and two presses of any button from the
+demonstration's state there enter Oak's lab. But that tile was recorded *inside*
+the cutscene, so it is an artifact of where the scene put the player rather than
+a place that triggers anything. Waypoints taken from a demonstration cannot
+distinguish "somewhere you walked to" from "somewhere you were carried", and
+that is the next thing to fix.
+
+The earlier advance/abandon controller is kept behind `--controller waypoints`,
+because the three rules tried for it each failed differently and the
+comparison is the point:
 
 - **advance to the next** stranded the plan — by waypoint 23 it wanted Oak's lab
   while the player had wandered back to the bedroom. The same bug as the latent

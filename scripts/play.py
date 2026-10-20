@@ -47,6 +47,7 @@ from poke.maps import name as map_name
 from poke.milestones import chain_from
 from poke.ram import TRAINER_BATTLE, battle_kind, coords, cur_map, in_battle, party_count
 from poke.waypoints import build as build_waypoints
+from poke.waypoints import localise
 
 from scripts.plan_cem import action_lookup, cem_plan
 
@@ -193,6 +194,117 @@ class Player:
 
     def here_tile(self):
         return (cur_map(self.env), *coords(self.env))
+
+    def run_pursuit(self, points, probe, lookup, milestone, budget: int) -> bool:
+        """Project the real position onto the route, aim a little ahead, repeat.
+
+        The three earlier controller rules all chose the next target
+        independently of where the player actually was, and each failed
+        differently -- stranding, failure to recover, oscillation. Here the
+        target is a consequence of ground truth every step: localise on the
+        route by real tile, then pursue the node `lookahead` further on.
+
+        Nothing is "abandoned", so there is no timer to tune. Progress is the
+        furthest node localised, and the run ends when that stops moving.
+        """
+        spent, furthest, since_furthest = 0, -1, 0
+        # Dialogue and cutscenes ignore the d-pad. At the north edge of Pallet
+        # all seven buttons give the identical result, because Oak stops the
+        # player and walks them to the lab; the route's own actions there are
+        # b, a, up, b, b, up. Planning a path through a scene that ignores
+        # paths is hopeless, and it is the same situation as a battle, which
+        # already hands off. Detect it the cheap way -- the tile has not moved
+        # for a while -- and mash A, which is what advances text.
+        stuck_at, stuck_for = None, 0
+        while spent < budget:
+            if milestone.reached(self.env, self.history):
+                self.history["pursuit_furthest"] = furthest + 1
+                return True
+            if since_furthest >= self.args.stall:
+                print(f"   stalled: {since_furthest} actions without passing "
+                      f"node {furthest + 1}/{len(points)}")
+                break
+            if in_battle(self.env):
+                self.step(A, "battle", milestone.key)
+                spent += 1
+                continue
+
+            here = self.here_tile()
+            if here == stuck_at:
+                stuck_for += 1
+            else:
+                stuck_at, stuck_for = here, 0
+            if stuck_for >= self.args.dialogue_after:
+                self.step(A, "dialogue", milestone.key)
+                spent += 1
+                since_furthest += 1
+                continue
+
+            at = localise(points, here, floor=max(furthest, 0))
+            if at is None:
+                # Off the route entirely: steer at the furthest node known
+                # good rather than give up, so the planner has a target.
+                at = max(furthest, 0)
+            # Progress means ARRIVING, not being nearest. localise returns the
+            # closest node at any distance, so counting it as progress reported
+            # node 22 of 38 while the player stood 8 tiles away and never
+            # entered the lab at all. The projection still steers; only arrival
+            # advances the score.
+            arrived = points[at].reached(here, self.args.waypoint_tolerance)
+            if arrived and at > furthest:
+                furthest, since_furthest = at, 0
+                print(f"   node {at + 1}/{len(points)} REACHED at action "
+                      f"{spent}: {points[at]}")
+            if at >= len(points) - 1:
+                break
+
+            target = points[min(at + self.args.lookahead, len(points) - 1)]
+            # A target in another room gives the planner nothing to work with:
+            # the wrong-map penalty swamps the tile distance, every plan that
+            # stays in this room ties, and CEM has no gradient to follow. That
+            # is exactly how pursuit stalled in the house at node 10 while the
+            # next nodes were in Pallet Town. Aim at the last node of the
+            # CURRENT room instead -- the door the route leaves by.
+            if target.map_id != here[0]:
+                exits = [
+                    index for index in range(at, len(points))
+                    if points[index].map_id == here[0]
+                ]
+                # Standing ON the exit already, aiming at it gives zero
+                # distance and no gradient -- the stall at node 22, on the
+                # doorstep of Oak's lab. Aim through the door instead: the
+                # wrong-map penalty then rewards any plan that actually
+                # crosses, which is the one action needed.
+                if exits and not points[max(exits)].reached(
+                    here, self.args.waypoint_tolerance
+                ):
+                    target = points[max(exits)]
+            map_index = probe["maps"].tolist().index(target.map_id)
+            initial = self.observe()
+            sequence, cost, _ = cem_plan(
+                self.model, initial, None,
+                horizon=self.args.horizon,
+                samples=self.args.samples,
+                elites=self.args.elites,
+                iterations=self.args.iterations,
+                seed=self.args.seed + spent,
+                verbose=False,
+                score_fn=lambda m, i, seq: coords_probe.plan_costs(
+                    m, i, seq, probe, lookup, map_index, target.y, target.x
+                ),
+            )
+            for action_index in sequence.tolist()[: self.args.commit]:
+                self.step(action_index, "planner",
+                          f"{milestone.key}:node{at}", cost)
+                spent += 1
+                since_furthest += 1
+                if milestone.reached(self.env, self.history):
+                    self.history["pursuit_furthest"] = furthest + 1
+                    return True
+
+        self.history["pursuit_furthest"] = furthest + 1
+        self.history["pursuit_total"] = len(points)
+        return milestone.reached(self.env, self.history)
 
     def run_waypoints(self, points, probe, lookup, milestone, budget: int) -> bool:
         """Steer tile to tile. Arrival is read from RAM, not from the model.
@@ -429,6 +541,16 @@ def main() -> None:
     parser.add_argument("--waypoint-budget", type=int, default=25,
                         help="actions spent reaching one waypoint before "
                              "moving on to the next")
+    parser.add_argument("--controller", default="pursuit",
+                        choices=("pursuit", "waypoints"),
+                        help="pursuit: localise on the route by real tile and "
+                             "aim ahead (no timers). waypoints: the earlier "
+                             "advance/abandon rule, kept for comparison.")
+    parser.add_argument("--dialogue-after", type=int, default=10,
+                        help="actions with the player's tile unchanged before "
+                             "handing over to the scripted text masher")
+    parser.add_argument("--lookahead", type=int, default=2,
+                        help="nodes ahead of the projection to steer at")
     parser.add_argument("--waypoint-tolerance", type=int, default=1,
                         help="tiles of slack when deciding a waypoint is "
                              "reached; the probe is only good to ~1.5 tiles "
@@ -567,7 +689,10 @@ def main() -> None:
 
         for milestone in chain:
             print(f"-> {milestone.key}: {milestone.description}")
-            if waypoints is not None:
+            if waypoints is not None and args.controller == "pursuit":
+                ok = player.run_pursuit(waypoints, coord_probe, lookup,
+                                        milestone, args.budget)
+            elif waypoints is not None:
                 ok = player.run_waypoints(waypoints, coord_probe, lookup,
                                           milestone, args.budget)
             elif scorer is not None:
@@ -609,7 +734,10 @@ def main() -> None:
                      "budget", "stall", "seed", "ladder", "stride", "approach",
                      "rung_budget", "reanchor", "anchor_span", "objective",
                      "waypoint_budget", "waypoint_stride",
-                     "waypoint_tolerance", "waypoint_lookahead")},
+                     "waypoint_tolerance", "waypoint_lookahead",
+                     "controller", "lookahead", "dialogue_after")},
+        "pursuit_furthest": player.history.get("pursuit_furthest"),
+        "pursuit_total": player.history.get("pursuit_total"),
         "waypoints_reached": player.history.get("waypoints_reached"),
         "waypoints_furthest": player.history.get("waypoints_furthest"),
         "waypoints_total": player.history.get("waypoints_total"),

@@ -86,3 +86,80 @@ def test_tolerance_never_crosses_maps():
 
 def test_unreadable_coordinates_are_not_an_arrival():
     assert not Waypoint(38, 6, 3, 0).reached((38, None, None), tolerance=5)
+
+
+def points():
+    return [
+        Waypoint(38, 6, 3, 0), Waypoint(38, 1, 6, 10),
+        Waypoint(37, 1, 5, 20), Waypoint(37, 7, 2, 30),
+        Waypoint(0, 5, 5, 40), Waypoint(0, 0, 10, 50),
+        Waypoint(40, 11, 5, 60),
+    ]
+
+
+def test_localise_projects_onto_the_nearest_node_on_the_same_map():
+    from poke.waypoints import localise
+
+    assert localise(points(), (37, 1, 5)) == 2
+    assert localise(points(), (0, 0, 9)) == 5
+
+
+def test_localise_ignores_other_maps_even_when_coordinates_match():
+    """(6,3) in the bedroom and (6,3) in Pallet Town are unrelated places."""
+    from poke.waypoints import localise
+
+    assert localise(points(), (0, 6, 3)) == 4
+
+
+def test_localise_respects_the_floor_so_it_cannot_walk_backwards():
+    """95% of this route's frames sit on a tile it revisits, so a coincidental
+    match must not drag the plan back."""
+    from poke.waypoints import localise
+
+    assert localise(points(), (38, 6, 3)) == 0
+    assert localise(points(), (38, 6, 3), floor=1) == 1
+
+
+def test_localise_looks_behind_the_floor_when_the_player_has_regressed():
+    """Walking back into the house leaves no node at or after the floor on that
+    map; returning None would strand the plan, which is the bug being fixed."""
+    from poke.waypoints import localise
+
+    assert localise(points(), (38, 1, 6), floor=4) == 1
+
+
+def test_localise_returns_none_off_the_route_entirely():
+    from poke.waypoints import localise
+
+    assert localise(points(), (12, 3, 3)) is None
+    assert localise(points(), (38, None, None)) is None
+
+
+def test_localise_breaks_ties_forwards():
+    from poke.waypoints import localise
+
+    same = [Waypoint(38, 2, 2, 0), Waypoint(38, 2, 2, 5)]
+    assert localise(same, (38, 2, 2)) == 1
+
+
+def test_the_exit_node_of_a_room_is_its_last_one_on_the_route():
+    """When the target is in another room the planner has no gradient, so it
+    should steer at the route's exit from the current room instead."""
+    route = points()
+    at, current_map = 2, 37
+    exits = [i for i in range(at, len(route)) if route[i].map_id == current_map]
+    assert max(exits) == 3
+    assert (route[3].y, route[3].x) == (7, 2)
+
+
+def test_being_nearest_is_not_the_same_as_having_arrived():
+    """localise returns the closest node at ANY distance. Counting that as
+    progress reported node 22 of 38 while the player stood 8 tiles away and
+    never entered the lab."""
+    from poke.waypoints import localise
+
+    route = points()
+    here = (0, 9, 18)
+    at = localise(route, here)
+    assert at is not None
+    assert not route[at].reached(here, tolerance=1)

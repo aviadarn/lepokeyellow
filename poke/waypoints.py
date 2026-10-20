@@ -46,6 +46,44 @@ class Waypoint:
         return f"map {self.map_id} ({self.y},{self.x})"
 
 
+def localise(points, here, floor: int = 0) -> int | None:
+    """Index of the route node closest to the player's ACTUAL tile.
+
+    This is the fix for all three controller failures at once. Advancing on a
+    timer strands the target; re-targeting forwards cannot recover from walking
+    into the wrong room; re-targeting anywhere oscillates. Each one chooses the
+    target independently of where the player is. Projecting the real position
+    onto the route first makes the target a consequence of ground truth, which
+    is the pure-pursuit idea from path following.
+
+    `floor` refuses to localise behind the furthest node already reached, so a
+    coincidental match on a tile the route visits twice cannot walk the plan
+    backwards -- 95% of this route's frames sit on a revisited tile.
+    """
+    map_id, y, x = here
+    if y is None or x is None:
+        return None
+    candidates = [
+        (abs(point.y - y) + abs(point.x - x), index)
+        for index, point in enumerate(points)
+        if point.map_id == map_id and index >= floor
+    ]
+    if not candidates:
+        # Off the route's remaining maps: allow a look behind the floor rather
+        # than return nothing, since being in an earlier room IS the situation
+        # that needs recovering from.
+        candidates = [
+            (abs(point.y - y) + abs(point.x - x), index)
+            for index, point in enumerate(points)
+            if point.map_id == map_id
+        ]
+    if not candidates:
+        return None
+    # Ties go to the later node, biasing forward along the route.
+    return max(index for distance, index in candidates
+               if distance == min(candidates)[0])
+
+
 def build(data_path: str, stride: int = 8) -> list[Waypoint]:
     """Every `stride`-th distinct tile along the demonstration, in order.
 
