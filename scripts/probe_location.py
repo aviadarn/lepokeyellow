@@ -36,14 +36,8 @@ from poke.goals import default_device
 from poke.jepa import JEPA
 from poke.maps import name as map_name
 from poke.probe_linear import fit_ridge, predict, r2
+from poke.splits import frame_episodes
 from scripts.probe_position import downsample, encode_frames
-
-
-def episode_of_frame(episodes: np.ndarray, n: int) -> np.ndarray:
-    owner = np.zeros(n, dtype=np.int64)
-    for index, (start, length) in enumerate(episodes):
-        owner[int(start) : int(start) + int(length)] = index
-    return owner
 
 
 def group_split(groups: np.ndarray, folds: int, seed: int):
@@ -90,7 +84,7 @@ def main() -> None:
         location = file["location"][:]
         episodes = file["episodes"][:]
         total = file["frames"].shape[0]
-        owner = episode_of_frame(episodes, total)
+        owner = frame_episodes(episodes, total)
 
         device = t.device(args.device)
         checkpoint = t.load(args.checkpoint, map_location=device, weights_only=False)

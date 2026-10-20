@@ -1,5 +1,6 @@
 import torch as t
 import einops
+from poke.coord_head import CoordHead, coord_loss
 from poke.sigreg import SIGReg
 from poke.jepa import JEPA
 from poke.dataset import PokeDataset
@@ -14,8 +15,15 @@ from pathlib import Path
 """Train the JEPA. Adapted from stmonty/lePokeRed.
 
 Changed: MPS is a device candidate (upstream picks cuda or cpu, so training on
-an Apple box silently lands on CPU), and DefaultConfig's fields are exposed as
-flags so the dataset and checkpoint directory can move without editing code.
+an Apple box silently lands on CPU), DefaultConfig's fields are exposed as
+flags so the dataset and checkpoint directory can move without editing code,
+and `--coord-weight` adds the auxiliary coordinate loss from poke.coord_head.
+
+That last one is not a tweak. With `L_pred + lambda L_reg` alone the predictor
+reaches an excellent embedding MSE and is still WORSE than assuming the player
+never moved at saying where the player will be -- 2.42 tiles against 0.69, held
+out (results/rollout_tiles.json) -- so nothing downstream can plan a route.
+Nothing in the objective ever asked the prediction to keep a tile legible.
 """
 
 
@@ -28,9 +36,10 @@ class DefaultConfig:
     learning_rate: float = 3e-4
     weight_decay: float = 0.05
     regularizer_weight: float = 0.1
+    coord_weight: float = 0.05
     seed: int = 42
 
-def loss_terms(model: JEPA, reg: SIGReg, batch: dict[str, t.Tensor], regularizer_weight: float = 0.1) -> tuple[t.Tensor, t.Tensor, t.Tensor]:
+def loss_terms(model: JEPA, reg: SIGReg, batch: dict[str, t.Tensor], regularizer_weight: float = 0.1, head: CoordHead | None = None, coord_weight: float = 0.0) -> tuple[t.Tensor, ...]:
     predictions, targets, embeddings = model(batch["frames"], batch["actions"])
     prediction_loss = t.nn.functional.mse_loss(predictions, targets)
     temporal_embeddings = einops.rearrange(embeddings, "b t d -> t b d")
@@ -38,22 +47,32 @@ def loss_terms(model: JEPA, reg: SIGReg, batch: dict[str, t.Tensor], regularizer
 
     # This represents: L_pred + λL_reg (and yes I had to find a lambda character on Google)
     total_loss = prediction_loss + (regularizer_weight * reg_loss)
-    
-    return total_loss, prediction_loss, reg_loss
+
+    coord_term = prediction_loss.new_zeros(())
+    coord_tiles = prediction_loss.new_zeros(())
+    if head is not None and coord_weight > 0 and "location" in batch:
+        coord_term, coord_tiles = coord_loss(
+            head, predictions, targets, batch["location"]
+        )
+        total_loss = total_loss + coord_weight * coord_term
+
+    return total_loss, prediction_loss, reg_loss, coord_tiles
 
 
-def optimization_step(model: JEPA, reg: SIGReg, optimizer: Optimizer, batch: dict[str, t.Tensor], regularizer_weight: float = 0.1) -> tuple[t.Tensor, t.Tensor, t.Tensor]:
+def optimization_step(model: JEPA, reg: SIGReg, optimizer: Optimizer, batch: dict[str, t.Tensor], regularizer_weight: float = 0.1, head: CoordHead | None = None, coord_weight: float = 0.0) -> tuple[t.Tensor, ...]:
     model.train()
+    if head is not None:
+        head.train()
 
     optimizer.zero_grad(set_to_none=True)
-    total_loss, prediction_loss, reg_loss = loss_terms(model, reg, batch, regularizer_weight)
+    losses = loss_terms(model, reg, batch, regularizer_weight, head, coord_weight)
 
     # Calculate gradients
-    total_loss.backward()
+    losses[0].backward()
 
     optimizer.step()
 
-    return (total_loss.detach(), prediction_loss.detach(), reg_loss.detach())
+    return tuple(value.detach() for value in losses)
 
 def make_loaders(data_path: str, num_frames: int = 4, batch_size: int = 16, num_workers: int = 0, val_fraction: float = 0.1, seed: int = 42) -> tuple[DataLoader, DataLoader]:
     train_episodes, val_episodes = episode_split(data_path, val_fraction=val_fraction, seed=seed)
@@ -68,9 +87,11 @@ def make_loaders(data_path: str, num_frames: int = 4, batch_size: int = 16, num_
 
 
 @t.no_grad()
-def validate(model: JEPA, reg: SIGReg, loader: DataLoader, device: t.device, regularizer_weight: float = 0.1) -> tuple[float, float, float]:
+def validate(model: JEPA, reg: SIGReg, loader: DataLoader, device: t.device, regularizer_weight: float = 0.1, head: CoordHead | None = None, coord_weight: float = 0.0) -> tuple[float, ...]:
     model.eval()
-    loss_sums = t.zeros(3, device=device)
+    if head is not None:
+        head.eval()
+    loss_sums = t.zeros(4, device=device)
     number_of_samples = 0
 
     for batch in tqdm(loader, desc="validation", unit="batch", leave=False):
@@ -79,7 +100,7 @@ def validate(model: JEPA, reg: SIGReg, loader: DataLoader, device: t.device, reg
             for name, tensor in batch.items()
         }
 
-        losses = loss_terms(model, reg, batch, regularizer_weight)
+        losses = loss_terms(model, reg, batch, regularizer_weight, head, coord_weight)
         batch_size = batch["frames"].size(0)
         loss_sums += t.stack(losses) * batch_size
         number_of_samples += batch_size
@@ -94,10 +115,12 @@ def train_one_epoch(
     loader: DataLoader,
     device: t.device,
     regularizer_weight: float = 0.1,
-) -> tuple[float, float, float]:
+    head: CoordHead | None = None,
+    coord_weight: float = 0.0,
+) -> tuple[float, ...]:
     model.train()
 
-    loss_sums = t.zeros(3, device=device)
+    loss_sums = t.zeros(4, device=device)
     number_of_samples = 0
 
     progress = tqdm(loader, desc="training", unit="batch")
@@ -108,7 +131,8 @@ def train_one_epoch(
             for name, tensor in batch.items()
         }
 
-        losses = optimization_step(model, reg, optimizer, batch, regularizer_weight)
+        losses = optimization_step(model, reg, optimizer, batch,
+                                   regularizer_weight, head, coord_weight)
 
         batch_size = batch["frames"].size(0)
 
@@ -121,6 +145,7 @@ def train_one_epoch(
                 total=f"{running_averages[0].item():.4f}",
                 pred=f"{running_averages[1].item():.4f}",
                 reg=f"{running_averages[2].item():.4f}",
+                tiles=f"{running_averages[3].item():.2f}",
             )
 
     averages = loss_sums / number_of_samples
@@ -134,8 +159,9 @@ def save_checkpoint(
     config: DefaultConfig,
     epoch: int,
     global_step: int,
-    train_losses: tuple[float, float, float],
-    val_losses: tuple[float, float, float],
+    train_losses: tuple[float, ...],
+    val_losses: tuple[float, ...],
+    head: CoordHead | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = path.with_suffix(path.suffix + ".tmp")
@@ -146,6 +172,7 @@ def save_checkpoint(
             "global_step": global_step,
             "config": asdict(config),
             "jepa": model.state_dict(),
+            "coord_head": None if head is None else head.state_dict(),
             "sigreg": reg.state_dict(),
             "optimizer": optimizer.state_dict(),
             "train_losses": train_losses,
@@ -175,8 +202,13 @@ def parse_config() -> tuple[DefaultConfig, Path, str]:
     # The checkpoint you plan with is then selected on the anti-collapse
     # penalty rather than on how well it predicts, which is the wrong criterion
     # for a model whose only job is to predict. Default changed to "pred".
-    parser.add_argument("--select-on", default="pred", choices=("pred", "total"),
-                        help="validation metric that decides the best checkpoint")
+    parser.add_argument("--select-on", default="pred",
+                        choices=("pred", "total", "tiles"),
+                        help="validation metric that decides the best "
+                             "checkpoint. 'tiles' selects on how well the "
+                             "PREDICTED embedding places the player, which is "
+                             "what a planner reads and what embedding MSE "
+                             "turned out not to measure")
     parser.add_argument("--device", default=default_device())
     args = parser.parse_args()
     fields = {name: getattr(args, name) for name in asdict(defaults)}
@@ -192,13 +224,21 @@ def main() -> None:
 
     model = JEPA(num_frames=config.num_frames).to(device)
     reg = SIGReg().to(device)
+    head = CoordHead(dim=model.dim).to(device) if config.coord_weight > 0 else None
 
-    optimizer = t.optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+    parameters = list(model.parameters())
+    if head is not None:
+        parameters += list(head.parameters())
+    optimizer = t.optim.AdamW(parameters, lr=config.learning_rate, weight_decay=config.weight_decay)
     print(f"device: {device}")
     print(f"train windows: {len(train_loader.dataset)}")
     print(f"validation windows: {len(val_loader.dataset)}")
     print(f"parameters: {sum(p.numel() for p in model.parameters()):,}")
     print(f"selecting best checkpoint on validation {select_on}")
+    if head is None:
+        print("no coordinate loss (--coord-weight 0)")
+    else:
+        print(f"coordinate loss weight {config.coord_weight}")
 
     best_val_loss = float("inf")
 
@@ -210,6 +250,8 @@ def main() -> None:
             train_loader,
             device,
             config.regularizer_weight,
+            head,
+            config.coord_weight,
         )
 
         val_losses = validate(
@@ -218,6 +260,8 @@ def main() -> None:
             val_loader,
             device,
             config.regularizer_weight,
+            head,
+            config.coord_weight,
         )
 
         print(
@@ -227,7 +271,8 @@ def main() -> None:
             f"reg={train_losses[2]:.4f} | "
             f"val total={val_losses[0]:.4f} "
             f"pred={val_losses[1]:.4f} "
-            f"reg={val_losses[2]:.4f}"
+            f"reg={val_losses[2]:.4f} "
+            f"tiles={val_losses[3]:.2f}"
         )
 
         completed_epoch = epoch + 1
@@ -243,10 +288,12 @@ def main() -> None:
             global_step,
             train_losses,
             val_losses,
+            head,
         )
 
-        # val_losses is (total, pred, reg); index 1 is the prediction loss.
-        selected = val_losses[0] if select_on == "total" else val_losses[1]
+        # val_losses is (total, pred, reg, tiles).
+        selected = {"total": val_losses[0], "pred": val_losses[1],
+                    "tiles": val_losses[3]}[select_on]
         if selected < best_val_loss:
             best_val_loss = selected
             save_checkpoint(
@@ -259,6 +306,7 @@ def main() -> None:
                 global_step,
                 train_losses,
                 val_losses,
+                head,
             )
             print(f"saved new best checkpoint: {checkpoint_dir / 'best.pt'}")
 

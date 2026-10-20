@@ -1,0 +1,63 @@
+{
+  "start": [
+    0,
+    5,
+    5
+  ],
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "budget": 80,
+  "rows": [
+    {
+      "horizon": 1,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 1,
+      "reached": 0,
+      "seeds": 2,
+      "best_y": 5,
+      "median_y": 5.0,
+      "best_cost": 6.0,
+      "median_cost": 6.0
+    },
+    {
+      "horizon": 2,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 2,
+      "reached": 0,
+      "seeds": 2,
+      "best_y": 4,
+      "median_y": 4.5,
+      "best_cost": 6.0,
+      "median_cost": 6.0
+    },
+    {
+      "horizon": 4,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 4,
+      "reached": 0,
+      "seeds": 2,
+      "best_y": 5,
+      "median_y": 5.0,
+      "best_cost": 6.0,
+      "median_cost": 6.0
+    },
+    {
+      "horizon": 8,
+      "repeat": 1,
+      "how": "discounted",
+      "lookahead": 8,
+      "reached": 0,
+      "seeds": 2,
+      "best_y": 5,
+      "median_y": 5.0,
+      "best_cost": 6.0,
+      "median_cost": 6.0
+    }
+  ]
+}

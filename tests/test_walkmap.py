@@ -76,13 +76,80 @@ def test_distances_respect_one_way_edges():
         walk.distances(0, (1, 1)).get((2, 2)) is None
 
 
-def test_field_marks_unvisited_tiles_as_unknown_not_free():
-    """Treating never-seen tiles as free space is exactly how the Manhattan
-    heuristic walked into the house."""
+def test_field_charges_more_for_unvisited_tiles_than_visited_ones():
+    """Treating never-seen tiles as free space is how the Manhattan heuristic
+    walked into the house, so they cost more -- but not as one flat plateau.
+
+    A plateau turns the probe's half-tile error into the full `unknown`
+    penalty whenever rounding lands one cell outside the observed region, and
+    then every option scores the same catastrophic number. Cost grows with how
+    far outside the observed region a cell sits, and still caps at `unknown`.
+    """
     walk = WalkMap({0: {(0, 0): {(0, 1)}, (0, 1): set()}})
-    grid = walk.field(0, (0, 1), (3, 3), unknown=99.0)
+    grid = walk.field(0, (0, 1), (8, 8), unknown=8.0, fill=2.0)
     assert grid[0, 1] == 0.0 and grid[0, 0] == 1.0
+    # Three tiles of extrapolation from the target, at 2 per tile.
+    assert grid[2, 2] == 6.0
+    # Monotone in how far outside the observed region a cell sits...
+    assert grid[1, 1] < grid[2, 2]
+    # ...and never worse than `unknown`, so one plateau is still the ceiling.
+    assert grid[4, 4] == 8.0 and grid[7, 7] == 8.0
+
+
+def test_field_can_keep_the_hard_plateau():
+    walk = WalkMap({0: {(0, 0): {(0, 1)}, (0, 1): set()}})
+    grid = walk.field(0, (0, 1), (3, 3), unknown=99.0, fill=0.0)
     assert grid[2, 2] == 99.0
+
+
+def test_doors_connect_maps_so_there_is_a_way_back_out(h5_path):
+    """A cost field over one map alone has no value for any tile in another, so
+    a planner scored on it is blind the moment it walks through a door."""
+    path = write(h5_path, [[(37, 7, 2), (37, 6, 2), (0, 5, 5), (0, 6, 5)]])
+    walk = build(path)
+    assert walk.doors[(37, 6, 2)] == {(0, 5, 5)}
+    distances = walk.global_distances((0, 6, 5), adjacency="observed")
+    assert distances[(0, 5, 5)] == 1
+    # Inside the house, and still scored: two steps and a doorway away.
+    assert distances[(37, 6, 2)] == 2
+    assert distances[(37, 7, 2)] == 3
+
+
+def test_grid_adjacency_counts_one_hop_per_tile(h5_path):
+    """One recorded step can cross more than one tile, so the recorded
+    transitions are not unit steps: measured on the real dataset, BFS over them
+    put (5, 5) at 6 hops, (6, 6) at 5 and (5, 6) at 7, which is not a distance
+    a planner can descend. Four-adjacency over observed tiles is."""
+    path = write(h5_path, [[(0, 5, 5), (0, 5, 7), (0, 5, 6)]])
+    walk = build(path)
+    observed = walk.global_distances((0, 5, 7), adjacency="observed")
+    assert observed[(0, 5, 5)] == 1          # a two-tile jump, counted as one
+    grid = walk.global_distances((0, 5, 7), adjacency="grid")
+    assert grid[(0, 5, 6)] == 1
+    assert grid[(0, 5, 5)] == 2              # through the tile in between
+
+
+def test_fields_stack_in_the_probes_map_order(h5_path):
+    path = write(h5_path, [[(37, 7, 2), (37, 6, 2), (0, 5, 5), (0, 5, 6)]])
+    walk = build(path)
+    grids = walk.fields([0, 37], (0, 5, 6), (8, 8), unknown=99.0, fill=0.0)
+    assert grids.shape == (2, 8, 8)
+    assert grids[0][5, 6] == 0.0 and grids[0][5, 5] == 1.0
+    assert grids[1][6, 2] == 2.0
+    # Reversing the order reverses the first axis, because that axis is the
+    # decoded map index and nothing else.
+    assert np.array_equal(walk.fields([37, 0], (0, 5, 6), (8, 8), 99.0, 0.0),
+                          grids[::-1])
+
+
+def test_lookup_is_tolerant_of_an_unreadable_position():
+    from poke.walkmap import lookup
+
+    fields = np.zeros((2, 4, 4), dtype=np.float32)
+    assert lookup(fields, None, 1, 1, 7.0) == 7.0
+    assert lookup(fields, 0, None, 1, 7.0) == 7.0
+    assert lookup(fields, 5, 1, 1, 7.0) == 7.0
+    assert lookup(fields, 1, 99, 99, 7.0) == 0.0
 
 
 def test_missing_location_dataset_is_a_clear_error(h5_path):

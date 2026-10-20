@@ -632,6 +632,18 @@ def main() -> None:
                         help="goal: minimise latent distance to a goal image "
                              "(mislocalises at range). progress: maximise "
                              "route position read off the frozen encoder.")
+    parser.add_argument("--coord-fit-on", default="real",
+                        choices=("real", "predicted", "both"),
+                        help="what the coordinate head is fitted on. Fitting "
+                             "on predicted embeddings reads them far more "
+                             "accurately on average and ranks actions far "
+                             "worse, which is the only thing a planner uses; "
+                             "see results/nav_decisions_mlp_both.json")
+    parser.add_argument("--coord-head", default="mlp", choices=("linear", "mlp"),
+                        help="read-out head for the coords objective. linear "
+                             "ridge was the incumbent and its 1.9-tile error "
+                             "in Pallet Town is finer than nothing but coarser "
+                             "than the one-tile cost field it scores against.")
     parser.add_argument("--progress-epsilon", type=float, default=1.0,
                         help="progress in actions that counts as improvement")
     parser.add_argument("--ladder", action="store_true",
@@ -708,14 +720,19 @@ def main() -> None:
 
         waypoints = coord_probe = lookup = None
         if args.objective == "coords":
-            fitted = coords_probe.fit(model, args.data, device)
+            fitted = coords_probe.fit(model, args.data, device,
+                                      head=args.coord_head,
+                                      on=args.coord_fit_on)
             coord_probe = fitted.to_torch(device)
             lookup = action_lookup(device)
             waypoints = build_waypoints(args.data, args.waypoint_stride,
                                         args.annotations)
+            held_out = " held out" if fitted.head == "mlp" else " in-sample"
             print(f"coordinate probe: map id {fitted.map_accuracy:.1%} accurate "
-                  f"over {len(fitted.maps)} maps, "
-                  f"position +/-{fitted.tile_mae:.2f} tiles")
+                  f"over {len(fitted.maps)} maps, {fitted.head} position head "
+                  f"on {fitted.fitted_on} embeddings "
+                  f"+/-{fitted.tile_mae:.2f} tiles{held_out} "
+                  f"(linear {fitted.linear_tile_mae:.2f} in-sample)")
             print(f"{len(waypoints)} waypoints at stride {args.waypoint_stride}: "
                   f"{waypoints[0]} -> {waypoints[-1]}\n")
 

@@ -1,0 +1,189 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "head": "mlp",
+  "tile_mae": 0.10233183116744007,
+  "start": [
+    0,
+    6,
+    5
+  ],
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "start_cost": 6.0,
+  "rows": [
+    {
+      "action": "noop",
+      "predicted_map": 0,
+      "predicted": [
+        7.96,
+        5.77
+      ],
+      "predicted_cost": 6.0,
+      "observed_map": 0,
+      "observed": [
+        6.22,
+        5.13
+      ],
+      "observed_cost": 6.0,
+      "real_map": 0,
+      "real": [
+        6,
+        5
+      ],
+      "real_cost": 6.0
+    },
+    {
+      "action": "up",
+      "predicted_map": 0,
+      "predicted": [
+        4.41,
+        5.41
+      ],
+      "predicted_cost": 8.0,
+      "observed_map": 37,
+      "observed": [
+        1.21,
+        6.96
+      ],
+      "observed_cost": 60.0,
+      "real_map": 37,
+      "real": [
+        7,
+        2
+      ],
+      "real_cost": 60.0
+    },
+    {
+      "action": "down",
+      "predicted_map": 0,
+      "predicted": [
+        5.87,
+        5.72
+      ],
+      "predicted_cost": 5.0,
+      "observed_map": 0,
+      "observed": [
+        8.01,
+        5.1
+      ],
+      "observed_cost": 7.0,
+      "real_map": 0,
+      "real": [
+        8,
+        5
+      ],
+      "real_cost": 7.0
+    },
+    {
+      "action": "left",
+      "predicted_map": 0,
+      "predicted": [
+        7.65,
+        5.14
+      ],
+      "predicted_cost": 7.0,
+      "observed_map": 0,
+      "observed": [
+        6.1,
+        3.74
+      ],
+      "observed_cost": 6.0,
+      "real_map": 0,
+      "real": [
+        6,
+        4
+      ],
+      "real_cost": 6.0
+    },
+    {
+      "action": "right",
+      "predicted_map": 0,
+      "predicted": [
+        8.97,
+        5.26
+      ],
+      "predicted_cost": 9.0,
+      "observed_map": 0,
+      "observed": [
+        5.96,
+        7.16
+      ],
+      "observed_cost": 7.0,
+      "real_map": 0,
+      "real": [
+        6,
+        7
+      ],
+      "real_cost": 7.0
+    },
+    {
+      "action": "a",
+      "predicted_map": 0,
+      "predicted": [
+        5.16,
+        6.35
+      ],
+      "predicted_cost": 7.0,
+      "observed_map": 0,
+      "observed": [
+        6.2,
+        5.13
+      ],
+      "observed_cost": 6.0,
+      "real_map": 0,
+      "real": [
+        6,
+        5
+      ],
+      "real_cost": 6.0
+    },
+    {
+      "action": "b",
+      "predicted_map": 0,
+      "predicted": [
+        9.48,
+        5.45
+      ],
+      "predicted_cost": 9.0,
+      "observed_map": 0,
+      "observed": [
+        6.2,
+        5.13
+      ],
+      "observed_cost": 6.0,
+      "real_map": 0,
+      "real": [
+        6,
+        5
+      ],
+      "real_cost": 6.0
+    }
+  ],
+  "chosen": "down",
+  "chosen_real_cost": 7.0,
+  "best_available": "noop",
+  "best_real_cost": 6.0,
+  "agrees_with_best": false,
+  "reduces_distance": false,
+  "predicted_x_spread": [
+    5.14,
+    6.35
+  ],
+  "oracle_action": "noop",
+  "oracle_real_cost": 6.0,
+  "head_error_tiles": 0.2799999999999998,
+  "rollout_error_tiles": 3.143333333333333,
+  "holdout_tile_mae": {
+    "map0_y": 0.2643054938851319,
+    "map0_x": 0.2887126849753433,
+    "map37_y": 0.04093563826879249,
+    "map37_x": 0.04560742172607823,
+    "map38_y": 0.022803277164250037,
+    "map38_x": 0.1377476257953515,
+    "map40_y": 0.008136631888547519,
+    "map40_x": 0.0104058756360255
+  }
+}

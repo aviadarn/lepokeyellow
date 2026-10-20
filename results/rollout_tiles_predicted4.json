@@ -1,0 +1,79 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "data": "episodes/yellow_v3.h5",
+  "head": "mlp",
+  "fitted_on": "predicted",
+  "holdout_episodes": 104,
+  "samples": 512,
+  "maps": null,
+  "probe_holdout_tile_mae": {
+    "map0_y": 3.1046649717943042,
+    "map0_x": 2.449920548973268,
+    "map37_y": 1.277818564673021,
+    "map37_x": 0.9815782031395193,
+    "map38_y": 0.3243320957096059,
+    "map38_x": 0.6063716087248733,
+    "map40_y": 0.7597751893968706,
+    "map40_x": 0.842965234882258
+  },
+  "results": {
+    "context1": [
+      {
+        "k": 1,
+        "n": 511,
+        "head_tiles": 2.139647960662842,
+        "rollout_tiles": 1.0591919422149658,
+        "map_accuracy": 0.9921721816062927
+      },
+      {
+        "k": 2,
+        "n": 508,
+        "head_tiles": 2.0810344219207764,
+        "rollout_tiles": 1.3344793319702148,
+        "map_accuracy": 0.9921259880065918
+      },
+      {
+        "k": 3,
+        "n": 505,
+        "head_tiles": 2.2665884494781494,
+        "rollout_tiles": 1.4662810564041138,
+        "map_accuracy": 0.9920791983604431
+      },
+      {
+        "k": 4,
+        "n": 504,
+        "head_tiles": 2.2670023441314697,
+        "rollout_tiles": 1.5552427768707275,
+        "map_accuracy": 0.9920634627342224
+      },
+      {
+        "k": 5,
+        "n": 500,
+        "head_tiles": 2.2377562522888184,
+        "rollout_tiles": 1.7875632047653198,
+        "map_accuracy": 0.9940000176429749
+      },
+      {
+        "k": 6,
+        "n": 499,
+        "head_tiles": 2.1028709411621094,
+        "rollout_tiles": 1.9565469026565552,
+        "map_accuracy": 0.9899799823760986
+      },
+      {
+        "k": 7,
+        "n": 497,
+        "head_tiles": 2.215111017227173,
+        "rollout_tiles": 2.146409273147583,
+        "map_accuracy": 0.9879275560379028
+      },
+      {
+        "k": 8,
+        "n": 497,
+        "head_tiles": 2.3016068935394287,
+        "rollout_tiles": 2.14411997795105,
+        "map_accuracy": 0.9839034080505371
+      }
+    ]
+  }
+}

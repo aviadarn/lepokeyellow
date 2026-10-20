@@ -23,3 +23,16 @@ def episode_split(
         train.append(group[n:])
 
     return np.sort(np.concatenate(train)), np.sort(np.concatenate(val))
+
+
+def frame_episodes(episodes: np.ndarray, total: int) -> np.ndarray:
+    """Which episode each frame belongs to, as an index into `episodes`.
+
+    A probe must be split by episode and not by frame: one episode is a
+    continuous walk, so a random frame split puts a step and its neighbour on
+    opposite sides and measures autocorrelation instead of generalisation.
+    """
+    owner = np.zeros(total, dtype=np.int64)
+    for index, (start, length) in enumerate(episodes):
+        owner[int(start) : int(start) + int(length)] = index
+    return owner

@@ -1,0 +1,933 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "head": "mlp",
+  "fitted_on": "real",
+  "tile_mae": 0.10233183116744007,
+  "holdout_tile_mae": {
+    "map0_y": 0.2643054938851319,
+    "map0_x": 0.2887126849753433,
+    "map37_y": 0.04093563826879249,
+    "map37_x": 0.04560742172607823,
+    "map38_y": 0.022803277164250037,
+    "map38_x": 0.1377476257953515,
+    "map40_y": 0.008136631888547519,
+    "map40_x": 0.0104058756360255
+  },
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "summary": {
+    "steps": 60,
+    "optimal": 0.1,
+    "helps": 0.2833333333333333,
+    "no_worse": 0.55,
+    "start_cost": 12.0,
+    "final_cost": 13.0,
+    "best_cost_seen": 9.0,
+    "reached": false
+  },
+  "decisions": [
+    {
+      "step": 0,
+      "at": [
+        0,
+        5,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 11.0,
+      "optimal": true,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 1,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 13.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 2,
+      "at": [
+        0,
+        8,
+        5
+      ],
+      "start_cost": 13.0,
+      "chosen": "up",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 12.0,
+      "optimal": true,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 3,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 12.0,
+      "optimal": true,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 4,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 5,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 6,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 7,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 8,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 9,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 10,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 11,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 12,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 13,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 14,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 15,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 16,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 17,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 18,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 19,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 20,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 21,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 22,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 23,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 24,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 25,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 26,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 27,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 28,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 29,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 30,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 31,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 32,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 33,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 34,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 35,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 36,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 37,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 38,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 39,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 40,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 41,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 42,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 43,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 44,
+      "at": [
+        0,
+        7,
+        6
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 45,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 11.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 46,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 11.0,
+      "chosen": "down",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 47,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "noop",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 48,
+      "at": [
+        0,
+        7,
+        5
+      ],
+      "start_cost": 12.0,
+      "chosen": "right",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 10.0,
+      "optimal": true,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 49,
+      "at": [
+        0,
+        7,
+        7
+      ],
+      "start_cost": 10.0,
+      "chosen": "up",
+      "chosen_real_cost": 9.0,
+      "best_real_cost": 8.0,
+      "optimal": false,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 50,
+      "at": [
+        0,
+        6,
+        7
+      ],
+      "start_cost": 9.0,
+      "chosen": "left",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 8.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 51,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "up",
+      "chosen_real_cost": 10.0,
+      "best_real_cost": 9.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 52,
+      "at": [
+        0,
+        6,
+        6
+      ],
+      "start_cost": 10.0,
+      "chosen": "left",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 8.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 53,
+      "at": [
+        0,
+        6,
+        4
+      ],
+      "start_cost": 12.0,
+      "chosen": "up",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 54,
+      "at": [
+        0,
+        6,
+        4
+      ],
+      "start_cost": 12.0,
+      "chosen": "down",
+      "chosen_real_cost": 14.0,
+      "best_real_cost": 10.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 55,
+      "at": [
+        0,
+        8,
+        4
+      ],
+      "start_cost": 14.0,
+      "chosen": "noop",
+      "chosen_real_cost": 14.0,
+      "best_real_cost": 13.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 56,
+      "at": [
+        0,
+        8,
+        4
+      ],
+      "start_cost": 14.0,
+      "chosen": "noop",
+      "chosen_real_cost": 14.0,
+      "best_real_cost": 12.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 57,
+      "at": [
+        0,
+        8,
+        4
+      ],
+      "start_cost": 14.0,
+      "chosen": "up",
+      "chosen_real_cost": 13.0,
+      "best_real_cost": 13.0,
+      "optimal": true,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 58,
+      "at": [
+        0,
+        7,
+        4
+      ],
+      "start_cost": 13.0,
+      "chosen": "up",
+      "chosen_real_cost": 12.0,
+      "best_real_cost": 12.0,
+      "optimal": true,
+      "helps": true,
+      "no_worse": true
+    },
+    {
+      "step": 59,
+      "at": [
+        0,
+        6,
+        4
+      ],
+      "start_cost": 12.0,
+      "chosen": "down",
+      "chosen_real_cost": 13.0,
+      "best_real_cost": 11.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    }
+  ]
+}

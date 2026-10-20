@@ -62,10 +62,18 @@ class PokeDataset(Dataset):
         frames = f["frames"][s:e, :, :, 0].astype(np.float32) / 127.5 - 1.0
         actions = f["actions"][s:e].astype(np.float32)
 
-        return {
+        batch = {
             "frames": torch.from_numpy(frames).unsqueeze(1),
             "actions": torch.from_numpy(actions),
         }
+        # Schema 3 records (map, y, x) per frame, with -1 where the read
+        # failed. The auxiliary coordinate head needs it; older datasets
+        # simply do not carry it and train without that loss term.
+        if "location" in f:
+            batch["location"] = torch.from_numpy(
+                f["location"][s:e].astype(np.int64)
+            )
+        return batch
 
     def close(self) -> None:
         if self._h5 is not None:

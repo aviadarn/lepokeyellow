@@ -1,0 +1,633 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "head": "mlp",
+  "fitted_on": "both",
+  "tile_mae": 0.5387384092028,
+  "holdout_tile_mae": {
+    "map0_y": 1.4203153145162748,
+    "map0_x": 1.0213393788596836,
+    "map37_y": 0.35137761324265493,
+    "map37_x": 0.34693465653675915,
+    "map38_y": 0.16947315117993086,
+    "map38_x": 0.41959435474499385,
+    "map40_y": 0.1531670898744035,
+    "map40_x": 0.42770571466769985
+  },
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "summary": {
+    "steps": 40,
+    "optimal": 0.05,
+    "helps": 0.0,
+    "no_worse": 0.95,
+    "start_cost": 6.0,
+    "final_cost": 8.0,
+    "best_cost_seen": 6.0,
+    "reached": false
+  },
+  "decisions": [
+    {
+      "step": 0,
+      "at": [
+        0,
+        5,
+        5
+      ],
+      "start_cost": 6.0,
+      "chosen": "noop",
+      "chosen_real_cost": 6.0,
+      "best_real_cost": 6.0,
+      "optimal": true,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 1,
+      "at": [
+        0,
+        6,
+        5
+      ],
+      "start_cost": 6.0,
+      "chosen": "up",
+      "chosen_real_cost": 7.0,
+      "best_real_cost": 6.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 2,
+      "at": [
+        37,
+        7,
+        2
+      ],
+      "start_cost": 7.0,
+      "chosen": "noop",
+      "chosen_real_cost": 7.0,
+      "best_real_cost": 7.0,
+      "optimal": true,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 3,
+      "at": [
+        37,
+        7,
+        2
+      ],
+      "start_cost": 7.0,
+      "chosen": "up",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 6.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": false
+    },
+    {
+      "step": 4,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 5,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 6,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 7,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 8,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 9,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 10,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 11,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 12,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 13,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 14,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 15,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 16,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 17,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 18,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 19,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 20,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 21,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 22,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 23,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 24,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 25,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 26,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 27,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 28,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 29,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 30,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 31,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 32,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 33,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 34,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 35,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 36,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 37,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 38,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    },
+    {
+      "step": 39,
+      "at": [
+        37,
+        5,
+        2
+      ],
+      "start_cost": 8.0,
+      "chosen": "noop",
+      "chosen_real_cost": 8.0,
+      "best_real_cost": 7.0,
+      "optimal": false,
+      "helps": false,
+      "no_worse": true
+    }
+  ]
+}

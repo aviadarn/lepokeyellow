@@ -1,0 +1,52 @@
+{
+  "checkpoint": "/Users/aviad/Documents/lepokeyellow/checkpoints/yellow_v2/best.pt",
+  "data": "episodes/yellow_v3.h5",
+  "folds": 5,
+  "alpha_sweep": [
+    1.0,
+    10.0,
+    100.0,
+    1000.0
+  ],
+  "mlp": {
+    "hidden": 256,
+    "depth": 2,
+    "epochs": 400,
+    "patience": 60,
+    "weight_decay": 0.01
+  },
+  "results": {
+    "map0_y": {
+      "frames": 3233,
+      "linear_r2": 0.7595196020809961,
+      "linear_mae_tiles": 1.8849735865964667,
+      "linear_alpha": 1.0,
+      "mlp_r2": 0.9588542263770617,
+      "mlp_mae_tiles": 0.5314302432513757,
+      "mlp_shuffled_r2": -0.02165336099984394,
+      "mlp_mean_epochs": 338.0,
+      "seconds": 13.8,
+      "pixels_linear_r2": 0.9119472011988216,
+      "pixels_linear_mae_tiles": 0.6630603034608511,
+      "pixels_linear_alpha": 1000.0,
+      "pixels_mlp_r2": 0.9338736099449321,
+      "pixels_mlp_mae_tiles": 0.39847057762625504
+    },
+    "map0_x": {
+      "frames": 3233,
+      "linear_r2": 0.6552928632614845,
+      "linear_mae_tiles": 1.4366902467950067,
+      "linear_alpha": 1.0,
+      "mlp_r2": 0.8654588635037572,
+      "mlp_mae_tiles": 0.47933807529662426,
+      "mlp_shuffled_r2": -0.019504849074351682,
+      "mlp_mean_epochs": 345.6,
+      "seconds": 12.2,
+      "pixels_linear_r2": 0.8026065219013379,
+      "pixels_linear_mae_tiles": 0.5770722746955328,
+      "pixels_linear_alpha": 1000.0,
+      "pixels_mlp_r2": 0.9020825879263112,
+      "pixels_mlp_mae_tiles": 0.35423139649797514
+    }
+  }
+}

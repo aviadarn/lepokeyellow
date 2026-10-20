@@ -1,0 +1,45 @@
+{
+  "start": [
+    0,
+    5,
+    5
+  ],
+  "target": [
+    0,
+    0,
+    10
+  ],
+  "budget": 80,
+  "rows": [
+    {
+      "horizon": 14,
+      "repeat": 2,
+      "how": "min",
+      "lookahead": 28,
+      "reached": 0,
+      "seeds": 1,
+      "best_y": 5,
+      "median_y": 5.0
+    },
+    {
+      "horizon": 14,
+      "repeat": 2,
+      "how": "final",
+      "lookahead": 28,
+      "reached": 0,
+      "seeds": 1,
+      "best_y": 5,
+      "median_y": 5.0
+    },
+    {
+      "horizon": 14,
+      "repeat": 2,
+      "how": "discounted",
+      "lookahead": 28,
+      "reached": 0,
+      "seeds": 1,
+      "best_y": 5,
+      "median_y": 5.0
+    }
+  ]
+}
