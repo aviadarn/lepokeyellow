@@ -382,13 +382,43 @@ Two structural fixes it needed, both found by running it:
   hopeless, so the tile standing still for N actions hands over to the text
   masher, exactly as a battle does.
 
-It still does not finish. The remaining blocker is **not navigation**: the
-player genuinely reaches (0, 10, 9), and two presses of any button from the
-demonstration's state there enter Oak's lab. But that tile was recorded *inside*
-the cutscene, so it is an artifact of where the scene put the player rather than
-a place that triggers anything. Waypoints taken from a demonstration cannot
-distinguish "somewhere you walked to" from "somewhere you were carried", and
-that is the next thing to fix.
+### Which steps of a route are a movie
+
+Waypoints from a demonstration cannot tell "somewhere you walked to" from
+"somewhere you were carried", and the emulator can answer that exactly: at each
+step, snapshot, try all seven buttons, and compare. If every button gives the
+same screen, nothing the planner chooses matters there.
+
+`scripts/annotate_route.py` does it in seconds, and the answer is larger than
+expected:
+
+> **42 % of this route is scripted** — 189 of 455 steps. Oak's encounter alone
+> is a **116-step** scene starting at map 0 `(0,10)`, the north edge of Pallet.
+> The Pikachu handover is another 39.
+
+That relocates the goal. The planner should aim at `(0,0,10)` — the tile you
+*walk to*, where control is then taken away — and mash from there. The tile the
+earlier run reached, `(0,10,9)`, is 52 steps *inside* the scene: somewhere the
+game carried the player, which is why arriving there under your own power does
+nothing.
+
+One trap in filtering by this: control is lost **on** the trigger tile, so the
+counterfactual marks it scripted. Dropping it removes the only waypoint that
+starts the encounter. The first step of each scripted run is kept.
+
+**Filtering the waypoints changed nothing end to end**, because the run stalls
+before it ever reaches that region. Kept anyway — it is correct, and it matters
+as soon as navigation improves.
+
+A more principled cutscene detector — comparing two buttons' screens live,
+the same test bootstrap uses — **measured worse**: 17/38 nodes against 22/38.
+The cruder "tile has not moved" rule is the better *policy* precisely because
+it mashes A more, which advances text the planner would otherwise sit through.
+It stays the default; `--control-probe` switches.
+
+So the real blocker is plain long-range navigation: **the planner never gets
+north of y=5 in Pallet Town, and the trigger is at y=0.** A 14-action horizon
+and a ±1.5-tile readout are not enough to cross an open map.
 
 The earlier advance/abandon controller is kept behind `--controller waypoints`,
 because the three rules tried for it each failed differently and the

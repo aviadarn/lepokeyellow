@@ -192,8 +192,23 @@ class Player:
             "predicted_cost": cost,
         })
 
+    in_control = True
+
     def here_tile(self):
         return (cur_map(self.env), *coords(self.env))
+
+    def has_control(self) -> bool:
+        """Two buttons, one snapshot, compare screens. Side-effect free."""
+        blob = self.env.snapshot()
+        screens = []
+        try:
+            for button in ("down", "right"):
+                self.env.restore(blob)
+                self.env.step(ACTIONS.index(button))
+                screens.append(self.env.screen()[:, :, 0].tobytes())
+        finally:
+            self.env.restore(blob)
+        return screens[0] != screens[1]
 
     def run_pursuit(self, points, probe, lookup, milestone, budget: int) -> bool:
         """Project the real position onto the route, aim a little ahead, repeat.
@@ -208,6 +223,7 @@ class Player:
         furthest node localised, and the run ends when that stops moving.
         """
         spent, furthest, since_furthest = 0, -1, 0
+        stuck_at, stuck_for = None, 0
         # Dialogue and cutscenes ignore the d-pad. At the north edge of Pallet
         # all seven buttons give the identical result, because Oak stops the
         # player and walks them to the lab; the route's own actions there are
@@ -215,7 +231,6 @@ class Player:
         # paths is hopeless, and it is the same situation as a battle, which
         # already hands off. Detect it the cheap way -- the tile has not moved
         # for a while -- and mash A, which is what advances text.
-        stuck_at, stuck_for = None, 0
         while spent < budget:
             if milestone.reached(self.env, self.history):
                 self.history["pursuit_furthest"] = furthest + 1
@@ -234,11 +249,33 @@ class Player:
                 stuck_for += 1
             else:
                 stuck_at, stuck_for = here, 0
-            if stuck_for >= self.args.dialogue_after:
-                self.step(A, "dialogue", milestone.key)
-                spent += 1
-                since_furthest += 1
-                continue
+            # Two ways to notice the game has taken over. The cheap one -- the
+            # tile has not moved for a while -- is the default because it
+            # MEASURED BETTER end to end: 22/38 nodes against 17/38 for the
+            # probe below. It is the worse detector and the better policy,
+            # because its incidental A-mashing advances text the planner would
+            # otherwise sit through.
+            if not self.args.control_probe:
+                if stuck_for >= self.args.dialogue_after:
+                    self.step(A, "dialogue", milestone.key)
+                    spent += 1
+                    since_furthest += 1
+                continue_planning = stuck_for < self.args.dialogue_after
+                if not continue_planning:
+                    continue
+            # The principled one. Two buttons from one snapshot:
+            # under real control `down` and `right` give different screens,
+            # while a cutscene or an open text box feeds both the same thing.
+            # The "tile has not moved" heuristic this replaces missed Oak's
+            # encounter entirely, because the scene WALKS the player -- the
+            # tile changes the whole way through.
+            elif spent % self.args.control_check == 0 or not self.in_control:
+                self.in_control = self.has_control()
+                if not self.in_control:
+                    self.step(A, "dialogue", milestone.key)
+                    spent += 1
+                    since_furthest += 1
+                    continue
 
             at = localise(points, here, floor=max(furthest, 0))
             if at is None:
@@ -546,9 +583,20 @@ def main() -> None:
                         help="pursuit: localise on the route by real tile and "
                              "aim ahead (no timers). waypoints: the earlier "
                              "advance/abandon rule, kept for comparison.")
+    parser.add_argument("--control-probe", action="store_true",
+                        help="detect cutscenes by comparing two buttons' "
+                             "screens instead of by the tile standing still. "
+                             "More principled, measured worse (17/38 vs 22/38) "
+                             "because the cruder rule mashes A more.")
     parser.add_argument("--dialogue-after", type=int, default=10,
-                        help="actions with the player's tile unchanged before "
-                             "handing over to the scripted text masher")
+                        help="actions with the tile unchanged before handing "
+                             "over to the scripted text masher")
+    parser.add_argument("--control-check", type=int, default=3,
+                        help="how often to test whether the player is actually "
+                             "in control (costs two emulator actions)")
+    parser.add_argument("--annotations",
+                        help="route annotations from scripts/annotate_route.py; "
+                             "scripted steps are excluded from waypoints")
     parser.add_argument("--lookahead", type=int, default=2,
                         help="nodes ahead of the projection to steer at")
     parser.add_argument("--waypoint-tolerance", type=int, default=1,
@@ -646,7 +694,8 @@ def main() -> None:
             fitted = coords_probe.fit(model, args.data, device)
             coord_probe = fitted.to_torch(device)
             lookup = action_lookup(device)
-            waypoints = build_waypoints(args.data, args.waypoint_stride)
+            waypoints = build_waypoints(args.data, args.waypoint_stride,
+                                        args.annotations)
             print(f"coordinate probe: map id {fitted.map_accuracy:.1%} accurate "
                   f"over {len(fitted.maps)} maps, "
                   f"position +/-{fitted.tile_mae:.2f} tiles")
@@ -735,7 +784,8 @@ def main() -> None:
                      "rung_budget", "reanchor", "anchor_span", "objective",
                      "waypoint_budget", "waypoint_stride",
                      "waypoint_tolerance", "waypoint_lookahead",
-                     "controller", "lookahead", "dialogue_after")},
+                     "controller", "lookahead", "control_check",
+                     "control_probe", "dialogue_after")},
         "pursuit_furthest": player.history.get("pursuit_furthest"),
         "pursuit_total": player.history.get("pursuit_total"),
         "waypoints_reached": player.history.get("waypoints_reached"),
