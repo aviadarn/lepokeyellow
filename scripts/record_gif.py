@@ -59,16 +59,90 @@ def caption_font(scale: int) -> ImageFont.ImageFont:
         return ImageFont.load_default()
 
 
+def map_panel(field: np.ndarray, here, trail, target, size: int,
+              font=None) -> Image.Image:
+    """The cost field of the map the player is on, with where they have been.
+
+    Without this the GIF hides its own subject. The camera is centred on the
+    player, so walking shows up only as the background scrolling; a good part
+    of any route is dialogue, where nothing moves at all; and when the planner
+    is stuck it is stuck on two tiles, which looks exactly like a still image.
+    Drawing the tile, the trail and the distance makes a run that is going
+    nowhere look like a run that is going nowhere, instead of looking broken.
+
+    White cells are ground never walked on in the dataset, so the planner has
+    no distance for them. Every other cell is shaded by how far it is from the
+    target, dark being closer. Nothing observed is ever drawn white, which is
+    what lets the markers -- the ring on the target, the dot on each tile
+    already visited, the square on the player -- all be white and still read.
+    """
+    rows, cols = field.shape
+    known = field[field < field.max()]
+    worst = float(known.max()) if known.size else 1.0
+
+    cell = max(4, size // max(rows, cols))
+    panel = Image.new("L", (cols * cell, rows * cell + 28), 255)
+    draw = ImageDraw.Draw(panel)
+    for y in range(rows):
+        for x in range(cols):
+            cost = float(field[y, x])
+            if cost >= field.max():
+                shade = 255                     # never walked on
+            else:
+                shade = int(40 + 150 * min(cost / worst, 1.0))
+            draw.rectangle([x * cell, y * cell,
+                            (x + 1) * cell - 1, (y + 1) * cell - 1], fill=shade)
+
+    for (y, x) in trail:
+        draw.rectangle([x * cell + cell // 3, y * cell + cell // 3,
+                        x * cell + cell - cell // 3,
+                        y * cell + cell - cell // 3], fill=255)
+    ty, tx = target
+    if 0 <= ty < rows and 0 <= tx < cols:
+        draw.ellipse([tx * cell, ty * cell,
+                      (tx + 1) * cell - 1, (ty + 1) * cell - 1],
+                     outline=255, width=max(1, cell // 5))
+    if here[1] is not None and 0 <= here[1] < rows and 0 <= here[2] < cols:
+        draw.rectangle([here[2] * cell, here[1] * cell,
+                        (here[2] + 1) * cell - 1, (here[1] + 1) * cell - 1],
+                       fill=0, outline=255, width=max(2, cell // 4))
+    legend = ImageFont.load_default(size=11)
+    draw.text((2, rows * cell + 2), "dark = closer to the goal",
+              fill=0, font=legend)
+    draw.text((2, rows * cell + 14), "white = never walked on",
+              fill=0, font=legend)
+    return panel
+
+
+def crop_field(grid: np.ndarray, unknown: float) -> tuple[np.ndarray, int, int]:
+    """Trim a cost grid to the ground that was actually observed, plus a cell.
+
+    The grids are 32x32 because that covers any Gen-1 map; Pallet Town uses 13
+    rows of it. Drawing the empty remainder would shrink the part worth seeing.
+    """
+    known = np.argwhere(grid < unknown)
+    if not len(known):
+        return grid, 0, 0
+    (y0, x0), (y1, x1) = known.min(axis=0), known.max(axis=0)
+    y0, x0 = max(int(y0) - 1, 0), max(int(x0) - 1, 0)
+    y1 = min(int(y1) + 2, grid.shape[0])
+    x1 = min(int(x1) + 2, grid.shape[1])
+    return grid[y0:y1, x0:x1], y0, x0
+
+
 def frame_image(screen: np.ndarray, scale: int, lines: list[str],
-                font=None) -> Image.Image:
+                font=None, panel: Image.Image | None = None) -> Image.Image:
     """One GIF frame: the Game Boy screen, scaled, over a caption strip."""
     grey = Image.fromarray(screen[:, :, 0].astype(np.uint8), mode="L")
     grey = grey.resize((grey.width * scale, grey.height * scale), Image.NEAREST)
 
     font = font or caption_font(scale)
     step = CAPTION_HEIGHT // 2
-    canvas = Image.new("L", (grey.width, grey.height + CAPTION_HEIGHT), 255)
+    width = grey.width + (0 if panel is None else panel.width + 8)
+    canvas = Image.new("L", (width, grey.height + CAPTION_HEIGHT), 255)
     canvas.paste(grey, (0, 0))
+    if panel is not None:
+        canvas.paste(panel, (grey.width + 8, 0))
     draw = ImageDraw.Draw(canvas)
     for index, text in enumerate(lines[:2]):
         draw.text((8, grey.height + 3 + index * step), text, fill=0, font=font)
@@ -144,6 +218,11 @@ def main() -> None:
     parser.add_argument("--iterations", type=int, default=6)
     parser.add_argument("--commit", type=int, default=2)
     parser.add_argument("--scale", type=int, default=2)
+    parser.add_argument("--panel", type=int, default=200,
+                        help="pixel size of the map panel; 0 draws no panel")
+    parser.add_argument("--skip", type=int, default=0,
+                        help="actions to run before recording starts, for "
+                             "skipping an opening stretch of dialogue")
     parser.add_argument("--ms", type=int, default=140, help="per frame")
     parser.add_argument("--unknown-cost", type=float, default=120.0)
     parser.add_argument("--seed", type=int, default=0)
@@ -189,10 +268,33 @@ def main() -> None:
                 f"buttons of one run over the screens of another. Use the "
                 f"state it was recorded from."
             )
-        planned = route.indices[: args.steps]
+        planned = route.indices[: args.skip + args.steps]
     elif args.policy == "random":
         rng = np.random.default_rng(args.seed)
-        planned = rng.integers(0, len(ACTIONS), args.steps).tolist()
+        planned = rng.integers(0, len(ACTIONS),
+                               args.skip + args.steps).tolist()
+
+    # The panel draws the raw BFS distances, not the field the planner is
+    # scored on. The planner's field extrapolates a cost into unvisited ground
+    # so that a half-tile read-out error does not fall off a cliff, which is
+    # right for scoring and wrong for a picture: it shades the whole 32x32 grid
+    # and the walkable region stops being visible at all.
+    display = walk.fields(maps, TARGET, (32, 32), unknown=args.unknown_cost,
+                          fill=0.0)
+    crops = {map_id: crop_field(display[index], args.unknown_cost)
+             for map_id, index in index_of.items()}
+    trails: dict[int, list[tuple[int, int]]] = {}
+
+    def panel_for(here):
+        """The current map's field, in that map's own crop, with its trail."""
+        if not args.panel or here[0] not in crops or here[1] is None:
+            return None
+        grid, y0, x0 = crops[here[0]]
+        local = (here[0], here[1] - y0, here[2] - x0)
+        target = ((TARGET[1] - y0, TARGET[2] - x0) if here[0] == TARGET[0]
+                  else (-9, -9))
+        trail = [(y - y0, x - x0) for (y, x) in trails.get(here[0], [])]
+        return map_panel(grid, local, trail, target, args.panel, font)
 
     field_tensor = (t.from_numpy(field).to(device) if needs_model else None)
     env = PokeEnv(args.rom, args.state, headless=True)
@@ -202,13 +304,18 @@ def main() -> None:
         env.reset()
         env.settle()
         here = (cur_map(env), *coords(env))
-        frames.append(frame_image(env.screen(), args.scale,
-                                  caption(0, here, cost_of(here), None), font))
+        if here[1] is not None:
+            trails.setdefault(here[0], []).append((here[1], here[2]))
+        if not args.skip:
+            frames.append(frame_image(
+                env.screen(), args.scale,
+                caption(0, here, cost_of(here), None), font, panel_for(here),
+            ))
 
         spent = 0
         predicted = None
         arrived = False
-        while spent < args.steps and not arrived:
+        while spent < args.skip + args.steps and not arrived:
             if planned:
                 batch = [planned[spent]]
             else:
@@ -218,19 +325,22 @@ def main() -> None:
                     args.commit, args.seed, spent, field_tensor,
                 )
             for action_index in batch:
-                if spent >= args.steps:
+                if spent >= args.skip + args.steps:
                     break
                 # Captured AFTER the step, so the caption describes the action
                 # that produced the frame and the tile it produced.
                 env.step(action_index)
                 spent += 1
                 here = (cur_map(env), *coords(env))
-                frames.append(frame_image(
-                    env.screen(), args.scale,
-                    caption(spent, here, cost_of(here),
-                            ACTIONS[action_index], predicted),
-                    font,
-                ))
+                if here[1] is not None:
+                    trails.setdefault(here[0], []).append((here[1], here[2]))
+                if spent > args.skip:
+                    frames.append(frame_image(
+                        env.screen(), args.scale,
+                        caption(spent, here, cost_of(here),
+                                ACTIONS[action_index], predicted),
+                        font, panel_for(here),
+                    ))
                 if here[0] == TARGET[0] and here[1] == TARGET[1]:
                     arrived = True
                     break

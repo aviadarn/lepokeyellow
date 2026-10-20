@@ -22,19 +22,28 @@ caught them are the useful part.
 
 ## What it looks like
 
-Same save state, same cost field, 2× scale. The caption under each frame is the
-emulator's own truth — which map, which tile, how many hops from the target —
-and for the planner, the tile it predicted it would land on.
+The caption under each frame is the emulator's own truth — which map, which
+tile, how many hops from the target — and for the model runs, the tile it
+predicted it would land on. The panel beside it is the cost field of the map
+the player is on: dark is closer to the goal, white is ground never walked on
+in the dataset, the ring is the target, the square is the player and the dots
+are where they have already been.
 
 | the recorded human route | the planner | one-step greedy |
 |---|---|---|
 | ![route](media/route.gif) | ![planner](media/planner.gif) | ![greedy](media/greedy.gif) |
-| 120 actions, bedroom → Pallet Town | 30 actions, ends **inside the house** | 50 actions, oscillates on two tiles |
+| crosses Pallet Town, 18 → 11 hops | walks back **into the house** | bumps an NPC, then presses `up` into the text box for 27 actions |
 
-The middle one is the failure this README is mostly about, and it is easier to
-watch than to argue about: the planner leaves the doorstep, walks back through
-the door it came out of, and the caption shows it predicting a tile it is not
-on. Reproduce any of them with `scripts/record_gif.py`.
+The panel is not decoration. Without it these runs are hard to read at all: the
+camera is centred on the player, so walking shows up only as the background
+scrolling, and a stuck run looks exactly like a still image. With it, the first
+recording immediately showed something the frames alone hid — the greedy run is
+not oscillating, it is **stuck in a conversation**. `scripts/play.py` mashes A
+to clear dialogue; `nav_bench.py` and `nav_decisions.py` have no such rule, so
+any run that walks into an NPC is over.
+
+Reproduce any of them with `scripts/record_gif.py`, which also has `--policy
+random` and a `--skip` for jumping an opening stretch of dialogue.
 
 ---
 
