@@ -35,6 +35,7 @@ import torch as t
 
 from poke.actions import ACTIONS
 from poke.env import PokeEnv
+from poke import coords_probe
 from poke import progress as progress_probe
 from poke.ladder import build as build_ladder
 from poke.ladder import dedupe as dedupe_ladder
@@ -45,6 +46,7 @@ from poke.jepa import JEPA
 from poke.maps import name as map_name
 from poke.milestones import chain_from
 from poke.ram import TRAINER_BATTLE, battle_kind, coords, cur_map, in_battle, party_count
+from poke.waypoints import build as build_waypoints
 
 from scripts.plan_cem import action_lookup, cem_plan
 
@@ -189,6 +191,126 @@ class Player:
             "predicted_cost": cost,
         })
 
+    def here_tile(self):
+        return (cur_map(self.env), *coords(self.env))
+
+    def run_waypoints(self, points, probe, lookup, milestone, budget: int) -> bool:
+        """Steer tile to tile. Arrival is read from RAM, not from the model.
+
+        The latent ladder had to guess whether a rung was cleared and got it
+        wrong in both directions. Here the two jobs are separate: whether we
+        have arrived is ground truth, and only the button choice is the
+        model's imagination. A failure can then only be the planner's.
+        """
+        index, spent, reached_count = 0, 0, 0
+        since_arrival = 0
+        # Ground truth makes a real stall detector possible: the furthest
+        # waypoint the player has ACTUALLY stood on. Re-targeting backwards is
+        # needed to recover from wandering into the wrong room, but unbounded
+        # it just oscillates -- one run bounced between waypoints 14 and 15 for
+        # 1,200 actions. Progress is measured on the furthest reached, and the
+        # run ends when that stops moving.
+        furthest, since_furthest = -1, 0
+        while spent < budget and index < len(points):
+            if milestone.reached(self.env, self.history):
+                self.history["waypoints_reached"] = reached_count
+                self.history["waypoints_furthest"] = furthest + 1
+                return True
+            if since_furthest >= self.args.stall:
+                print(f"   stalled: {since_furthest} actions without passing "
+                      f"waypoint {furthest + 1}/{len(points)}")
+                break
+            if in_battle(self.env):
+                self.step(A, "battle", milestone.key)
+                spent += 1
+                continue
+
+            here = self.here_tile()
+            # Skip ahead past any later waypoint already satisfied. Safe in a
+            # way the latent ladder's re-anchoring was not: this compares real
+            # tiles from RAM, not a latent distance that turned out to match
+            # Pallet Town to a rung inside Oak's lab.
+            ahead = [
+                offset
+                for offset in range(min(self.args.waypoint_lookahead,
+                                        len(points) - index))
+                if points[index + offset].reached(here, self.args.waypoint_tolerance)
+            ]
+            if ahead:
+                jumped = max(ahead)
+                index += jumped + 1
+                reached_count += 1
+                since_arrival = 0
+                if index - 1 > furthest:
+                    furthest, since_furthest = index - 1, 0
+                print(f"   waypoint {index}/{len(points)} reached at action "
+                      f"{spent}: {points[index - 1]}"
+                      f"{f' (skipped {jumped})' if jumped else ''}")
+                continue
+            target = points[index]
+            if since_arrival >= self.args.waypoint_budget:
+                # Do NOT just advance. Marching the target forward on every
+                # abandonment is what stranded the latent ladder, and doing it
+                # here was worse: by waypoint 23 the plan wanted Oak's lab
+                # while the player had wandered back to the bedroom.
+                #
+                # Re-target to the nearest upcoming waypoint ON THE PLAYER'S
+                # CURRENT MAP instead. That is sound here in a way it never was
+                # in latent space, because these are real tiles read from RAM.
+                # Search the WHOLE list, not just forward. Walking back into
+                # the house leaves no upcoming waypoint on the current map, and
+                # a forward-only search then falls through to "advance anyway"
+                # -- which is the stranding bug again. Re-targeting backwards
+                # is the correct recovery: it steers to a tile the route
+                # actually passes through from where the player now is.
+                map_id, y, x = here
+                candidates = [
+                    (abs(points[j].y - y) + abs(points[j].x - x), -j, j)
+                    for j in range(len(points))
+                    if points[j].map_id == map_id and y is not None
+                ]
+                nearest = min(candidates)[2] if candidates else min(index + 1,
+                                                                   len(points) - 1)
+                direction = ("back to" if nearest < index
+                             else "on to" if nearest > index else "retry")
+                print(f"   waypoint {index + 1}/{len(points)} ABANDONED at "
+                      f"action {spent}: wanted {target}, at {here} "
+                      f"-> {direction} {nearest + 1}")
+                index = nearest
+                since_arrival = 0
+                continue
+
+            map_index = probe["maps"].tolist().index(target.map_id)
+            initial = self.observe()
+            sequence, cost, _ = cem_plan(
+                self.model, initial, None,
+                horizon=self.args.horizon,
+                samples=self.args.samples,
+                elites=self.args.elites,
+                iterations=self.args.iterations,
+                seed=self.args.seed + spent,
+                verbose=False,
+                score_fn=lambda m, i, seq: coords_probe.plan_costs(
+                    m, i, seq, probe, lookup, map_index, target.y, target.x
+                ),
+            )
+            for action_index in sequence.tolist()[: self.args.commit]:
+                self.step(action_index, "planner",
+                          f"{milestone.key}:wp{index}", cost)
+                spent += 1
+                since_arrival += 1
+                since_furthest += 1
+                if milestone.reached(self.env, self.history):
+                    self.history["waypoints_reached"] = reached_count
+                    return True
+                if target.reached(self.here_tile(), self.args.waypoint_tolerance):
+                    break
+
+        self.history["waypoints_reached"] = reached_count
+        self.history["waypoints_furthest"] = furthest + 1
+        self.history["waypoints_total"] = len(points)
+        return milestone.reached(self.env, self.history)
+
     def run_progress(self, scorer, milestone, budget: int) -> bool:
         """Plan by maximising predicted route progress, no rungs involved.
 
@@ -304,7 +426,22 @@ def main() -> None:
     parser.add_argument("--rom", default="pokeyellow.gbc")
     parser.add_argument("--state", default="states/bedroom.state")
     parser.add_argument("--from-milestone")
-    parser.add_argument("--objective", default="goal", choices=("goal", "progress"),
+    parser.add_argument("--waypoint-budget", type=int, default=25,
+                        help="actions spent reaching one waypoint before "
+                             "moving on to the next")
+    parser.add_argument("--waypoint-tolerance", type=int, default=1,
+                        help="tiles of slack when deciding a waypoint is "
+                             "reached; the probe is only good to ~1.5 tiles "
+                             "and one action can walk two")
+    parser.add_argument("--waypoint-lookahead", type=int, default=4,
+                        help="later waypoints checked for being already "
+                             "satisfied, so overshooting does not strand the "
+                             "plan")
+    parser.add_argument("--waypoint-stride", type=int, default=8,
+                        help="every Nth distinct tile of the demonstration "
+                             "becomes a waypoint")
+    parser.add_argument("--objective", default="goal",
+                        choices=("goal", "progress", "coords"),
                         help="goal: minimise latent distance to a goal image "
                              "(mislocalises at range). progress: maximise "
                              "route position read off the frozen encoder.")
@@ -382,6 +519,18 @@ def main() -> None:
               f"({map_name(cur_map(env))}), party={party_count(env)}")
         print(f"replan every {args.commit} of {args.horizon} planned actions\n")
 
+        waypoints = coord_probe = lookup = None
+        if args.objective == "coords":
+            fitted = coords_probe.fit(model, args.data, device)
+            coord_probe = fitted.to_torch(device)
+            lookup = action_lookup(device)
+            waypoints = build_waypoints(args.data, args.waypoint_stride)
+            print(f"coordinate probe: map id {fitted.map_accuracy:.1%} accurate "
+                  f"over {len(fitted.maps)} maps, "
+                  f"position +/-{fitted.tile_mae:.2f} tiles")
+            print(f"{len(waypoints)} waypoints at stride {args.waypoint_stride}: "
+                  f"{waypoints[0]} -> {waypoints[-1]}\n")
+
         scorer = None
         if args.objective == "progress":
             probe = progress_probe.fit(model, args.data, device)
@@ -418,7 +567,10 @@ def main() -> None:
 
         for milestone in chain:
             print(f"-> {milestone.key}: {milestone.description}")
-            if scorer is not None:
+            if waypoints is not None:
+                ok = player.run_waypoints(waypoints, coord_probe, lookup,
+                                          milestone, args.budget)
+            elif scorer is not None:
                 ok = player.run_progress(scorer, milestone, args.budget)
             elif rungs is not None and milestone is chain[0]:
                 ok = player.run_ladder(rungs, milestone, args.budget)
@@ -455,7 +607,12 @@ def main() -> None:
         "planner": {k: getattr(args, k) for k in
                     ("horizon", "commit", "samples", "elites", "iterations",
                      "budget", "stall", "seed", "ladder", "stride", "approach",
-                     "rung_budget", "reanchor", "anchor_span", "objective")},
+                     "rung_budget", "reanchor", "anchor_span", "objective",
+                     "waypoint_budget", "waypoint_stride",
+                     "waypoint_tolerance", "waypoint_lookahead")},
+        "waypoints_reached": player.history.get("waypoints_reached"),
+        "waypoints_furthest": player.history.get("waypoints_furthest"),
+        "waypoints_total": player.history.get("waypoints_total"),
         "rungs_cleared": player.history.get("rungs_cleared"),
         "rungs_total": player.history.get("rungs_total"),
         "milestones_reached": reached,

@@ -1,0 +1,52 @@
+{
+  "checkpoint": "checkpoints/yellow_v2/best.pt (epoch 10)",
+  "coordinate_probe": {
+    "map_accuracy": 0.995,
+    "tile_mae": 1.51
+  },
+  "note": "Same model, same start state, three planning objectives. Scoring plans on predicted TILES rather than on a latent norm is the only one that navigates three maps and makes sustained forward progress.",
+  "runs": [
+    {
+      "objective": "latent goal distance (ladder)",
+      "actions": 702,
+      "progress": "9/46 rungs",
+      "distinct_tiles": 83,
+      "maps_visited": [
+        0,
+        37,
+        38
+      ],
+      "furthest_map": 0,
+      "reached_pallet": true,
+      "reached_lab": false
+    },
+    {
+      "objective": "latent progress probe",
+      "actions": 144,
+      "progress": "n/a",
+      "distinct_tiles": 24,
+      "maps_visited": [
+        0,
+        37,
+        38
+      ],
+      "furthest_map": 37,
+      "reached_pallet": true,
+      "reached_lab": false
+    },
+    {
+      "objective": "coordinates + waypoints",
+      "actions": 450,
+      "progress": "15/38 waypoints",
+      "distinct_tiles": 43,
+      "maps_visited": [
+        0,
+        37,
+        38
+      ],
+      "furthest_map": 0,
+      "reached_pallet": true,
+      "reached_lab": false
+    }
+  ]
+}

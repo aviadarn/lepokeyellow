@@ -333,6 +333,50 @@ that are not position — text boxes, palette, screen transitions — which is a
 why the progress objective below walks to the highest-scoring map and stays
 there.
 
+## Planning on tiles instead of on a latent norm
+
+Recording `(map, y, x)` makes a different objective possible. Two ridge heads on
+the frozen encoder — one-vs-rest for the map, then a per-map regressor for `y`
+and `x` — read the player's tile straight out of an embedding:
+
+> **map id 99.5 % accurate over 4 maps, position ±1.51 tiles**
+
+So a plan can be scored on *where the model thinks the player will end up*, in
+tiles, rather than on a distance in a space where position is only one of many
+things varying. Waypoints come from the demonstration's own recorded positions,
+which separates the two jobs cleanly: **whether we have arrived is read from
+RAM, and only the button choice is the model's imagination.** A failure can then
+only be the planner's.
+
+Same model, same start state, three objectives:
+
+| objective | progress | distinct tiles | maps |
+|---|---|---|---|
+| latent goal distance (ladder) | 9/46 rungs | 83 | 38, 37, 0 |
+| latent progress probe | oscillated through a door 15× | 24 | 38, 37, 0 |
+| **coordinates + waypoints** | **15/38 waypoints** | 43 | 38, 37, 0 |
+
+The coordinate objective navigates bedroom → house → Pallet Town and gets about
+40 % along the route before stalling. It is the first objective that makes
+sustained, checkable forward progress.
+
+It still does not finish, and the limiting factor has moved. Three controller
+rules were tried for what to do when a waypoint is not reached in time, and all
+three failed differently:
+
+- **advance to the next** stranded the plan — by waypoint 23 it wanted Oak's lab
+  while the player had wandered back to the bedroom. The same bug as the latent
+  ladder, rebuilt by hand.
+- **re-target forwards on the current map** cannot recover from walking into the
+  wrong room, because no upcoming waypoint is on that map, so it falls through
+  to advancing anyway.
+- **re-target anywhere on the current map** recovers but oscillates: one run
+  bounced between waypoints 14 and 15 for 1,200 actions.
+
+The run above uses the third rule with a stall detector on **furthest waypoint
+actually stood on**, which is a ground-truth quantity and ends the run honestly
+rather than tuning a fourth heuristic.
+
 ## Cost
 
 Measured on an Apple M5 (32 GB) with torch 2.13 on MPS, on this architecture at
