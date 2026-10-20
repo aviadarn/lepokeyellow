@@ -289,6 +289,57 @@ encounter — at which point `wIsInBattle` read 1 and the battle controller took
 over, correctly, with an empty party. Yellow genuinely enters a battle state
 with zero Pokémon during that cutscene.
 
+## Why it fails: the encoder is a map detector
+
+A linear probe on the frozen encoder, with the controls that make a probe score
+mean anything — blocked and purged splits (adjacent frames are nearly
+identical), a raw-pixel arm, a shuffled-label arm, and a swept ridge strength:
+
+| probe | R² | MAE (actions) | best α |
+|---|---|---|---|
+| **encoder** | **0.697** | **55.2** | 100 |
+| raw pixels | 0.105 | 87.1 | 1000 |
+| encoder, shuffled labels | −0.031 | 117.7 | 1000 |
+| predict the mean | 0.000 | 116.7 | — |
+
+Route position looks linearly recoverable. It is not what it appears:
+
+| question | answer |
+|---|---|
+| map id from the embedding | **93.6 %** (majority-class baseline 50.3 %, 4 maps) |
+| position *within* map 40 alone, 235 frames | **R² −0.297**, ±63 actions — at or below chance |
+
+**The encoder knows which room you are in and not where in the room.** The
+0.697 is carried entirely by map identity, and ±55 actions is about the length
+of one within-map stretch. That single fact explains every failure above:
+latent distance mislocalises because within a map there is no geometry;
+consecutive ladder rungs sit 0.0017 apart for the same reason; and Pallet Town
+matches a late-route rung because both are "not the bedroom".
+
+Planning on that progress signal does exactly what the mechanism predicts.
+Measured over the planner's own trajectory:
+
+| map | probe score | transition | mean Δ |
+|---|---|---|---|
+| 38 bedroom | 10.7 | 37 → 0 | **+99.2** |
+| 37 house | 82.4 | 0 → 37 | **−111.4** |
+| 0 Pallet Town | 208.3 | | |
+
+The planner walks to the highest-scoring map and harvests the door crossing —
+**15 round trips through the front door**, reporting "progress 234 of 467"
+while never entering map 40, which is where action 234 actually is. The probe
+is an excellent *passive* predictor and a terrible *optimisation target*.
+
+Worth noting what is not at fault: the probe survives the predictor almost
+unchanged (±48.2 actions on predicted embeddings against ±47.2 on encoded
+ones), so this is not rollout drift. And one-step prediction remains 44× to
+631× better than a no-change baseline. The dynamics model is fine; the
+representation has no within-room metric for anything to plan against.
+
+The fix is a training-signal change, not a planner change — the encoder is
+never asked to distinguish two positions in the same room, because predicting
+the next frame does not require it.
+
 ## Cost
 
 Measured on an Apple M5 (32 GB) with torch 2.13 on MPS, on this architecture at

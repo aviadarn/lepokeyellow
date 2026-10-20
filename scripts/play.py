@@ -35,6 +35,7 @@ import torch as t
 
 from poke.actions import ACTIONS
 from poke.env import PokeEnv
+from poke import progress as progress_probe
 from poke.ladder import build as build_ladder
 from poke.ladder import dedupe as dedupe_ladder
 from poke.ladder import load_frames as load_ladder_frames
@@ -45,7 +46,7 @@ from poke.maps import name as map_name
 from poke.milestones import chain_from
 from poke.ram import TRAINER_BATTLE, battle_kind, coords, cur_map, in_battle, party_count
 
-from scripts.plan_cem import cem_plan
+from scripts.plan_cem import action_lookup, cem_plan
 
 A = ACTIONS.index("a")
 
@@ -188,6 +189,57 @@ class Player:
             "predicted_cost": cost,
         })
 
+    def run_progress(self, scorer, milestone, budget: int) -> bool:
+        """Plan by maximising predicted route progress, no rungs involved.
+
+        There is nothing to advance through and nothing to abandon: the
+        objective is a single scalar read off each predicted state, so the loop
+        is plan, commit a few actions, look at the real screen, plan again.
+        """
+        spent = 0
+        best_progress = -float("inf")
+        since_improvement = 0
+        while spent < budget:
+            if milestone.reached(self.env, self.history):
+                return True
+            if in_battle(self.env):
+                self.step(A, "battle", milestone.key)
+                spent += 1
+                continue
+
+            initial = self.observe()
+            sequence, cost, _ = cem_plan(
+                self.model, initial, None,
+                horizon=self.args.horizon,
+                samples=self.args.samples,
+                elites=self.args.elites,
+                iterations=self.args.iterations,
+                seed=self.args.seed + spent,
+                verbose=False,
+                score_fn=scorer,
+            )
+            for action_index in sequence.tolist()[: self.args.commit]:
+                self.step(action_index, "planner", milestone.key, cost)
+                spent += 1
+                if milestone.reached(self.env, self.history):
+                    return True
+
+            # observe() is [1, D], so the product is [1]; take the scalar.
+            here = float(
+                (self.observe().cpu().numpy() @ scorer.weights_np
+                 + scorer.intercept_np).reshape(-1)[0]
+            )
+            if here > best_progress + self.args.progress_epsilon:
+                best_progress, since_improvement = here, 0
+                print(f"   progress {here:7.1f} / {scorer.length} at action {spent}")
+            else:
+                since_improvement += self.args.commit
+                if since_improvement >= self.args.stall:
+                    print(f"   stalled: {since_improvement} actions without "
+                          f"progress (best {best_progress:.1f})")
+                    return False
+        return milestone.reached(self.env, self.history)
+
     def run_milestone(self, milestone, budget: int) -> bool:
         goal = (
             self.goal_embedding(milestone.goal_state)
@@ -252,6 +304,12 @@ def main() -> None:
     parser.add_argument("--rom", default="pokeyellow.gbc")
     parser.add_argument("--state", default="states/bedroom.state")
     parser.add_argument("--from-milestone")
+    parser.add_argument("--objective", default="goal", choices=("goal", "progress"),
+                        help="goal: minimise latent distance to a goal image "
+                             "(mislocalises at range). progress: maximise "
+                             "route position read off the frozen encoder.")
+    parser.add_argument("--progress-epsilon", type=float, default=1.0,
+                        help="progress in actions that counts as improvement")
     parser.add_argument("--ladder", action="store_true",
                         help="climb subgoals taken from the demonstration route "
                              "instead of steering straight at the milestone")
@@ -324,6 +382,33 @@ def main() -> None:
               f"({map_name(cur_map(env))}), party={party_count(env)}")
         print(f"replan every {args.commit} of {args.horizon} planned actions\n")
 
+        scorer = None
+        if args.objective == "progress":
+            probe = progress_probe.fit(model, args.data, device)
+            lookup = action_lookup(device)
+            weights, intercept = probe.torch_weights(device)
+
+            def scorer(model_, initial_, sequences):
+                return progress_probe.plan_costs(
+                    model_, initial_, sequences, weights, intercept, lookup
+                )
+
+            scorer.weights_np = probe.weights
+            scorer.intercept_np = probe.intercept
+            scorer.length = probe.length
+            print(f"progress probe: cross-validated R^2 {probe.cv_r2:.3f}, "
+                  f"+/-{probe.cv_mae:.0f} actions over {probe.length}")
+            print(f"  error on encoded next states   {probe.encoded_mae:6.1f} actions")
+            print(f"  error on PREDICTED next states {probe.predicted_mae:6.1f} actions")
+            if not probe.survives_rollout:
+                raise SystemExit(
+                    "the probe does not survive the predictor: its error on "
+                    "predicted embeddings is no better than guessing the "
+                    "middle of the route, so every plan would score "
+                    "plausibly and none of it would mean anything."
+                )
+            print()
+
         rungs = None
         if args.ladder:
             ladder = dedupe_ladder(args.data, build_ladder(args.data, args.stride))
@@ -333,7 +418,9 @@ def main() -> None:
 
         for milestone in chain:
             print(f"-> {milestone.key}: {milestone.description}")
-            if rungs is not None and milestone is chain[0]:
+            if scorer is not None:
+                ok = player.run_progress(scorer, milestone, args.budget)
+            elif rungs is not None and milestone is chain[0]:
                 ok = player.run_ladder(rungs, milestone, args.budget)
             else:
                 ok = player.run_milestone(milestone, args.budget)
@@ -368,7 +455,7 @@ def main() -> None:
         "planner": {k: getattr(args, k) for k in
                     ("horizon", "commit", "samples", "elites", "iterations",
                      "budget", "stall", "seed", "ladder", "stride", "approach",
-                     "rung_budget", "reanchor", "anchor_span")},
+                     "rung_budget", "reanchor", "anchor_span", "objective")},
         "rungs_cleared": player.history.get("rungs_cleared"),
         "rungs_total": player.history.get("rungs_total"),
         "milestones_reached": reached,

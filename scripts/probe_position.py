@@ -84,6 +84,13 @@ def main() -> None:
                              "must exceed folds or the probe is asked to "
                              "extrapolate along the route")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--by-map", action="store_true",
+                        help="also ask whether the probe is an odometer or just "
+                             "a map detector: map-id accuracy, and position "
+                             "within a single map")
+    parser.add_argument("--rom", default="pokeyellow.gbc")
+    parser.add_argument("--route", default="routes/yellow_pikachu.json")
+    parser.add_argument("--state", default="states/bedroom.state")
     parser.add_argument("--out", default="results/probe_position.json")
     parser.add_argument("--device", default=default_device())
     args = parser.parse_args()
@@ -136,6 +143,65 @@ def main() -> None:
               f"{swept[best_alpha]['mae']:>16.1f}{best_alpha:>12g}")
     print(f"{'predict the mean':<26}{0.0:>8.3f}{float(np.abs(position - position.mean()).mean()):>16.1f}")
 
+    by_map = {}
+    if args.by_map:
+        # Replaying the route is the only way to label each frame with its map;
+        # the dataset does not store one.
+        from poke.actions import ACTIONS
+        from poke.env import PokeEnv
+        from poke.ram import cur_map
+        from poke.routes import Route
+
+        route = Route.load(args.route)
+        env = PokeEnv(args.rom, args.state, headless=True)
+        try:
+            env.reset()
+            maps = [cur_map(env)]
+            for action in route.actions:
+                env.step(ACTIONS.index(action))
+                maps.append(cur_map(env))
+        finally:
+            env.close()
+        # The episode runs past the route by --post-goal frames, which all sit
+        # on the map the route ended in.
+        while len(maps) < length:
+            maps.append(maps[-1])
+        maps = np.array(maps[:length])
+
+        print("\nis it an odometer, or a map detector?")
+        # Map identity, one-vs-rest ridge, scored as accuracy.
+        ids = sorted(set(maps.tolist()))
+        votes = np.zeros((length, len(ids)))
+        for column, map_id in enumerate(ids):
+            target = (maps == map_id).astype(np.float64)
+            scored = cross_val(embeddings, target, alpha=100.0, folds=args.folds,
+                               purge=args.purge, blocks=args.blocks)
+            votes[:, column] = scored["predictions"]
+        predicted_map = np.array(ids)[votes.argmax(axis=1)]
+        accuracy = float((predicted_map == maps).mean())
+        majority = float(max((maps == i).mean() for i in ids))
+        print(f"  map id from the embedding: {accuracy:.1%} accurate "
+              f"(majority-class baseline {majority:.1%}, {len(ids)} maps)")
+        by_map["map_id_accuracy"] = accuracy
+        by_map["map_id_majority_baseline"] = majority
+
+        # Position WITHIN the single longest map stretch. If the probe is an
+        # odometer this still works; if it is a map detector it collapses.
+        best = max(ids, key=lambda i: int((maps == i).sum()))
+        mask = maps == best
+        inside_x = embeddings[mask]
+        inside_y = position[mask]
+        inner_blocks = max(args.folds, min(args.blocks, len(inside_y) // 8))
+        inner = cross_val(inside_x, inside_y, alpha=100.0, folds=args.folds,
+                          purge=args.purge, blocks=inner_blocks)
+        print(f"  position within map {best} alone ({int(mask.sum())} frames): "
+              f"R^2 {inner['r2']:.3f}, +/-{inner['mae']:.0f} actions")
+        by_map["largest_map"] = int(best)
+        by_map["largest_map_frames"] = int(mask.sum())
+        by_map["within_map_r2"] = inner["r2"]
+        by_map["within_map_mae"] = inner["mae"]
+        by_map["is_map_detector"] = bool(accuracy > 0.8 and inner["r2"] < 0.2)
+
     encoder_r2 = results["encoder"]["r2"]
     encoder_mae = results["encoder"]["mae"]
     pixel_mae = results["raw pixels"]["mae"]
@@ -168,12 +234,28 @@ def main() -> None:
               f"Reading progress out of the embedding needs a better readout "
               f"than a linear one, or a training signal that makes position "
               f"linearly available.")
+    elif by_map.get("is_map_detector"):
+        print(f"VERDICT: MAP DETECTOR, not an odometer. Route position scores "
+              f"R^2 {encoder_r2:.3f} overall, but that is carried by map "
+              f"identity: map id is {by_map['map_id_accuracy']:.1%} accurate "
+              f"against a {by_map['map_id_majority_baseline']:.1%} "
+              f"majority-class baseline, while position WITHIN map "
+              f"{by_map['largest_map']} alone scores "
+              f"{by_map['within_map_r2']:.3f} over "
+              f"{by_map['largest_map_frames']} frames -- at or below chance. "
+              f"The encoder knows which room you are in and not where in the "
+              f"room, and +/-{encoder_mae:.0f} actions is about the length of "
+              f"a within-map stretch. Progress read this way is not a usable "
+              f"planning objective: maximising it walks to the highest-scoring "
+              f"map and stays there.")
     else:
         print(f"VERDICT: route position IS linearly recoverable (R^2 "
               f"{encoder_r2:.3f}, +/-{encoder_mae:.0f} actions), beating raw "
               f"pixels ({pixel_mae:.0f}). The information is there and "
               f"Euclidean distance is the wrong way to read it -- replace the "
-              f"planner's cost with predicted progress; the model can stay.")
+              f"planner's cost with predicted progress; the model can stay. "
+              f"Re-run with --by-map before trusting this: a probe that is "
+              f"really a map detector scores well here too.")
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -191,6 +273,7 @@ def main() -> None:
         "alpha_sweep": args.alpha,
         "results": results,
         "mean_baseline_mae": float(np.abs(position - position.mean()).mean()),
+        "by_map": by_map,
     }, indent=2) + "\n")
     print("wrote", out)
 

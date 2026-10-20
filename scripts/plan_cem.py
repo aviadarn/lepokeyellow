@@ -54,8 +54,14 @@ def cem_plan(
     min_probability: float = 0.01,
     seed: int = 0,
     verbose: bool = True,
+    score_fn=None,
 ) -> tuple[t.Tensor, float, list[float]]:
-    """Use categorical Cross-Entropy Method to find an action sequence."""
+    """Use categorical Cross-Entropy Method to find an action sequence.
+
+    `score_fn(model, initial, sequences) -> costs` replaces the goal-distance
+    cost, so an alternative objective -- predicted route progress, say -- can
+    reuse the same search unchanged. `goals` is ignored when it is supplied.
+    """
 
     if horizon < 1 or samples < 1 or iterations < 1:
         raise ValueError("horizon, samples, and iterations must be positive")
@@ -90,7 +96,11 @@ def cem_plan(
             generator=generator,
         ).transpose(0, 1)
 
-        costs = plan_costs(model, initial, goals, sequences)
+        costs = (
+            score_fn(model, initial, sequences)
+            if score_fn is not None
+            else plan_costs(model, initial, goals, sequences)
+        )
         elite_indices = costs.topk(elites, largest=False).indices
         elite_sequences = sequences[elite_indices]
 

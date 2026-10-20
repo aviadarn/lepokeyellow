@@ -259,5 +259,14 @@
       "mae": 117.69774339760929
     }
   },
-  "mean_baseline_mae": 116.74946466809422
+  "mean_baseline_mae": 116.74946466809422,
+  "by_map": {
+    "map_id_accuracy": 0.9357601713062098,
+    "map_id_majority_baseline": 0.5032119914346895,
+    "largest_map": 40,
+    "largest_map_frames": 235,
+    "within_map_r2": -0.29717535492124786,
+    "within_map_mae": 62.93720326398175,
+    "is_map_detector": true
+  }
 }
