@@ -33,6 +33,12 @@ class RamMap:
     y_coord: int
     x_coord: int
     in_battle: int
+    event_flags: int
+    num_bag_items: int
+    facing: int
+    # Filled by scripts/calibrate_control.py. None means "not measured for
+    # this version", and poke.control refuses rather than reading a guess.
+    text_box: int | None = None
     confidence: dict[str, str] = field(default_factory=dict)
 
     def verified(self, name: str) -> bool:
@@ -61,6 +67,9 @@ RED = Game(
         y_coord=0xD361,
         x_coord=0xD362,
         in_battle=0xD057,
+        event_flags=0xD747,
+        num_bag_items=0xD31D,
+        facing=0xC109,
         confidence={
             "party_count": "documented",
             "party_species": "documented",
@@ -68,6 +77,9 @@ RED = Game(
             "y_coord": "documented",
             "x_coord": "documented",
             "in_battle": "documented",
+            "event_flags": "documented",
+            "num_bag_items": "documented",
+            "facing": "documented",
         },
     ),
 )
@@ -83,6 +95,9 @@ YELLOW = Game(
         y_coord=0xD360,
         x_coord=0xD361,
         in_battle=0xD056,
+        event_flags=0xD746,
+        num_bag_items=0xD31C,
+        facing=0xC109,
         confidence={
             # Watched go 0 -> 1 on this cartridge when Pikachu arrives.
             "party_count": "confirmed-on-rom",
@@ -98,6 +113,12 @@ YELLOW = Game(
             # Read 2 (trainer battle) during the forced rival fight in Oak's
             # lab while Red's 0xD057 stayed 0, and cleared to 0 when it ended.
             "in_battle": "confirmed-on-rom",
+            # Watched bits 37/56/57 flip in the right order on this cartridge
+            # while the parcel moved through the bag (flag spike, 2026-10-21).
+            "event_flags": "confirmed-on-rom",
+            "num_bag_items": "confirmed-on-rom",
+            # Below $CF1A, so the -1 shift does not apply.
+            "facing": "documented",
         },
     ),
 )
