@@ -1,0 +1,38 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+game=yellow start=states/bedroom.state at 38 (player's bedroom), party=0
+replan every 1 of 14 planned actions
+
+coordinate probe: map id 99.2% accurate over 4 maps, mlp position head on real embeddings +/-0.03 tiles held out (linear 0.21 in-sample)
+41 waypoints at stride 3: map 38 (7,1) -> map 0 (0,10)
+walkmap: 286 tiles across 4 maps, 16 doorways
+
+-> pikachu: hold a Pokemon (Oak hands over Pikachu)
+   node 3/41 REACHED at action 4: map 38 (1,6)
+   node 6/41 REACHED at action 11: map 37 (3,1)
+   node 8/41 REACHED at action 14: map 37 (2,2)
+   node 10/41 REACHED at action 20: map 37 (7,4)
+   node 20/41 REACHED at action 40: map 0 (4,8)
+   node 22/41 REACHED at action 92: map 0 (10,9)
+   node 33/41 REACHED at action 175: map 40 (6,5)
+   node 36/41 REACHED at action 180: map 40 (4,7)
+   node 37/41 REACHED at action 209: map 40 (4,5)
+   REACHED after 227 actions (map 40, party 1)
+
+-> rival_beaten: survive the forced rival battle in the lab
+   REACHED after 86 actions (map 40, party 1)
+
+-> left_lab: get back out of Oak's lab
+   node 37/41 is not reachable on foot (map 40 (4,5)); going on without it
+   node 39/41 REACHED at action 58: map 40 (11,5)
+   REACHED after 59 actions (map 0, party 1)
+
+-> left_pallet: leave Pallet Town
+   node 40/41 REACHED at action 1: map 0 (12,11)
+   stalled waiting for node 41/41 (map 0 (0,10)); going on without it
+   stalled: 250 actions without passing node 40/41
+   failed after 501 actions (map 40, party 1)
+
+milestones reached: 3/4  ['pikachu', 'rival_beaten', 'left_lab']
+actions by controller: {'planner': 327, 'script': 332, 'approach': 24, 'battle': 83, 'dialogue': 67, 'decline': 40}
+477.8s for 873 actions
+wrote results/play_milestones_s0.json

@@ -38,6 +38,13 @@ class Waypoint:
     # walk north forever. Measured: 240 actions oscillating between (1, 11)
     # and (3, 11) two tiles from the trigger, pressing b 61 times.
     scripted: bool = False
+    # The direction the demonstration was moving when it stepped onto this
+    # tile, and therefore the way the player is facing when the scene fires.
+    # Standing on the trigger tile is not enough: Gen 1 interacts with the tile
+    # the player FACES, and Pikachu's hand-over is a Poke Ball on a table one
+    # tile north of (4, 7). Reached facing east, 60 A presses do nothing;
+    # turn up first and the party has a Pikachu 34 presses later.
+    facing: str | None = None
 
     def reached(self, here, tolerance: int = 0) -> bool:
         """Same map, and within `tolerance` tiles.
@@ -55,6 +62,27 @@ class Waypoint:
 
     def __str__(self) -> str:
         return f"map {self.map_id} ({self.y},{self.x})"
+
+
+def gate(points, at: int, touched) -> int:
+    """Never aim past a trigger tile that has not been stood on.
+
+    A scripted waypoint is a tile the demonstration lost control ON -- the
+    scene fires because the player walked there. The tiles the scene then
+    carries them to are waypoints as well, and those are the ones a planner
+    arrives at by accident. This route holds map 40 (3, 5) twice, once carried
+    in through the lab door and once carried by the hand-over itself, and
+    `localise` matches the later one because ties go forward.
+
+    Measured: the planner walked onto (3, 5) under its own power at action 111,
+    the route reported 38/38 complete, and the tile that actually starts the
+    hand-over -- two tiles east and one south -- was never stood on at all. The
+    run then spent 489 actions pressing A at a table that was not there.
+    """
+    for index, point in enumerate(points):
+        if point.scripted and index not in touched:
+            return min(at, index)
+    return at
 
 
 def localise(points, here, floor: int = 0) -> int | None:
@@ -136,6 +164,29 @@ def build(data_path: str, stride: int = 8,
             if not navigable[step] and (step == 0 or navigable[step - 1]):
                 navigable[step] = True
 
+    tiles = location.tolist()
+
+    def facing_at(step: int) -> str | None:
+        """Which way the player was moving when they arrived on this tile.
+
+        Read from the raw positions rather than from the kept waypoints: the
+        step before a trigger tile is usually inside the same scripted run and
+        has been filtered out, and it is exactly the step that says which way
+        the player turned. A move that changes map, stands still or crosses
+        both axes at once says nothing about facing.
+        """
+        if step <= 0 or step >= len(tiles):
+            return None
+        before, now = tiles[step - 1], tiles[step]
+        if before[0] != now[0]:
+            return None
+        dy, dx = now[1] - before[1], now[2] - before[2]
+        if bool(dy) == bool(dx):
+            return None
+        if dy:
+            return "up" if dy < 0 else "down"
+        return "left" if dx < 0 else "right"
+
     def is_scripted(step: int) -> bool:
         """The step was kept despite the counterfactual calling it scripted."""
         return (navigable is not None and step < len(scripted_at)
@@ -154,7 +205,8 @@ def build(data_path: str, stride: int = 8,
 
     return [
         Waypoint(map_id=int(tile[0]), y=int(tile[1]), x=int(tile[2]),
-                 route_step=step, scripted=is_scripted(step))
+                 route_step=step, scripted=is_scripted(step),
+                 facing=facing_at(step))
         for tile, step in picked
         if tile[0] >= 0
     ]

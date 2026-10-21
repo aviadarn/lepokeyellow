@@ -176,3 +176,56 @@ def test_missing_location_dataset_is_a_clear_error(h5_path):
         del f["location"]
     with pytest.raises(RuntimeError, match="no location dataset"):
         build(path)
+
+
+def test_a_wall_found_by_walking_into_it_drops_the_edge():
+    """Four-adjacency assumes two recorded tiles side by side are connected.
+    Inside Oak's lab that is false: (4, 4) and (4, 5) are both in the data, a
+    counter runs between them, and the only reason (4, 5) was ever recorded is
+    that a cutscene carried the player onto it. The field read one hop to the
+    trigger tile and the planner pressed right 33 times into the counter.
+    """
+    walk = WalkMap({40: {
+        (4, 4): set(), (4, 5): set(), (4, 6): set(), (4, 7): set(),
+        (5, 4): set(), (5, 5): set(), (5, 6): set(), (5, 7): set(),
+    }})
+    target = (40, 4, 7)
+    assert walk.global_distances(target)[(40, 4, 4)] == 3
+    # The counter: you cannot step east off (4, 4).
+    blocked = {((40, 4, 4), (40, 4, 5))}
+    around = walk.global_distances(target, blocked=blocked)
+    assert around[(40, 4, 4)] == 5          # down, along row 5, back up
+    assert around[(40, 4, 6)] == 1          # everything else is untouched
+
+
+def test_blocking_an_edge_leaves_the_other_direction_alone():
+    """A wall is learned from one side. Nothing says the reverse step is
+    impossible, and the graph already carries one-way edges."""
+    walk = WalkMap({0: {(1, 1): set(), (1, 2): set()}})
+    blocked = {((0, 1, 1), (0, 1, 2))}
+    assert walk.global_distances((0, 1, 1), blocked=blocked)[(0, 1, 2)] == 1
+    assert (0, 1, 1) not in walk.global_distances((0, 1, 2), blocked=blocked)
+
+
+def test_a_blocked_edge_shows_up_in_the_stacked_fields():
+    walk = WalkMap({0: {(0, 0): set(), (0, 1): set(), (1, 0): set(), (1, 1): set()}})
+    grids = walk.fields([0], (0, 0, 0), (4, 4), unknown=99.0, fill=0.0,
+                        blocked={((0, 0, 1), (0, 0, 0))})
+    assert grids[0][0, 1] == 3.0
+
+
+def test_a_door_walked_one_way_is_still_a_way_back(h5_path):
+    """No episode ever left Oak's lab, so every recorded doorway points
+    inwards. Without the reverse, no tile in Pallet has any cost from inside
+    the lab at all: the player stepped out, back in through the same door, and
+    spent 482 actions on a flat field."""
+    path = write(h5_path, [[(0, 12, 11), (40, 11, 5), (40, 11, 6)]])
+    walk = build(path)
+    assert walk.doors[(0, 12, 11)] == {(40, 11, 5)}
+    out = walk.global_distances((0, 12, 11), two_way_doors=True)
+    assert out[(40, 11, 5)] == 1
+    assert out[(40, 11, 6)] == 2
+    # Off by default: it cost more than it bought. Giving the planner a door
+    # as a shortcut between rooms it had never walked that way took two of
+    # three seeds from four milestones to none.
+    assert (40, 11, 5) not in walk.global_distances((0, 12, 11))

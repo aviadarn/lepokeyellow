@@ -163,3 +163,55 @@ def test_being_nearest_is_not_the_same_as_having_arrived():
     at = localise(route, here)
     assert at is not None
     assert not route[at].reached(here, tolerance=1)
+
+
+def test_facing_is_the_direction_the_player_arrived_from(h5_path):
+    """A trigger needs the tile AND the way the player is facing: Pikachu's
+    hand-over is a ball on a table, and reaching its tile facing east does
+    nothing at all."""
+    path = write(h5_path, [(40, 5, 7), (40, 4, 7), (40, 4, 8)])
+    points = build(path, stride=1)
+    assert [p.facing for p in points] == [None, "up", "right"]
+
+
+def test_facing_is_unknown_when_the_move_cannot_be_a_turn(h5_path):
+    """A cutscene moves the player diagonally, several tiles at once, or into
+    another room. None of those say which way they ended up facing."""
+    path = write(h5_path, [(40, 5, 7), (40, 4, 6), (0, 4, 6)])
+    assert [p.facing for p in build(path, stride=1)] == [None, None, None]
+
+
+def gated_route():
+    return [
+        Waypoint(40, 5, 5, 0),
+        Waypoint(40, 4, 7, 10, scripted=True, facing="up"),
+        Waypoint(40, 4, 5, 20, scripted=True),
+        Waypoint(40, 3, 5, 30, scripted=True, facing="up"),
+    ]
+
+
+def test_a_trigger_tile_cannot_be_skipped():
+    """The route holds (3, 5) twice -- carried in through the door, and carried
+    there again by the hand-over -- and localise matches the later one because
+    ties go forwards. Measured: the planner walked onto it under its own power
+    at action 111, reported 38/38 complete, and never stood on the tile that
+    starts the scene."""
+    from poke.waypoints import gate
+
+    assert gate(gated_route(), 3, touched=set()) == 1
+    assert gate(gated_route(), 3, touched={1}) == 2
+    assert gate(gated_route(), 3, touched={1, 2}) == 3
+
+
+def test_the_gate_is_open_once_every_trigger_has_been_stood_on():
+    from poke.waypoints import gate
+
+    assert gate(gated_route(), 3, touched={1, 2, 3}) == 3
+
+
+def test_the_gate_never_drags_the_route_forwards():
+    """It is a ceiling, not a target: a player still at the first node stays
+    there even though the gate is further on."""
+    from poke.waypoints import gate
+
+    assert gate(gated_route(), 0, touched=set()) == 0

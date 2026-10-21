@@ -48,7 +48,7 @@ from poke.maps import name as map_name
 from poke.milestones import chain_from
 from poke.ram import TRAINER_BATTLE, battle_kind, coords, cur_map, in_battle, party_count
 from poke.waypoints import build as build_waypoints
-from poke.waypoints import localise
+from poke.waypoints import gate, localise
 
 from scripts.plan_cem import action_lookup, cem_plan
 
@@ -67,6 +67,23 @@ class Player:
         self.log: list[dict] = []
         self.history: dict = {}
         self.blocked: set[int] = set()
+        # Trigger tiles stood on, exactly. A scripted waypoint is a gate, and
+        # a gate is only open once the player has been ON it.
+        self.touched: set[int] = set()
+        self.a_run = 0
+        self.talked: dict[int, int] = {}
+        self.waited: dict[int, int] = {}
+        self.since_move = 0
+        self.party_was = -1
+        self.decline = 0
+        self.faced_at = None
+        # Edges the player has walked into. Four-adjacency assumes that two
+        # recorded tiles side by side are connected, and inside Oak's lab a
+        # counter proves otherwise -- so the assumption is held until the game
+        # refutes it, and the cost field is rebuilt without the edge.
+        self.walls: set[tuple[tuple, tuple]] = set()
+        self.tried: set[int] = set()
+        self.approached: dict[int, int] = {}
         self.visits: np.ndarray | None = None
         self.walk = None
         self.maps: list[int] = []
@@ -119,7 +136,9 @@ class Player:
         key = (target.map_id, target.y, target.x)
         if key not in self._fields:
             grids = self.walk.fields(self.maps, key, (32, 32),
-                                     unknown=self.args.unknown_cost)
+                                     unknown=self.args.unknown_cost,
+                                     fill=self.args.field_fill,
+                                     blocked=frozenset(self.walls))
             self._fields[key] = t.from_numpy(grids).to(self.device)
         return self._fields[key]
 
@@ -253,8 +272,47 @@ class Player:
         ).mean())
         if self.here_tile() != before_tile:
             self.blocked = set()
-        elif difference <= self.args.screen_epsilon:
-            self.blocked.add(action_index)
+            self.tried = set()
+        else:
+            # A direction pressed twice from one tile without moving is a
+            # wall: the first press only turns the player, the second would
+            # walk if anything were open. The screen test below cannot see
+            # this one -- Oak and the rival animate every frame, so the mean
+            # pixel difference never falls under the threshold inside the lab,
+            # and the planner pressed right into a counter 33 times without
+            # ever marking it. Confirm control first, because the player also
+            # stands still through a text box, and a cutscene that ignores the
+            # d-pad would otherwise be recorded as walls on every side.
+            # Only just after a move, because the player also stands still
+            # through a text box and a cutscene ignores the d-pad, and a scene
+            # would otherwise be recorded as walls on every side. Recency is
+            # the test rather than `has_control`, which costs a snapshot and a
+            # restore: run inside every step it made the whole run
+            # irreproducible from its own action log.
+            if (action_index in self.tried
+                    and ACTIONS[action_index] in self.STEPS
+                    and self.since_move <= self.args.wall_window):
+                self.note_wall(before_tile, action_index)
+            self.tried.add(action_index)
+            if difference <= self.args.screen_epsilon:
+                self.blocked.add(action_index)
+        if self.here_tile() == before_tile:
+            self.since_move += 1
+            self.a_run += 1 if ACTIONS[action_index] == "a" else 0
+        else:
+            self.since_move = 0
+            self.a_run = 0
+        # A memory of what does nothing HERE goes stale when the world moves
+        # on: A pressed into a closed text box is blocked, then the party gains
+        # a Pikachu and the next box needs A. Measured, the planner spent 488
+        # actions pressing right at one tile with A masked out of every plan.
+        party = party_count(self.env)
+        if party != self.party_was:
+            self.party_was = party
+            self.blocked = set()
+            self.tried = set()
+            if party:
+                self.decline = self.args.decline
         self.note_visit()
         if battle_kind(self.env) == TRAINER_BATTLE:
             self.history["saw_trainer_battle"] = True
@@ -270,6 +328,42 @@ class Player:
             "battle": battle_kind(self.env),
             "predicted_cost": cost,
         })
+
+    STEPS = {"up": (-1, 0), "down": (1, 0), "left": (0, -1), "right": (0, 1)}
+
+    def talk(self) -> int:
+        """A to advance text, B once A has stopped getting anywhere.
+
+        A commits and B cancels, and the difference matters exactly once in
+        this story: the hand-over ends on "do you want to give a nickname?",
+        where A answers YES and opens a naming screen in which A types another
+        letter, B deletes one, and the way out is a button this action set does
+        not have. Measured, the run sat there for its whole remaining budget.
+        B alone is no answer either -- it never advances the hand-over at all,
+        80 presses, no Pikachu. So: A, and a B whenever a run of A presses has
+        moved nothing, because that is what a menu looks like from here and a
+        conversation does not.
+        """
+        if self.a_run >= self.args.talk_run:
+            self.a_run = 0
+            return ACTIONS.index("b")
+        return A
+
+    def note_wall(self, tile, action_index: int) -> None:
+        """A direction that moved nothing and drew nothing is a wall.
+
+        Recorded as an edge of the graph rather than as a fact about the tile,
+        because that is what the cost field is made of: dropping it re-runs BFS
+        around the obstacle instead of through it. Dropped caches, so the next
+        plan is scored on the corrected field.
+        """
+        step = self.STEPS.get(ACTIONS[action_index])
+        if step is None or self.walk is None or tile[1] is None:
+            return
+        edge = (tile, (tile[0], tile[1] + step[0], tile[2] + step[1]))
+        if edge not in self.walls:
+            self.walls.add(edge)
+            self._fields.clear()
 
     in_control = True
 
@@ -301,7 +395,15 @@ class Player:
         Nothing is "abandoned", so there is no timer to tune. Progress is the
         furthest node localised, and the run ends when that stops moving.
         """
-        spent, furthest, since_furthest = 0, -1, 0
+        # The route is one route, not one per milestone. Starting each
+        # milestone from node 0 let the projection fall back onto tiles the
+        # player had already left: after the rival's fight, 207 of 336 actions
+        # were spent pursuing a node four tiles BEHIND, and the lab door --
+        # the only thing between the player and the next three milestones --
+        # was never targeted at all.
+        spent, since_furthest = 0, 0
+        furthest = max(self.history.get("pursuit_furthest", 0) - 1, -1)
+        aimed = max(furthest, 0)
         route_done = False
         stuck_at, stuck_for, talking_for = None, 0, 0
         # Dialogue and cutscenes ignore the d-pad. At the north edge of Pallet
@@ -316,11 +418,43 @@ class Player:
                 self.history["pursuit_furthest"] = furthest + 1
                 return True
             if since_furthest >= self.args.stall:
+                waiting = next((index for index, point in enumerate(points)
+                                if point.scripted and index not in self.touched),
+                               None)
+                if waiting is not None:
+                    print(f"   stalled waiting for node {waiting + 1}/"
+                          f"{len(points)} ({points[waiting]}); going on "
+                          f"without it")
+                    self.touched.add(waiting)
+                    since_furthest = 0
+                    continue
                 print(f"   stalled: {since_furthest} actions without passing "
                       f"node {furthest + 1}/{len(points)}")
                 break
             if in_battle(self.env):
                 self.step(A, "battle", milestone.key)
+                spent += 1
+                continue
+
+            # Getting out of the scene the party change starts. Oak carries
+            # on talking, and somewhere in it comes "do you want to give a
+            # nickname?", which is a yes/no box: A answers YES and opens a
+            # naming screen where A types another letter, B deletes one, and
+            # the way out is a button this action set does not have. Measured,
+            # the run reached that screen holding a Pikachu and spent every
+            # remaining action inside it -- 207 A presses at one tile, unable
+            # to move.
+            #
+            # B is no answer either: in Gen 1 it does not advance text at all,
+            # so 24 B presses left Oak mid-sentence. `down` and A in turn is
+            # what works, and for one reason -- `down` does nothing to a line
+            # of text and moves the cursor to NO in a box, so the A that
+            # follows either turns the page or declines. Measured from the end
+            # of the recorded route: the rival's fight starts 23 actions later.
+            if self.decline > 0:
+                self.decline -= 1
+                self.step(A if self.decline % 2 else ACTIONS.index("down"),
+                          "decline", milestone.key)
                 spent += 1
                 continue
 
@@ -351,7 +485,7 @@ class Player:
                        and talking_for < self.args.dialogue_max)
             if not self.args.control_probe:
                 if talking:
-                    self.step(A, "dialogue", milestone.key)
+                    self.step(self.talk(), "dialogue", milestone.key)
                     talking_for += 1
                     spent += 1
                     since_furthest += 1
@@ -365,16 +499,76 @@ class Player:
             elif spent % self.args.control_check == 0 or not self.in_control:
                 self.in_control = self.has_control()
                 if not self.in_control:
-                    self.step(A, "dialogue", milestone.key)
+                    self.step(self.talk(), "dialogue", milestone.key)
                     spent += 1
                     since_furthest += 1
                     continue
 
+            for index, point in enumerate(points):
+                # Exactly, not within the tolerance the other waypoints are
+                # judged by. A trigger fires on its own tile and nowhere else,
+                # and (5, 7) counts as reaching (4, 7) at tolerance 1 -- which
+                # is how the gate came to open on a tile the scene had never
+                # fired from. A trigger that cannot be stood on is given up
+                # below rather than accepted from next door.
+                if (point.reached(here, 0) and index not in self.touched
+                        and index <= aimed + 1 + self.args.lookahead):
+                    # One node per visit, the earliest still outstanding, and
+                    # only within reach of where the route actually is. Map 0
+                    # (0, 10) appears twice -- Oak stops the player there on
+                    # the way out of Pallet, and leaving Pallet for good is
+                    # the same tile -- and his scene steps onto it, walks them
+                    # south and steps onto it again. Two visits marked both
+                    # nodes, so the exit counted as done before the player had
+                    # a Pokemon and the run never pressed up.
+                    self.touched.add(index)
+                    break
             at = localise(points, here, floor=max(furthest, 0))
             if at is None:
                 # Off the route entirely: steer at the furthest node known
                 # good rather than give up, so the planner has a target.
                 at = max(furthest, 0)
+            # A trigger tile you walk onto has to be in the room you are
+            # standing in, and BEHIND the route's own progress. Oak's
+            # encounter leaves the player at (10, 9) in Pallet, that tile is a
+            # route node, and the scene carried them there rather than letting
+            # them walk -- so the exact tile is never stood on and the gate
+            # held the route for 250 actions while the player was already two
+            # rooms away in the lab. Releasing every gate in another room was
+            # too much: standing in Pallet it released the lab's, and a
+            # continuation tile beside the lab door then matched the player on
+            # their way IN, which carried the route past the whole lab.
+            open_gates = self.touched | {
+                index for index, point in enumerate(points)
+                if point.map_id != here[0] and index <= max(furthest, 0)
+            }
+            at = gate(points, at, open_gates)
+            # And a gate is bounded in actions. One press walks two tiles, so
+            # whether a given tile can be landed on at all depends on parity
+            # with where the walk started: the approach above stepped back and
+            # forth across (6, 5) until its budget ran out, and then the run
+            # sat on the global stall for 250 more.
+            held = gate(points, len(points) - 1, open_gates)
+            # Counted only while the player is AT the gate, not while walking
+            # to it. Measured on seed 0: the gate on Pallet's north edge was
+            # held from inside Oak's lab, crossing Pallet takes about fifty
+            # actions on its own, and an eighty-action budget expired with the
+            # player most of the way there -- so the exit was given up and
+            # nothing was left to aim at.
+            near_gate = (points[held].map_id == here[0] and here[1] is not None
+                         and abs(points[held].y - here[1])
+                         + abs(points[held].x - here[2])
+                         <= self.args.script_radius)
+            if held not in open_gates and near_gate:
+                self.waited[held] = self.waited.get(held, 0) + 1
+                if self.waited[held] > self.args.gate_budget:
+                    print(f"   node {held + 1}/{len(points)} cannot be stood "
+                          f"on ({points[held]}); going on without it")
+                    tile = (points[held].map_id, points[held].y, points[held].x)
+                    for index in range(held + 1):
+                        point = points[index]
+                        if (point.map_id, point.y, point.x) == tile:
+                            self.touched.add(index)
             # Progress means ARRIVING, not being nearest. localise returns the
             # closest node at any distance, so counting it as progress reported
             # node 22 of 38 while the player stood 8 tiles away and never
@@ -391,12 +585,112 @@ class Player:
             # the moment the player walked through the lab door the projection
             # snapped to the final node and the run ended on the spot, 94
             # actions in, with its score still showing node 4.
-            if at >= len(points) - 1 and points[-1].reached(
-                here, self.args.waypoint_tolerance
-            ):
+            # The last node is only done when the press it carries has
+            # somewhere to happen. Leaving Pallet is `up` from (0, 10), and at
+            # tolerance 1 the route reported itself finished from (1, 10), one
+            # tile short: 574 fallback actions followed, with nothing left
+            # aiming at the tile that is the exit.
+            done_within = 0 if points[-1].facing else self.args.waypoint_tolerance
+            if at >= len(points) - 1 and points[-1].reached(here, done_within):
                 route_done = True
                 break
 
+            # One tile short of a trigger tile that has never been stood
+            # on: step onto it by the recorded coordinate instead of by the
+            # plan. A trigger needs the EXACT tile -- (4, 7) fires the
+            # hand-over and (5, 7) one south of it does nothing -- and a
+            # read-out accurate to a quarter of a tile cannot be asked for
+            # exactness. Measured without this: the planner brought the player
+            # to (5, 7), the waypoint counted as reached at tolerance 1, and
+            # then 125 planner actions went left and right along row 5 and
+            # never once pressed up. Logged as its own controller, because
+            # these actions are not the planner's.
+            # Only the gate node, never any nearby scripted one. The tiles a
+            # scene CARRIES the player to are scripted waypoints too, and
+            # aiming at the closest of those walked the player south out of
+            # (3, 5) into a wall eleven times: (4, 5) is one tile away and is
+            # only in the route because the hand-over put the player there.
+            # The gate node and no other. The tiles a scene CARRIES the
+            # player to are scripted waypoints as well, and aiming at whichever
+            # of them is nearest walked the player south out of (3, 5) into a
+            # counter eleven times, and once spent the continuation's own last
+            # tile before the route had even started.
+            gated = (at if points[at].scripted and at not in self.touched
+                     and points[at].map_id == here[0] and here[1] is not None
+                     else None)
+            short = (gated if gated is not None
+                     and 0 < abs(points[gated].y - here[1])
+                     + abs(points[gated].x - here[2])
+                     <= self.args.script_approach else None)
+            if (short is not None
+                    and self.approached.get(short, 0) < self.args.script_steps):
+                tries = self.approached.get(short, 0)
+                self.approached[short] = tries + 1
+                dy = points[short].y - here[1]
+                dx = points[short].x - here[2]
+                straight = (("up" if dy < 0 else "down") if dy
+                            else ("left" if dx < 0 else "right"))
+                # One press walks one tile or two, depending on what is beyond,
+                # so whether a tile can be landed on at all depends on the side
+                # it is approached from. (4, 7) can only be stepped onto from
+                # (5, 7): the table to its north stops that walk after one
+                # tile, while along row 4 a press goes straight past it to
+                # (4, 8). Measured on seed 2, the approach pressed right and
+                # left across it until its budget ran out, the hand-over never
+                # fired, and the run finished 0/4. So after half the budget,
+                # step off the line and come at it from the other axis.
+                across = ((("left" if dx < 0 else "right") if dx else "down")
+                          if dy else "down")
+                name = across if tries >= self.args.script_steps // 2 else straight
+                self.step(ACTIONS.index(name), "approach",
+                          f"{milestone.key}:node{short}")
+                spent += 1
+                since_furthest += 1
+                continue
+            # A gate the player cannot get onto is not a gate. The tiles a
+            # scene carries the player to are marked scripted as well, and one
+            # of them -- (4, 5), where the hand-over leaves you -- has a
+            # counter between it and anywhere you can walk from. Waiting for
+            # it held the whole route behind a tile that cannot be stood on.
+            if (short is not None
+                    and self.approached.get(short, 0) >= self.args.script_steps):
+                print(f"   node {short + 1}/{len(points)} is not reachable on "
+                      f"foot ({points[short]}); going on without it")
+                # That node and any earlier one on the same tile, never a
+                # later one: giving up on a tile says nothing about a visit
+                # the route has not reached yet.
+                tile = (points[short].map_id, points[short].y, points[short].x)
+                for index in range(short + 1):
+                    point = points[index]
+                    if (point.map_id, point.y, point.x) == tile:
+                        self.touched.add(index)
+
+            # Standing ON a trigger tile: turn the way the demonstration
+            # turned, then talk to whatever is in front of it. A is not an
+            # interaction on its own -- Gen 1 talks to the tile the player
+            # FACES, and nothing in a stream of A presses ever changes that.
+            # Measured on Pikachu's table: reached facing east, 60 A presses
+            # do nothing; one `up` first and the party holds a Pikachu 34
+            # presses later. Keyed off the tile underfoot rather than the node
+            # being pursued, because standing on a node makes it "reached" and
+            # the lookahead then aims past the very tile that matters.
+            on = next((index for index, point in enumerate(points)
+                       if point.scripted and point.facing is not None
+                       and index >= max(furthest, 0)
+                       and point.reached(here, 0)), None)
+            if on is not None and self.talked.get(on, 0) < self.args.script_talk:
+                self.talked[on] = self.talked.get(on, 0) + 1
+                if self.faced_at != here:
+                    self.faced_at = here
+                    self.step(ACTIONS.index(points[on].facing), "script",
+                              f"{milestone.key}:face{on}")
+                else:
+                    self.step(self.talk(), "script", f"{milestone.key}:talk{on}")
+                spent += 1
+                since_furthest += 1
+                continue
+
+            aimed = max(aimed, at)
             ahead = min(at + self.args.lookahead, len(points) - 1)
             # A scripted node is a gate, not a suggestion. Looking two nodes
             # ahead from (4, 10) aimed at the lab door and skipped the tile
@@ -410,6 +704,20 @@ class Player:
                 ):
                     ahead = index
                     break
+            # And a gate in THIS room is the only tile in it that matters.
+            # Between the lab door and Pikachu's table the demonstration spent
+            # 160 actions wandering the west wall, and those tiles are route
+            # nodes like any other: pursued two at a time, the planner has to
+            # repeat a random walk before it is allowed to approach the
+            # trigger. The cost field knows the way to any observed tile, so
+            # aim at the gate and let it route.
+            if self.args.aim_gate:
+                gate_here = next(
+                    (index for index in range(at, len(points))
+                     if points[index].scripted and index not in open_gates
+                     and points[index].map_id == here[0]), None)
+                if gate_here is not None:
+                    ahead = gate_here
             target = points[ahead]
             # A target in another room used to give the planner nothing to work
             # with: the wrong-map penalty swamped the tile distance, every plan
@@ -443,7 +751,7 @@ class Player:
             if (target.scripted
                     and target.reached(here, self.args.script_radius)
                     and spent % 2 == 0):
-                self.step(A, "script", f"{milestone.key}:node{at}")
+                self.step(self.talk(), "script", f"{milestone.key}:node{at}")
                 spent += 1
                 since_furthest += 1
                 continue
@@ -500,9 +808,15 @@ class Player:
                 # player is FACING, and mashing A never changes which way that
                 # is. Measured, 489 A presses standing on the route's last tile
                 # in Oak's lab with nothing happening. Turn, then talk.
-                turn = (spent // 2) % 4
-                self.step(ACTIONS.index(("up", "right", "down", "left")[turn])
-                          if spent % 2 == 0 else A,
+                # Turn, talk, then refuse. B matters as much as A here: the
+                # hand-over ends on "do you want to give a nickname?", which
+                # is a yes/no box, and A answers YES. That opens the naming
+                # screen, where A types another letter and the run never gets
+                # out -- measured, 200 A presses on a full name box with the
+                # player unable to move. B answers no and backs out of a menu.
+                turn = (spent // 3) % 4
+                self.step((ACTIONS.index(("up", "right", "down", "left")[turn]),
+                           A, ACTIONS.index("b"))[spent % 3],
                           "fallback", f"{milestone.key}:route-end")
             else:
                 self.step(int(t.randint(0, len(ACTIONS), (1,)).item()),
@@ -740,6 +1054,33 @@ class Player:
         return milestone.reached(self.env, self.history)
 
 
+def continuation(spec: str, offset: int) -> list:
+    """Extra tiles to walk after the demonstration stops.
+
+    The recorded route ends on the frame Pikachu is handed over, so every
+    milestone after the first is past the end of the data. These are tiles the
+    walkmap already holds -- the lab's door and the top of Pallet -- and the
+    press each one needs to go through: a door is a step, not a conversation,
+    and the top edge of a map is the same.
+    """
+    from poke.waypoints import Waypoint
+
+    points = []
+    for index, chunk in enumerate(part for part in spec.split(";") if part.strip()):
+        fields = chunk.split(",")
+        if len(fields) not in (3, 4):
+            raise SystemExit(f"--continue-to: cannot read {chunk!r}; "
+                             "expected map,y,x[,press]")
+        map_id, y, x = (int(value) for value in fields[:3])
+        press = fields[3].strip() if len(fields) == 4 else None
+        if press is not None and press not in ("up", "down", "left", "right"):
+            raise SystemExit(f"--continue-to: {press!r} is not a direction")
+        points.append(Waypoint(map_id=map_id, y=y, x=x,
+                               route_step=offset + index,
+                               scripted=press is not None, facing=press))
+    return points
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -760,6 +1101,53 @@ def main() -> None:
                              "screens instead of by the tile standing still. "
                              "More principled, measured worse (17/38 vs 22/38) "
                              "because the cruder rule mashes A more.")
+    parser.add_argument("--continue-to",
+                        default="40,11,5,down;0,12,11;0,0,10,up",
+                        help="tiles to walk after the demonstration's route "
+                             "runs out, as map,y,x[,press] separated by ';'. "
+                             "The recorded route ends the moment Pikachu is "
+                             "handed over, and three of the four milestones "
+                             "are on the other side of that: the rival fight "
+                             "fires on the way to the lab door, and leaving "
+                             "Pallet is a tile at the top of the map. The "
+                             "middle one is the first tile outside the lab "
+                             "door that the dataset actually recorded: the "
+                             "door drops the player on a tile it never saw, "
+                             "and steering straight for the top of the map "
+                             "from there followed extrapolated cost into "
+                             "Pallet's east fence for 228 actions.")
+    parser.add_argument("--aim-gate", action=argparse.BooleanOptionalAction,
+                        default=True,
+                        help="pursue the next trigger tile in this room "
+                             "directly, instead of the demonstration's own "
+                             "wandering between here and it")
+    parser.add_argument("--decline", type=int, default=24,
+                        help="actions spent turning the page after the party "
+                             "changes, alternating down and A, so the nickname "
+                             "prompt is answered no rather than yes")
+    parser.add_argument("--wall-window", type=int, default=8,
+                        help="a repeated direction counts as a wall only this "
+                             "many actions after the player last moved; a "
+                             "cutscene ignores the d-pad for far longer")
+    parser.add_argument("--gate-budget", type=int, default=80,
+                        help="actions the route may wait for one trigger tile "
+                             "before going on without it")
+    parser.add_argument("--talk-run", type=int, default=8,
+                        help="A presses that move nothing before one is a B. "
+                             "A menu eats A presses forever; a conversation "
+                             "does not.")
+    parser.add_argument("--script-approach", type=int, default=2,
+                        help="step onto a trigger tile by its recorded "
+                             "coordinate from this many tiles away. A trigger "
+                             "needs the exact tile; the planner's read-out is "
+                             "accurate to a quarter of one.")
+    parser.add_argument("--script-steps", type=int, default=20,
+                        help="actions the coordinate approach may spend per "
+                             "trigger tile before handing back to the planner")
+    parser.add_argument("--script-talk", type=int, default=48,
+                        help="actions spent turning and talking while standing "
+                             "on a trigger tile. Pikachu's table needs 34 A "
+                             "presses after the turn.")
     parser.add_argument("--script-radius", type=int, default=5,
                         help="tiles from a scripted waypoint within which the "
                              "planner alternates with A to advance a scene")
@@ -811,6 +1199,16 @@ def main() -> None:
                              "transitions, across doorways, instead of "
                              "Manhattan distance plus a wrong-map penalty")
     parser.add_argument("--unknown-cost", type=float, default=120.0)
+    parser.add_argument("--field-fill", type=float, default=6.0,
+                        help="cost per tile of extrapolation beyond the "
+                             "recorded region. It has to outrun the revisit "
+                             "penalty: at 2.0 a tile costs less than three "
+                             "visits do, so the tabu that breaks loops inside "
+                             "the rooms also drives the player out of the data "
+                             "-- measured, 226 actions against Pallet's east "
+                             "fence on ground no episode ever walked. Turning "
+                             "the tabu down instead cost the lab: the loop by "
+                             "the door went unbroken and the run never left.")
     parser.add_argument("--coord-fit-on", default="real",
                         choices=("real", "predicted", "both"),
                         help="what the coordinate head is fitted on. Fitting "
@@ -912,6 +1310,8 @@ def main() -> None:
             lookup = action_lookup(device)
             waypoints = build_waypoints(args.data, args.waypoint_stride,
                                         args.annotations)
+            waypoints = waypoints + continuation(args.continue_to,
+                                                 len(waypoints))
             held_out = " held out" if fitted.head == "mlp" else " in-sample"
             print(f"coordinate probe: map id {fitted.map_accuracy:.1%} accurate "
                   f"over {len(fitted.maps)} maps, {fitted.head} position head "
@@ -1011,6 +1411,7 @@ def main() -> None:
                      "waypoint_tolerance", "waypoint_lookahead",
                      "controller", "lookahead", "control_check",
                      "control_probe", "dialogue_after", "action_repeat")},
+        "walls": sorted(f"{a}->{b}" for a, b in player.walls),
         "pursuit_furthest": player.history.get("pursuit_furthest"),
         "pursuit_total": player.history.get("pursuit_total"),
         "waypoints_reached": player.history.get("waypoints_reached"),

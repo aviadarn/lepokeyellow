@@ -9,12 +9,17 @@ which builds on [LeWorldModel](https://arxiv.org/abs/2603.19312) and
 
 Everything here runs on a laptop. No cloud GPU, no ROM included.
 
-**Where it stands:** the planner crosses Pallet Town and triggers the Pikachu
-encounter, 3/3 seeds, where the same planner on the previous checkpoint managed
-0/3 and barely left the doorstep. What changed is the training objective, not
-the planner: predicting embeddings well turned out not to be the same thing as
+**Where it stands:** from the first frame of a new game, the run reaches
+Pikachu, wins the rival's forced battle, leaves Oak's lab and leaves Pallet
+Town — **4 of 4 milestones on two of three seeds, 3 of 4 on the third**, in
+442-873 actions. The same planner on the previous checkpoint managed 0/3 at
+crossing one map. Two separate things had to change. The first was the training
+objective: predicting embeddings well turned out not to be the same thing as
 predicting the game, and until the objective asked for the player's position it
-did not keep it. [What stopped it](#what-stopped-it) is the chain of
+did not keep it. The second was not about the model at all — a story beat fires
+on an exact tile, facing an exact direction, and A is not a safe button to
+press, as the run that spent 207 presses trapped in a naming screen
+demonstrated. See [four milestones](#four-milestones-from-a-new-game). [What stopped it](#what-stopped-it) is the chain of
 measurements that found that, including two fixes that were correct, measurable
 and useless. Several confident conclusions along the way were wrong; those are
 kept in [Wrong answers](#wrong-answers-and-what-caught-them) because the
@@ -406,10 +411,38 @@ was in the controller rather than the model:
 | nearest to the last node counted as reaching it | run ends the instant the player steps through the lab door, scoring node 4 |
 | looking ahead skipped a scripted node | walks into the lab without the scene that puts Oak in it, then presses A in an empty room |
 
-The milestone is still **0/4**: the route ends standing in front of Oak, and
-receiving Pikachu is a scripted exchange that neither mashing A nor turning
-first completes. That is an interaction problem, not a navigation one, and it
-is where the work stands.
+### Four milestones, from a new game
+
+The milestone chain is now **4/4 on two of three seeds and 3/4 on the third**:
+Pikachu, the rival's fight, out of Oak's lab, out of Pallet Town, from the
+first frame of a new game in 442-873 actions. Every seed gets the first three.
+
+| seed | milestones | actions |
+|---|---|---|
+| 0 | 3/4 — walks back into the lab and the field there is flat | 873 |
+| 1 | 4/4 | 442 |
+| 2 | 4/4 | 490 |
+
+Getting there was not navigation. It was learning what a Game Boy does with a
+button, and every fix below came from a measurement on the cartridge:
+
+| what was wrong | what it looked like |
+|---|---|
+| the hand-over fires on a tile, not in a room | the route's last waypoint is `(3, 5)`, where the scene CARRIES the player; the tile that starts it is `(4, 7)`, and the run stood on the first under its own power, reported 38/38 complete, and pressed A at a table that was not there for 489 actions |
+| and on a direction | reached facing east, 60 A presses do nothing; one `up` first and the party holds a Pikachu 34 presses later |
+| A is not a safe button | the scene ends on "give a nickname?", and A answers YES — into a naming screen where A types a letter, B deletes one, and the exit is a button this action set does not have. 207 A presses at one tile, unable to move. `down` then A declines it |
+| B is not an answer either | in Gen 1 it does not advance text at all: 24 B presses left Oak mid-sentence |
+| a memory of what does nothing goes stale | A, blocked against a closed text box, stayed blocked once the player could no longer move, and 488 planner actions went to `right` with A masked out of every plan |
+| four-adjacency invents floor | `(4, 4)` and `(4, 5)` are both recorded and a counter runs between them — `(4, 5)` is only in the data because a cutscene put the player there. The field read one hop; the planner pressed right 33 times |
+| the route restarted each milestone | after the rival's fight, 207 of 336 actions pursued a node four tiles behind, and the lab door was never aimed at |
+| a tile can appear twice | `(0, 10)` is both where Oak stops the player and where leaving Pallet happens; Oak's scene steps onto it twice, which marked the exit done before the player had a Pokemon |
+| and the exit needs the exact tile | at tolerance 1 the route called itself finished from `(1, 10)`, one short, then spent 574 fallback actions with nothing aiming at the exit |
+| whether a tile can be landed on depends on the side | `(4, 7)` can only be stepped onto from below — the table north of it stops that walk after one tile, while along row 4 a press goes straight past. Approaching on one axis only: 0/4 |
+
+So the honest summary of the previous result is that it was not a navigation
+problem at all. The planner had been walking the route for some time; what it
+could not do was *press the right button on the right square*, and nothing in
+the objective or the cost field had anything to say about that.
 
 ### What still stops it
 
@@ -421,7 +454,10 @@ than one tile. `play.py` used to commit 3.
 
 **Standing on the exact trigger tile.** 0/3 across every setting, though all
 three seeds get within one hop and all three reach the encounter from the tile
-beside it. Inspecting the last decision, the model picks `up` correctly and
+beside it. This is what `--script-approach` now steps in for: inside two tiles
+of a trigger, the controller walks onto it by the coordinate the emulator
+reports, and the log counts those actions under their own name rather than the
+planner's. On the runs above that is 4-24 actions of 442-873. Inspecting the last decision, the model picks `up` correctly and
 scores it 0 — and also scores `right` 0, which really costs 2. The remaining
 failure is a tie between the right action and a mispredicted one, not a missing
 gradient. An oracle that scores actions on the emulator's own coordinates walks
@@ -525,8 +561,11 @@ Carried into the vendored code, each with a header saying what changed:
 2. ~~Train on real frames.~~ Done.
 3. ~~Separate "is the model wrong" from "is the objective wrong".~~ Done.
 4. ~~Plan on coordinates rather than a latent norm.~~ Done.
-5. **Cross Pallet Town.** Longer horizon, action repeats in the CEM proposal, or
-   a coarse walkable-tile search with the model used locally.
+5. ~~Cross Pallet Town.~~ Done, and then the whole opening: 4/4 milestones on
+   two of three seeds.
+5b. **Past Route 1.** The run leaves Pallet onto ground no episode has ever
+   walked, where neither the cost field nor the position read-out means
+   anything — so the next thing is data out there, not a better planner.
 6. Rollout error as a curve, `MSE(k)` for `k = 1..H`, before and after
    fine-tuning. `finetune_rollout` already prints per-horizon validation MSE.
 7. Close the lossiness gap: raw pixels out-predict the encoder on position

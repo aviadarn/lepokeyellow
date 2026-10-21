@@ -324,11 +324,21 @@ def main() -> None:
     frames: list[Image.Image] = []
     try:
         env.reset()
-        env.settle()
+        # Only when the buttons are being chosen here. `settle` spends 20
+        # frames so the first screen is not a black mid-fade, and those frames
+        # move the game: replaying the recorded route after them, the fourth
+        # `down` in Pallet Town walks two tiles instead of one and the run
+        # never reaches the lab, let alone Pikachu. A closed-loop policy reads
+        # the real screen every step and does not care; an open-loop one is
+        # the buttons and nothing else, so it gets the state they were
+        # recorded against. The cost is a dark first frame, so skip it.
+        settled = not planned
+        if settled:
+            env.settle()
         here = (cur_map(env), *coords(env))
         if here[1] is not None:
             trails.setdefault(here[0], []).append((here[1], here[2]))
-        if not args.skip:
+        if not args.skip and settled:
             frames.append(frame_image(
                 env.screen(), args.scale,
                 caption(0, here, cost_of(here), None), font, panel_for(here),

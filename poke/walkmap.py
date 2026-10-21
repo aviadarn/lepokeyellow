@@ -112,7 +112,8 @@ class WalkMap:
         return out
 
     def global_distances(
-        self, target: tuple[int, int, int], adjacency: str = "grid"
+        self, target: tuple[int, int, int], adjacency: str = "grid",
+        blocked=(), two_way_doors: bool = False,
     ) -> dict[tuple[int, int, int], int]:
         """BFS hop counts to a (map, y, x) node, across maps.
 
@@ -123,6 +124,15 @@ class WalkMap:
 
         Edges run backwards from the target, as in `distances`: a node is
         scored by how many steps reach the target from it.
+
+        `blocked` drops (source, destination) pairs the caller has since found
+        to be walls. Four-adjacency is an assumption -- both tiles were stood
+        on, so you can step between them -- and inside Oak's lab it is false:
+        (4, 4) and (4, 5) are both recorded, a counter runs between them, and
+        the only reason (4, 5) is in the data at all is that a cutscene carried
+        the player onto it. The field read one hop east to the trigger tile,
+        the planner pressed right 33 times into the counter, and the run
+        stalled three tiles from Pikachu.
         """
         if adjacency not in ("grid", "observed"):
             raise ValueError(f"unknown adjacency {adjacency!r}")
@@ -154,6 +164,19 @@ class WalkMap:
         for source, destinations in self.doors.items():
             for destination in destinations:
                 incoming.setdefault(destination, set()).add(source)
+                # Off by default, and measured that way round. The case for
+                # it: no episode ever left Oak's lab, so every recorded
+                # doorway points inwards and from inside the lab no tile in
+                # Pallet has any cost at all -- the player stepped out, back in
+                # through the same door, and spent 482 actions on a flat field.
+                # The case against, which won: turning it on gave the planner
+                # a door as a cheap shortcut between rooms it had never walked
+                # that way, and two of three seeds went from four milestones
+                # to none.
+                if two_way_doors:
+                    incoming.setdefault(source, set()).add(destination)
+        for source, destination in blocked:
+            incoming.get(destination, set()).discard(source)
 
         out = {target: 0}
         queue = deque([target])
@@ -167,7 +190,8 @@ class WalkMap:
 
     def fields(self, maps: list[int], target: tuple[int, int, int],
                shape: tuple[int, int], unknown: float,
-               fill: float = 2.0, adjacency: str = "grid") -> np.ndarray:
+               fill: float = 2.0, adjacency: str = "grid",
+               blocked=(), two_way_doors: bool = False) -> np.ndarray:
         """One [H, W] grid per entry of `maps`, stacked: [len(maps), H, W].
 
         `maps` is the probe's own map order, so a decoded map index indexes the
@@ -175,7 +199,8 @@ class WalkMap:
         wrong room is simply expensive, by however many doors it is from the
         target.
         """
-        distances = self.global_distances(target, adjacency)
+        distances = self.global_distances(target, adjacency, blocked,
+                                          two_way_doors)
         grids = []
         for map_id in maps:
             here = {(y, x): d for (m, y, x), d in distances.items() if m == map_id}

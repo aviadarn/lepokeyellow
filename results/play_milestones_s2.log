@@ -1,0 +1,43 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+game=yellow start=states/bedroom.state at 38 (player's bedroom), party=0
+replan every 1 of 14 planned actions
+
+coordinate probe: map id 99.2% accurate over 4 maps, mlp position head on real embeddings +/-0.03 tiles held out (linear 0.21 in-sample)
+41 waypoints at stride 3: map 38 (7,1) -> map 0 (0,10)
+walkmap: 286 tiles across 4 maps, 16 doorways
+
+-> pikachu: hold a Pokemon (Oak hands over Pikachu)
+   node 3/41 REACHED at action 4: map 38 (1,6)
+   node 6/41 REACHED at action 11: map 37 (3,1)
+   node 8/41 REACHED at action 14: map 37 (2,2)
+   node 10/41 REACHED at action 19: map 37 (7,4)
+   node 11/41 REACHED at action 36: map 37 (6,2)
+   node 12/41 REACHED at action 39: map 0 (6,4)
+   node 19/41 REACHED at action 43: map 0 (4,10)
+   node 22/41 REACHED at action 88: map 0 (10,9)
+   node 27/41 REACHED at action 178: map 40 (5,5)
+   node 33/41 REACHED at action 192: map 40 (6,5)
+   node 33/41 cannot be stood on (map 40 (6,5)); going on without it
+   node 35/41 REACHED at action 258: map 40 (4,6)
+   node 36/41 REACHED at action 260: map 40 (4,7)
+   node 36/41 is not reachable on foot (map 40 (4,7)); going on without it
+   node 37/41 REACHED at action 313: map 40 (4,5)
+   REACHED after 331 actions (map 40, party 1)
+
+-> rival_beaten: survive the forced rival battle in the lab
+   REACHED after 86 actions (map 40, party 1)
+
+-> left_lab: get back out of Oak's lab
+   node 37/41 is not reachable on foot (map 40 (4,5)); going on without it
+   node 39/41 REACHED at action 59: map 40 (11,5)
+   REACHED after 60 actions (map 0, party 1)
+
+-> left_pallet: leave Pallet Town
+   node 40/41 REACHED at action 1: map 0 (12,11)
+   node 41/41 REACHED at action 11: map 0 (0,10)
+   REACHED after 13 actions (map 12, party 1)
+
+milestones reached: 4/4  ['pikachu', 'rival_beaten', 'left_lab', 'left_pallet']
+actions by controller: {'planner': 131, 'approach': 46, 'script': 141, 'battle': 83, 'dialogue': 47, 'decline': 40, 'fallback': 2}
+204.7s for 490 actions
+wrote results/play_milestones_s2.json
