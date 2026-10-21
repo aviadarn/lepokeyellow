@@ -91,13 +91,14 @@ def main() -> None:
                         on_progress=progress)
         report[name] = {
             "found": result.found, "path": result.path,
+            "actions": result.actions, "action_len": len(result.actions),
             "path_len": len(result.path), "expanded": result.expanded,
             "nodes": result.nodes, "emulated_actions": result.emulated_actions,
             "maps_seen": result.maps_seen, "seconds": result.seconds,
             "end": result.end,
         }
-        print(json.dumps({k: v for k, v in report[name].items() if k != "path"}),
-              flush=True)
+        print(json.dumps({k: v for k, v in report[name].items()
+                          if k not in ("path", "actions")}), flush=True)
         if not result.found:
             break
         path = Path(args.states_dir) / f"{name}.state"

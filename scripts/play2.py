@@ -1,8 +1,14 @@
 """Play Part 2 under the contract: one continuous run, no rollback.
 
-The policy argument is deliberately dumb here -- random, a constant button, or
-a replay of the oracle's path. The trained policy lands in this same slot, so
-whatever this file measures about the baselines it will measure about it.
+The policy argument is deliberately dumb here -- random, or a constant button.
+The trained policy lands in this same slot, so whatever this file measures
+about the baselines it will measure about it.
+
+The oracle is NOT one of these. Its search snapshots and restores between
+actions, and the resulting action log does not replay from a clean load:
+measured, its 87-action first phase ends at (12, 28, 9) on Route 1 instead of
+at the Viridian Mart. It is a ceiling expressed as a number -- see
+results/part2_ceiling.json -- not a run.
 """
 
 from __future__ import annotations
@@ -18,20 +24,13 @@ from poke.env import PokeEnv
 from poke.handlers import HandlerState, choose
 from poke.objectives import CHAIN, one_hot
 
-POLICIES = ("random", "noop", "up", "down", "left", "right", "a", "b", "oracle")
+POLICIES = ("random", "noop", "up", "down", "left", "right", "a", "b")
 
 
-def policy_for(name: str, rng: random.Random, path=None):
+def policy_for(name: str, rng: random.Random):
     """A callable (env, objective one-hot) -> action index."""
     if name == "random":
         return lambda env, objective: rng.randrange(n_actions())
-    if name == "oracle":
-        steps = list(path or [])
-
-        def replay(env, objective, _steps=steps):
-            return ACTIONS.index(_steps.pop(0)) if _steps else ACTIONS.index("noop")
-
-        return replay
     index = ACTIONS.index(name)
     return lambda env, objective: index
 
@@ -82,22 +81,18 @@ def main() -> None:
     parser.add_argument("--rom", default="pokeyellow.gbc")
     parser.add_argument("--state", default="states/oracle/route1.state")
     parser.add_argument("--policy", default="random", choices=POLICIES)
-    parser.add_argument("--oracle-report", default="results/oracle.json",
-                        help="where --policy oracle reads its path from")
     parser.add_argument("--budget", type=int, default=4000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
-    path = None
-    if args.policy == "oracle":
-        report = json.loads(Path(args.oracle_report).read_text())
-        path = [button for phase in report.values() for button in phase.get("path", [])]
-
     env = PokeEnv(args.rom, args.state)
     env.reset()
-    env.settle()
-    result = play(env, policy_for(args.policy, random.Random(args.seed), path),
+    # No settle(). It ticks frames without an action, and both the oracle's
+    # recorded path and any open-loop replay are frame-phase sensitive: with
+    # it, the same buttons walk a different route. reset() already renders one
+    # frame, which is all the screen detector needs.
+    result = play(env, policy_for(args.policy, random.Random(args.seed)),
                   budget=args.budget)
     result["policy"] = args.policy
     result["seed"] = args.seed

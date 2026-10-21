@@ -114,6 +114,25 @@ def test_a_press_that_flips_a_flag_is_reachable():
     assert result.path[-1] == "a"
 
 
+def test_the_result_carries_the_literal_actions_not_just_the_edges():
+    """Each edge is one button plus however many A presses `transition` spent
+    waiting for control. Replaying the edge buttons alone desynchronises on
+    the first edge that waited, so the result carries both."""
+    env = CorridorEnv()
+    result = search(
+        env,
+        goal=lambda: env.ram[YELLOW.ram.event_flags] == 1,
+        allowed={1},
+        buttons=("right", "a"),
+        with_facing=False,
+    )
+    assert result.found
+    assert result.actions[: len(result.path)] or result.actions
+    assert len(result.actions) >= len(result.path)
+    assert all(button in ACTIONS for button in result.actions)
+    assert result.actions[-1] == "a"
+
+
 def test_story_key_separates_states_that_differ_only_in_flags():
     env = CorridorEnv()
     before = story_key(env, with_facing=False)

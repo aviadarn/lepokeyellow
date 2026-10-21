@@ -31,7 +31,11 @@ WARP_SETTLE = 30
 @dataclass(frozen=True)
 class SearchResult:
     found: bool
+    #: One button per search edge -- what the BFS chose.
     path: list[str] = field(default_factory=list)
+    #: Every button actually pressed, including the A presses `transition`
+    #: spent waiting for control. This is the replayable one.
+    actions: list[str] = field(default_factory=list)
     expanded: int = 0
     nodes: int = 0
     emulated_actions: int = 0
@@ -81,16 +85,25 @@ def _has_control(env) -> bool:
     return screens[0] != screens[1]
 
 
-def transition(env, button: str, cap: int = 400):
+def transition(env, button: str, cap: int = 400, trace: list | None = None):
     """One action, then mash A through whatever it started.
 
     Returns (actions spent, saw a battle), or None if this is not a route:
     either the game never gave control back inside `cap`, or the player blacked
     out and was warped home.
+
+    `trace`, if given, collects every button pressed. The edge button alone is
+    not replayable: the A presses below are part of the move.
     """
     ram = env.game.ram
     before = _pos(env)
-    env.step(ACTIONS.index(button))
+
+    def press(name):
+        env.step(ACTIONS.index(name))
+        if trace is not None:
+            trace.append(name)
+
+    press(button)
     used, saw_battle = 1, False
     if _pos(env)[0] != before[0]:
         # A warp lands mid fade-in and the next input is swallowed. Without
@@ -99,19 +112,19 @@ def transition(env, button: str, cap: int = 400):
         for _ in range(WARP_SETTLE):
             if _has_control(env):
                 break
-            env.step(ACTIONS.index("noop"))
+            press("noop")
             used += 1
     if button != "a" and _pos(env) != before and not env.read_ram(ram.in_battle):
         return used, saw_battle
     while used < cap:
         if env.read_ram(ram.in_battle):
             saw_battle = True
-            env.step(ACTIONS.index("a"))
+            press("a")
             used += 1
             continue
         if _has_control(env):
             break
-        env.step(ACTIONS.index("a"))
+        press("a")
         used += 1
     else:
         return None
@@ -126,7 +139,7 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
     started = time.time()
     root_blob = env.snapshot()
     root = story_key(env, with_facing)
-    parents: dict[tuple, tuple] = {root: (None, None, root_blob)}
+    parents: dict[tuple, tuple] = {root: (None, None, root_blob, [])}
     queue = collections.deque([root])
     expanded = emulated = 0
     maps_seen: collections.Counter = collections.Counter()
@@ -134,11 +147,12 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
 
     while queue and len(parents) < max_nodes and found is None:
         node = queue.popleft()
-        _, _, blob = parents[node]
+        blob = parents[node][2]
         expanded += 1
         for button in buttons:
             env.restore(blob)
-            outcome = transition(env, button)
+            trace: list[str] = []
+            outcome = transition(env, button, trace=trace)
             if outcome is None:
                 continue
             emulated += outcome[0]
@@ -148,7 +162,7 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
             child = story_key(env, with_facing)
             if child in parents:
                 continue
-            parents[child] = (node, button, env.snapshot())
+            parents[child] = (node, button, env.snapshot(), trace)
             maps_seen[here[0]] += 1
             if goal():
                 found = child
@@ -158,19 +172,23 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
             on_progress(expanded, len(parents), len(queue), dict(maps_seen))
 
     path: list[str] = []
+    actions: list[str] = []
     end = None
     if found is not None:
         node = found
+        edges = []
         while parents[node][0] is not None:
-            parent, button, _ = parents[node]
-            path.append(button)
+            parent, button, _, trace = parents[node]
+            edges.append((button, trace))
             node = parent
-        path.reverse()
+        edges.reverse()
+        path = [button for button, _ in edges]
+        actions = [pressed for _, trace in edges for pressed in trace]
         env.restore(parents[found][2])
         end = _pos(env)
 
     return SearchResult(
-        found=found is not None, path=path, expanded=expanded,
+        found=found is not None, path=path, actions=actions, expanded=expanded,
         nodes=len(parents), emulated_actions=emulated,
         maps_seen=dict(maps_seen), seconds=round(time.time() - started, 1),
         end=end,

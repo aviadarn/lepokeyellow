@@ -30,13 +30,6 @@ def test_random_policy_is_seeded_and_reproducible():
     assert first == second
 
 
-def test_oracle_policy_replays_its_path_then_idles():
-    policy = policy_for("oracle", random.Random(0), ["right", "a"])
-    assert policy(None, []) == ACTIONS.index("right")
-    assert policy(None, []) == ACTIONS.index("a")
-    assert policy(None, []) == ACTIONS.index("noop")
-
-
 def test_play_stops_at_the_budget():
     result = play(CorridorEnv(), policy_for("left", random.Random(0)), budget=12)
     assert result["actions"] == 12

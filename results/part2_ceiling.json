@@ -1,0 +1,54 @@
+{
+ "what": "BFS oracle ceiling for Part 2, Route 1 -> Viridian Forest.",
+ "uses_rollback": true,
+ "contract_compliant": false,
+ "start": "states/oracle/route1.state, reached by replaying results/play_milestones_s1.json from states/bedroom.state",
+ "phases": {
+  "parcel": {
+   "edges": 46,
+   "actions": 87,
+   "search_seconds": 296.5,
+   "nodes": 4277,
+   "emulated_actions": 32652,
+   "end": [
+    42,
+    5,
+    2
+   ]
+  },
+  "pokedex": {
+   "edges": 53,
+   "actions": 192,
+   "search_seconds": 378.5,
+   "nodes": 5617,
+   "emulated_actions": 35544,
+   "end": [
+    40,
+    3,
+    5
+   ]
+  },
+  "forest": {
+   "edges": 97,
+   "actions": 208,
+   "search_seconds": 105.0,
+   "nodes": 2327,
+   "emulated_actions": 12382,
+   "end": [
+    51,
+    47,
+    16
+   ]
+  }
+ },
+ "total_actions": 487,
+ "total_edges": 196,
+ "total_search_seconds": 780.0,
+ "budget_for_policy_arms": 1461,
+ "not_replayable": {
+  "claim": "The oracle's action log does not reproduce its own route from a clean state load.",
+  "evidence": "Replaying the 87 actions of the parcel phase from states/oracle/route1.state ends at (12, 28, 9) on Route 1; the search ended at (42, 5, 2), the Viridian Mart.",
+  "cause": "The search's control probe snapshots and restores between actions. PyBoy save/load is not bit-exact for whatever drives this, the same determinism break measured earlier when has_control() ran inside play.py's step().",
+  "consequence": "The ceiling is a number and a set of save states, not a baseline run. scripts/play2.py offers no oracle policy."
+ }
+}
