@@ -43,7 +43,10 @@ def test_map_changes_do_not_create_edges(h5_path):
     path = write(h5_path, [[(0, 6, 5), (37, 7, 2), (37, 5, 2)]])
     walk = build(path)
     assert walk.tiles(0) == set()
-    assert walk.edges[37][(7, 2)] == {(5, 2)}
+    # (7, 2) -> (5, 2) is a straight two-tile stride, so it is recorded as two
+    # steps through the tile the player walked over.
+    assert walk.edges[37][(7, 2)] == {(6, 2)}
+    assert walk.edges[37][(6, 2)] == {(5, 2)}
 
 
 def test_unreadable_positions_are_skipped(h5_path):
@@ -115,18 +118,31 @@ def test_doors_connect_maps_so_there_is_a_way_back_out(h5_path):
     assert distances[(37, 7, 2)] == 3
 
 
-def test_grid_adjacency_counts_one_hop_per_tile(h5_path):
-    """One recorded step can cross more than one tile, so the recorded
-    transitions are not unit steps: measured on the real dataset, BFS over them
-    put (5, 5) at 6 hops, (6, 6) at 5 and (5, 6) at 7, which is not a distance
-    a planner can descend. Four-adjacency over observed tiles is."""
-    path = write(h5_path, [[(0, 5, 5), (0, 5, 7), (0, 5, 6)]])
+def test_a_straight_stride_is_split_into_the_tiles_it_crossed(h5_path):
+    """One recorded step holds a button for 20 frames and then settles for 40,
+    long enough to cross several tiles, and the tiles in between are never
+    recorded standing-on. Measured on the real dataset, strides inside Oak's
+    lab reach four and seven tiles, which left the lab as four disconnected
+    islands and made the waypoint inside it unreachable from Pallet Town --
+    so the cost field over the whole town was one flat plateau.
+    """
+    path = write(h5_path, [[(0, 5, 2), (0, 5, 6), (0, 1, 6)]])
     walk = build(path)
-    observed = walk.global_distances((0, 5, 7), adjacency="observed")
-    assert observed[(0, 5, 5)] == 1          # a two-tile jump, counted as one
-    grid = walk.global_distances((0, 5, 7), adjacency="grid")
-    assert grid[(0, 5, 6)] == 1
-    assert grid[(0, 5, 5)] == 2              # through the tile in between
+    assert (5, 4) in walk.tiles(0) and (3, 6) in walk.tiles(0)
+    for adjacency in ("grid", "observed"):
+        distances = walk.global_distances((0, 1, 6), adjacency=adjacency)
+        # Four east then four north, counted as the eight tiles it is.
+        assert distances[(0, 5, 2)] == 8
+
+
+def test_an_unreconstructable_move_is_still_an_edge(h5_path):
+    """A cutscene can move the player diagonally or along a path that cannot
+    be inferred. Dropping those would leave the graph less connected than the
+    data, so the transition is kept as a single edge."""
+    path = write(h5_path, [[(0, 5, 5), (0, 3, 2)]])
+    walk = build(path)
+    assert walk.edges[0][(5, 5)] == {(3, 2)}
+    assert walk.global_distances((0, 3, 2), adjacency="grid")[(0, 5, 5)] == 1
 
 
 def test_fields_stack_in_the_probes_map_order(h5_path):

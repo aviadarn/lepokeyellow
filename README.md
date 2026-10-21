@@ -375,6 +375,28 @@ And `min` over the rollout, inherited from the goal objective, scores a plan by
 the single most optimistic tile decoded anywhere along 28 actions — a search
 for the head's largest mistake. `discounted` is the default now.
 
+### End to end, with the milestone chain
+
+`scripts/play.py` on the same checkpoint now walks the **entire demonstration
+route** — 38 of 38 waypoints, in 111 actions, bedroom to the far side of Oak's
+lab, through the cutscene at the north edge of Pallet Town. Six separate bugs
+stood between the isolated navigation result and that, and every one of them
+was in the controller rather than the model:
+
+| what was wrong | what it looked like |
+|---|---|
+| `play.py` never got the cost field | aims into another map, every plan ties, 60 actions oscillating in the bedroom |
+| no memory of a useless action | ten `down` presses into the wall beside the front door |
+| dialogue rule could not hand back control | 116 of 162 actions pressing A at a signpost, which changes the screen every press |
+| the graph fragmented the map | strides inside the lab reach seven tiles, so 4-adjacency left it in islands and only 12 tiles in the game could reach the waypoint inside it |
+| nearest to the last node counted as reaching it | run ends the instant the player steps through the lab door, scoring node 4 |
+| looking ahead skipped a scripted node | walks into the lab without the scene that puts Oak in it, then presses A in an empty room |
+
+The milestone is still **0/4**: the route ends standing in front of Oak, and
+receiving Pikachu is a scripted exchange that neither mashing A nor turning
+first completes. That is an interaction problem, not a navigation one, and it
+is where the work stands.
+
 ### What still stops it
 
 **Committing more than one action at a time.** Attributed directly: with

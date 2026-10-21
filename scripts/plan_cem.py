@@ -55,12 +55,20 @@ def cem_plan(
     seed: int = 0,
     verbose: bool = True,
     score_fn=None,
+    allowed: t.Tensor | None = None,
 ) -> tuple[t.Tensor, float, list[float]]:
     """Use categorical Cross-Entropy Method to find an action sequence.
 
     `score_fn(model, initial, sequences) -> costs` replaces the goal-distance
     cost, so an alternative objective -- predicted route progress, say -- can
     reuse the same search unchanged. `goals` is ignored when it is supplied.
+
+    `allowed` is a boolean mask over actions that are worth proposing. The
+    caller uses it to retire an action that has already been tried from this
+    exact tile and did nothing: the planner otherwise walks into the same wall
+    for as long as its budget lasts, which is measured, not hypothetical --
+    ten `down` presses into the wall beside the front door, and then fifty A
+    presses from a dialogue heuristic that fires on "the tile stopped moving".
     """
 
     if horizon < 1 or samples < 1 or iterations < 1:
@@ -77,11 +85,13 @@ def cem_plan(
     device = initial.device
     generator = t.Generator(device=device).manual_seed(seed)
 
-    probabilities = t.full(
-        (horizon, len(ACTIONS)),
-        1.0 / len(ACTIONS),
-        device=device,
-    )
+    mask = (t.ones(len(ACTIONS), device=device) if allowed is None
+            else allowed.to(device).float())
+    if float(mask.sum()) == 0:
+        # Everything has been tried and nothing worked. Refusing to plan would
+        # end the run, so plan over everything and let the caller notice.
+        mask = t.ones(len(ACTIONS), device=device)
+    probabilities = (mask / mask.sum()).expand(horizon, len(ACTIONS)).clone()
 
     # Track the best individual sequence across every iteration.
     best_sequence = t.empty(horizon, dtype=t.long, device=device)
@@ -121,7 +131,9 @@ def cem_plan(
             smoothing * probabilities
             + (1.0 - smoothing) * elite_probabilities
         )
-        probabilities = probabilities.clamp_min(min_probability)
+        # The floor goes on before the mask, so a masked action cannot be
+        # resurrected by it.
+        probabilities = probabilities.clamp_min(min_probability) * mask
         probabilities = probabilities / probabilities.sum(
             dim=-1,
             keepdim=True,

@@ -29,6 +29,15 @@ class Waypoint:
     y: int
     x: int
     route_step: int
+    # True when the demonstration lost control here -- the tile the player
+    # walks to in order to START a scene. Oak's encounter is the case that
+    # matters: it fires at the north edge of Pallet, walks the player back
+    # south, and fires again. The tile therefore keeps changing, which is
+    # exactly what the "tile stopped moving" dialogue detector needs in order
+    # to notice a scene, so the planner reads it as navigation and tries to
+    # walk north forever. Measured: 240 actions oscillating between (1, 11)
+    # and (3, 11) two tiles from the trigger, pressing b 61 times.
+    scripted: bool = False
 
     def reached(self, here, tolerance: int = 0) -> bool:
         """Same map, and within `tolerance` tiles.
@@ -117,6 +126,7 @@ def build(data_path: str, stride: int = 8,
 
         data = json.loads(Path(annotations).read_text())
         navigable = list(data["navigable"])
+        scripted_at_source = [not value for value in navigable]
         # Keep the FIRST step of each scripted run. Control is lost ON the
         # trigger tile, so the counterfactual marks it scripted -- but that is
         # the tile the player must walk to, not one the scene carried them to.
@@ -126,6 +136,12 @@ def build(data_path: str, stride: int = 8,
             if not navigable[step] and (step == 0 or navigable[step - 1]):
                 navigable[step] = True
 
+    def is_scripted(step: int) -> bool:
+        """The step was kept despite the counterfactual calling it scripted."""
+        return (navigable is not None and step < len(scripted_at)
+                and scripted_at[step])
+
+    scripted_at = [] if navigable is None else list(scripted_at_source)
     moves = [
         (tuple(row), step)
         for step, row in enumerate(location.tolist())
@@ -137,7 +153,8 @@ def build(data_path: str, stride: int = 8,
         picked = picked + [moves[-1]]
 
     return [
-        Waypoint(map_id=int(tile[0]), y=int(tile[1]), x=int(tile[2]), route_step=step)
+        Waypoint(map_id=int(tile[0]), y=int(tile[1]), x=int(tile[2]),
+                 route_step=step, scripted=is_scripted(step))
         for tile, step in picked
         if tile[0] >= 0
     ]

@@ -36,6 +36,7 @@ import torch as t
 from poke.actions import ACTIONS
 from poke.env import PokeEnv
 from poke import coords_probe
+from poke.walkmap import build as build_walkmap
 from poke import progress as progress_probe
 from poke.ladder import build as build_ladder
 from poke.ladder import dedupe as dedupe_ladder
@@ -65,6 +66,62 @@ class Player:
         self.model, self.env, self.device, self.args = model, env, device, args
         self.log: list[dict] = []
         self.history: dict = {}
+        self.blocked: set[int] = set()
+        self.visits: np.ndarray | None = None
+        self.walk = None
+        self.maps: list[int] = []
+        self._fields: dict[tuple[int, int, int], t.Tensor] = {}
+
+    def use_walkmap(self, walk, maps: list[int]) -> None:
+        self.walk, self.maps = walk, maps
+        self.visits = np.zeros((len(maps), 32, 32), dtype=np.float32)
+
+    def note_visit(self) -> None:
+        """Count the tile the player is standing on.
+
+        An MPC planner with no memory cannot tell that it has already tried a
+        direction, and two tiles that each look better from the other produce a
+        clean infinite loop -- measured beside the front door, where the plan
+        from (7, 1) scored 2.0 and the plan from (7, 3) scored 5.0, so the
+        planner walked between them 44 times. A small cost per previous visit
+        breaks the tie in favour of ground it has not already covered, and
+        decays to nothing on tiles it passes through once.
+        """
+        if self.visits is None or not self.maps:
+            return
+        here = self.here_tile()
+        if here[0] in self.maps and here[1] is not None:
+            index = self.maps.index(here[0])
+            rows, cols = self.visits.shape[1:]
+            self.visits[index,
+                        min(max(here[1], 0), rows - 1),
+                        min(max(here[2], 0), cols - 1)] += 1.0
+
+    def cost_field(self, target):
+        """The waypoint's field plus what revisiting already costs."""
+        field = self.field_for(target)
+        if field is None or self.visits is None:
+            return field
+        penalty = t.from_numpy(
+            np.minimum(self.visits, self.args.revisit_cap)
+            * self.args.revisit_cost
+        ).float().to(self.device)
+        return field + penalty
+
+    def field_for(self, target):
+        """BFS cost to one waypoint, as [n_maps, H, W]; None without a walkmap.
+
+        Cached per waypoint: the search is over a few hundred observed tiles
+        and the route revisits the same targets, so it is built once each.
+        """
+        if self.walk is None:
+            return None
+        key = (target.map_id, target.y, target.x)
+        if key not in self._fields:
+            grids = self.walk.fields(self.maps, key, (32, 32),
+                                     unknown=self.args.unknown_cost)
+            self._fields[key] = t.from_numpy(grids).to(self.device)
+        return self._fields[key]
 
     def observe(self) -> t.Tensor:
         with t.inference_mode():
@@ -175,8 +232,30 @@ class Player:
         self.history["rungs_total"] = len(rungs)
         return milestone.reached(self.env, self.history)
 
+    def allowed_actions(self) -> t.Tensor:
+        """Actions not yet known to do nothing from the tile standing on."""
+        return t.tensor([index not in self.blocked
+                         for index in range(len(ACTIONS))])
+
     def step(self, action_index: int, controller: str, milestone: str, cost=None) -> None:
+        before_tile = self.here_tile()
+        before_screen = self.env.screen()
         self.env.step(action_index)
+        # An action that moves nothing and changes nothing on screen did
+        # nothing, and doing it again will also do nothing. Measured without
+        # this: ten `down` presses into the wall beside the front door, then
+        # fifty A presses because the dialogue rule fires on "the tile stopped
+        # moving" and there was no dialogue to advance. Blocks are dropped the
+        # moment the tile changes, so this is a memory of the current square
+        # and not a belief about the map.
+        difference = float(np.abs(
+            self.env.screen().astype(np.int16) - before_screen.astype(np.int16)
+        ).mean())
+        if self.here_tile() != before_tile:
+            self.blocked = set()
+        elif difference <= self.args.screen_epsilon:
+            self.blocked.add(action_index)
+        self.note_visit()
         if battle_kind(self.env) == TRAINER_BATTLE:
             self.history["saw_trainer_battle"] = True
         y, x = coords(self.env)
@@ -223,7 +302,8 @@ class Player:
         furthest node localised, and the run ends when that stops moving.
         """
         spent, furthest, since_furthest = 0, -1, 0
-        stuck_at, stuck_for = None, 0
+        route_done = False
+        stuck_at, stuck_for, talking_for = None, 0, 0
         # Dialogue and cutscenes ignore the d-pad. At the north edge of Pallet
         # all seven buttons give the identical result, because Oak stops the
         # player and walks them to the lab; the route's own actions there are
@@ -248,20 +328,33 @@ class Player:
             if here == stuck_at:
                 stuck_for += 1
             else:
-                stuck_at, stuck_for = here, 0
+                stuck_at, stuck_for, talking_for = here, 0, 0
             # Two ways to notice the game has taken over. The cheap one -- the
             # tile has not moved for a while -- is the default because it
             # MEASURED BETTER end to end: 22/38 nodes against 17/38 for the
             # probe below. It is the worse detector and the better policy,
             # because its incidental A-mashing advances text the planner would
             # otherwise sit through.
+            # ...and it is refuted the moment A itself changes nothing on
+            # screen. Without that test the branch never hands control back --
+            # it only replans once the tile moves, and if A cannot move it,
+            # the tile never moves. Measured: 116 of 162 actions were A
+            # presses into a game that was not showing any text.
+            # A cap as well, because "A changed the screen" is not evidence
+            # of progress: standing on a sign, A opens the text box and A
+            # closes it, so the screen changes on every press and the player
+            # never moves. Measured: 116 of 162 actions were A presses at one
+            # tile in Pallet Town, which is a loop the game will happily run
+            # forever.
+            talking = (stuck_for >= self.args.dialogue_after
+                       and A not in self.blocked
+                       and talking_for < self.args.dialogue_max)
             if not self.args.control_probe:
-                if stuck_for >= self.args.dialogue_after:
+                if talking:
                     self.step(A, "dialogue", milestone.key)
+                    talking_for += 1
                     spent += 1
                     since_furthest += 1
-                continue_planning = stuck_for < self.args.dialogue_after
-                if not continue_planning:
                     continue
             # The principled one. Two buttons from one snapshot:
             # under real control `down` and `right` give different screens,
@@ -292,30 +385,69 @@ class Player:
                 furthest, since_furthest = at, 0
                 print(f"   node {at + 1}/{len(points)} REACHED at action "
                       f"{spent}: {points[at]}")
-            if at >= len(points) - 1:
+            # Being NEAREST to the last node is not reaching it -- the same
+            # mistake as counting the nearest node as progress, in the exit
+            # condition this time. Every node from 9 on is inside Oak's lab, so
+            # the moment the player walked through the lab door the projection
+            # snapped to the final node and the run ended on the spot, 94
+            # actions in, with its score still showing node 4.
+            if at >= len(points) - 1 and points[-1].reached(
+                here, self.args.waypoint_tolerance
+            ):
+                route_done = True
                 break
 
-            target = points[min(at + self.args.lookahead, len(points) - 1)]
-            # A target in another room gives the planner nothing to work with:
-            # the wrong-map penalty swamps the tile distance, every plan that
-            # stays in this room ties, and CEM has no gradient to follow. That
-            # is exactly how pursuit stalled in the house at node 10 while the
-            # next nodes were in Pallet Town. Aim at the last node of the
-            # CURRENT room instead -- the door the route leaves by.
-            if target.map_id != here[0]:
+            ahead = min(at + self.args.lookahead, len(points) - 1)
+            # A scripted node is a gate, not a suggestion. Looking two nodes
+            # ahead from (4, 10) aimed at the lab door and skipped the tile
+            # that starts Oak's encounter entirely -- and walking into the lab
+            # without that scene means there is no Oak inside to talk to, so
+            # the run ends standing in an empty room pressing A. Never aim past
+            # a scripted node that has not been stood on yet.
+            for index in range(at, ahead + 1):
+                if points[index].scripted and not points[index].reached(
+                    here, self.args.waypoint_tolerance
+                ):
+                    ahead = index
+                    break
+            target = points[ahead]
+            # A target in another room used to give the planner nothing to work
+            # with: the wrong-map penalty swamped the tile distance, every plan
+            # that stayed in this room tied, and CEM had no gradient. The
+            # workaround was to aim at the last node of the CURRENT room
+            # instead, which fails whenever the route has no further node here
+            # -- measured, the bedroom holds exactly one waypoint at stride 8,
+            # so after reaching it the planner aimed into another map and
+            # oscillated between two tiles for 60 actions.
+            #
+            # The cost field fixes it properly. It is BFS over observed
+            # transitions ACROSS doorways, so a tile in this room has a real
+            # distance to a target in another one and no penalty is needed.
+            field = self.cost_field(target)
+            if field is None and target.map_id != here[0]:
                 exits = [
                     index for index in range(at, len(points))
                     if points[index].map_id == here[0]
                 ]
-                # Standing ON the exit already, aiming at it gives zero
-                # distance and no gradient -- the stall at node 22, on the
-                # doorstep of Oak's lab. Aim through the door instead: the
-                # wrong-map penalty then rewards any plan that actually
-                # crosses, which is the one action needed.
                 if exits and not points[max(exits)].reached(
                     here, self.args.waypoint_tolerance
                 ):
                     target = points[max(exits)]
+            # Close to a tile the demonstration lost control on, alternate
+            # planning with A. Oak's encounter fires at the north edge, walks
+            # the player back south and fires again, so the tile never stops
+            # changing and the stuck-based dialogue rule never notices -- the
+            # planner reads a cutscene as navigation and tries to walk through
+            # it. Alternating keeps the walking that gets there and adds the
+            # text-advancing that gets through it.
+            if (target.scripted
+                    and target.reached(here, self.args.script_radius)
+                    and spent % 2 == 0):
+                self.step(A, "script", f"{milestone.key}:node{at}")
+                spent += 1
+                since_furthest += 1
+                continue
+
             map_index = probe["maps"].tolist().index(target.map_id)
             initial = self.observe()
             sequence, cost, _ = cem_plan(
@@ -328,8 +460,9 @@ class Player:
                 verbose=False,
                 score_fn=lambda m, i, seq: coords_probe.plan_costs(
                     m, i, seq, probe, lookup, map_index, target.y, target.x,
-                    repeat=self.args.action_repeat,
+                    repeat=self.args.action_repeat, field=field,
                 ),
+                allowed=self.allowed_actions(),
             )
             committed = False
             for action_index in sequence.tolist()[: self.args.commit]:
@@ -350,6 +483,31 @@ class Player:
                 committed = True
             if not committed:
                 break
+
+        # The route ends where the demonstration ended: standing in front of
+        # Oak, not holding a Pikachu. Receiving it is dialogue, and the walking
+        # is finished, so whatever budget is left goes on advancing text.
+        # Without this the run reported "failed" having completed every one of
+        # its waypoints, which is the difference between a navigation result
+        # and a milestone.
+        while route_done and spent < budget:
+            if milestone.reached(self.env, self.history):
+                break
+            if in_battle(self.env):
+                self.step(A, "battle", milestone.key)
+            elif self.args.fallback == "a":
+                # A alone is not an interaction: Gen 1 only talks to what the
+                # player is FACING, and mashing A never changes which way that
+                # is. Measured, 489 A presses standing on the route's last tile
+                # in Oak's lab with nothing happening. Turn, then talk.
+                turn = (spent // 2) % 4
+                self.step(ACTIONS.index(("up", "right", "down", "left")[turn])
+                          if spent % 2 == 0 else A,
+                          "fallback", f"{milestone.key}:route-end")
+            else:
+                self.step(int(t.randint(0, len(ACTIONS), (1,)).item()),
+                          "fallback", f"{milestone.key}:route-end")
+            spent += 1
 
         self.history["pursuit_furthest"] = furthest + 1
         self.history["pursuit_total"] = len(points)
@@ -452,8 +610,10 @@ class Player:
                 seed=self.args.seed + spent,
                 verbose=False,
                 score_fn=lambda m, i, seq: coords_probe.plan_costs(
-                    m, i, seq, probe, lookup, map_index, target.y, target.x
+                    m, i, seq, probe, lookup, map_index, target.y, target.x,
+                    field=self.cost_field(target),
                 ),
+                allowed=self.allowed_actions(),
             )
             for action_index in sequence.tolist()[: self.args.commit]:
                 self.step(action_index, "planner",
@@ -600,6 +760,19 @@ def main() -> None:
                              "screens instead of by the tile standing still. "
                              "More principled, measured worse (17/38 vs 22/38) "
                              "because the cruder rule mashes A more.")
+    parser.add_argument("--script-radius", type=int, default=5,
+                        help="tiles from a scripted waypoint within which the "
+                             "planner alternates with A to advance a scene")
+    parser.add_argument("--revisit-cost", type=float, default=0.75,
+                        help="hops of cost added per previous visit to a tile")
+    parser.add_argument("--revisit-cap", type=float, default=8.0,
+                        help="most visits a tile can be charged for")
+    parser.add_argument("--screen-epsilon", type=float, default=0.1,
+                        help="mean pixel change below which an action is "
+                             "treated as having done nothing at all")
+    parser.add_argument("--dialogue-max", type=int, default=20,
+                        help="A presses at one tile before the dialogue "
+                             "hypothesis is abandoned and planning resumes")
     parser.add_argument("--dialogue-after", type=int, default=10,
                         help="actions with the tile unchanged before handing "
                              "over to the scripted text masher")
@@ -632,6 +805,12 @@ def main() -> None:
                         help="goal: minimise latent distance to a goal image "
                              "(mislocalises at range). progress: maximise "
                              "route position read off the frozen encoder.")
+    parser.add_argument("--walkmap", action=argparse.BooleanOptionalAction,
+                        default=True,
+                        help="score plans on BFS hops over observed "
+                             "transitions, across doorways, instead of "
+                             "Manhattan distance plus a wrong-map penalty")
+    parser.add_argument("--unknown-cost", type=float, default=120.0)
     parser.add_argument("--coord-fit-on", default="real",
                         choices=("real", "predicted", "both"),
                         help="what the coordinate head is fitted on. Fitting "
@@ -740,7 +919,13 @@ def main() -> None:
                   f"+/-{fitted.tile_mae:.2f} tiles{held_out} "
                   f"(linear {fitted.linear_tile_mae:.2f} in-sample)")
             print(f"{len(waypoints)} waypoints at stride {args.waypoint_stride}: "
-                  f"{waypoints[0]} -> {waypoints[-1]}\n")
+                  f"{waypoints[0]} -> {waypoints[-1]}")
+            if args.walkmap:
+                walk = build_walkmap(args.data)
+                player.use_walkmap(walk, fitted.maps)
+                print(f"walkmap: {len(walk.nodes())} tiles across "
+                      f"{len(fitted.maps)} maps, {len(walk.doors)} doorways")
+            print()
 
         scorer = None
         if args.objective == "progress":

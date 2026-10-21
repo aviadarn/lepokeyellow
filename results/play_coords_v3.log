@@ -1,0 +1,30 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+game=yellow start=states/bedroom.state at 38 (player's bedroom), party=0
+replan every 1 of 14 planned actions
+
+coordinate probe: map id 99.2% accurate over 4 maps, mlp position head on real embeddings +/-0.03 tiles held out (linear 0.21 in-sample)
+38 waypoints at stride 3: map 38 (7,1) -> map 40 (3,5)
+walkmap: 286 tiles across 4 maps, 16 doorways
+
+-> pikachu: hold a Pokemon (Oak hands over Pikachu)
+   node 3/38 REACHED at action 4: map 38 (1,6)
+   node 6/38 REACHED at action 11: map 37 (3,1)
+   node 8/38 REACHED at action 12: map 37 (2,2)
+   node 10/38 REACHED at action 17: map 37 (7,4)
+   node 11/38 REACHED at action 38: map 37 (6,2)
+   node 12/38 REACHED at action 41: map 0 (6,4)
+   node 16/38 REACHED at action 43: map 0 (6,2)
+   node 17/38 REACHED at action 46: map 0 (8,6)
+   node 18/38 REACHED at action 47: map 0 (8,8)
+   node 20/38 REACHED at action 49: map 0 (4,8)
+   node 21/38 REACHED at action 54: map 0 (0,10)
+   node 22/38 REACHED at action 104: map 0 (10,9)
+   node 23/38 REACHED at action 106: map 40 (11,5)
+   node 27/38 REACHED at action 110: map 40 (5,5)
+   node 38/38 REACHED at action 111: map 40 (3,5)
+   failed after 600 actions (map 40, party 0)
+
+milestones reached: 0/4  []
+actions by controller: {'planner': 86, 'script': 3, 'dialogue': 3, 'battle': 19, 'fallback': 489}
+146.4s for 600 actions
+wrote results/play_coords_v3.json

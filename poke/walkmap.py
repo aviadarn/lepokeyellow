@@ -136,6 +136,16 @@ class WalkMap:
                             incoming.setdefault((map_id, ny, nx), set()).add(
                                 (map_id, y, x)
                             )
+                # Plus the recorded transitions themselves. A cutscene can move
+                # the player diagonally or several tiles at once along a path
+                # that cannot be reconstructed, and dropping those would leave
+                # the graph less connected than the data -- which is how the
+                # waypoint inside the lab became unreachable from Pallet Town.
+                for (y, x), destinations in self.edges.get(map_id, {}).items():
+                    for (ny, nx) in destinations:
+                        incoming.setdefault((map_id, ny, nx), set()).add(
+                            (map_id, y, x)
+                        )
         else:
             for map_id, graph in self.edges.items():
                 for (y, x), destinations in graph.items():
@@ -242,8 +252,32 @@ def build(data_path: str) -> WalkMap:
             destination = (int(after[1]), int(after[2]))
             if source == destination:
                 continue
-            edges.setdefault(int(before[0]), {}).setdefault(source, set()).add(destination)
-            edges[int(before[0])].setdefault(destination, set())
+            graph = edges.setdefault(int(before[0]), {})
+            # One recorded step holds a button for 20 frames and settles for
+            # 40, which is long enough to cross two tiles, and the tile in
+            # between is then never recorded standing-on. Four-adjacency over
+            # recorded tiles alone therefore cannot bridge it, and the graph
+            # fragments: measured, only 12 tiles could reach the waypoint
+            # inside Oak's lab, so the cost field over the whole of Pallet Town
+            # was one flat plateau and the planner had nothing to descend. The
+            # player demonstrably walked THROUGH the middle tile, so it is
+            # walkable and goes in, splitting the step into its two halves.
+            steps = [(source, destination)]
+            dy, dx = destination[0] - source[0], destination[1] - source[1]
+            if (dy == 0) != (dx == 0):
+                # A straight move of n tiles is n steps through n-1 tiles the
+                # player demonstrably stood on. Strides inside Oak's lab reach
+                # four and seven tiles, because a cutscene walks the player
+                # while the recorder samples once per action, so without this
+                # the lab is a handful of disconnected islands.
+                stride = abs(dy + dx)
+                step = ((dy > 0) - (dy < 0), (dx > 0) - (dx < 0))
+                path = [(source[0] + step[0] * n, source[1] + step[1] * n)
+                        for n in range(stride + 1)]
+                steps = list(zip(path[:-1], path[1:]))
+            for begin, end in steps:
+                graph.setdefault(begin, set()).add(end)
+                graph.setdefault(end, set())
     return WalkMap(edges, doors)
 
 
