@@ -36,9 +36,6 @@ class RamMap:
     event_flags: int
     num_bag_items: int
     facing: int
-    # Filled by scripts/calibrate_control.py. None means "not measured for
-    # this version", and poke.control refuses rather than reading a guess.
-    text_box: int | None = None
     confidence: dict[str, str] = field(default_factory=dict)
 
     def verified(self, name: str) -> bool:
