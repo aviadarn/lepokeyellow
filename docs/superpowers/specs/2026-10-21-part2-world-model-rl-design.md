@@ -57,7 +57,7 @@ is Red minus one above `$CF1A`.
 |---|---|---|---|
 | A1 | `get_parcel` | `wEventFlags` bit 57 `GOT_OAKS_PARCEL` = `0xD74D` bit 1 | Entering Viridian Mart, (42, 5, 2) |
 | A2 | `deliver_parcel` | bit 56 `OAK_GOT_PARCEL` = `0xD74D` bit 0, and bit 37 `GOT_POKEDEX` = `0xD74A` bit 5 | Talking to Oak, (40, 3, 5) |
-| A3 | `enter_forest` | `cur_map` (`0xD35D`) == 51, Viridian Forest | Through the gate building, map 50. **Map 51 is unconfirmed**: the spike's search ended at (50, 7, 4). The oracle port must confirm it. |
+| A3 | `enter_forest` | `cur_map` (`0xD35D`) == 51, Viridian Forest | Through the gate building, map 50. **Map 51 confirmed** on the cartridge (2026-10-21, `results/oracle_forest.json`): 5 actions north from the gate state lands at (51, 47, 16). |
 
 **The objective id comes from flags only** (and the bag for the parcel). It
 never comes from map id or position, so the policy input never reads location.

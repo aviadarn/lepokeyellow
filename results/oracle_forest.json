@@ -1,0 +1,28 @@
+{
+ "forest": {
+  "found": true,
+  "path": [
+   "up",
+   "up",
+   "right",
+   "up",
+   "up"
+  ],
+  "path_len": 5,
+  "expanded": 41,
+  "nodes": 67,
+  "emulated_actions": 165,
+  "maps_seen": {
+   "50": 37,
+   "13": 28,
+   "51": 1
+  },
+  "seconds": 2.0,
+  "end": [
+   51,
+   47,
+   16
+  ],
+  "state": "states/oracle/forest.state"
+ }
+}
