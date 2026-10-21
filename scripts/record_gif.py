@@ -150,10 +150,16 @@ def frame_image(screen: np.ndarray, scale: int, lines: list[str],
     return canvas
 
 
-def caption(step: int, here, cost, action: str | None, predicted=None) -> list[str]:
+def caption(step: int, here, cost, action: str | None, predicted=None,
+            unknown: float | None = None) -> list[str]:
     where = (f"{map_name(here[0])[:18]} ({here[1]}, {here[2]})"
              if here[1] is not None else map_name(here[0])[:18])
-    first = f"{step:>3}  {where}   {cost:.0f} hops to go"
+    # No hop count where there is no hop count. Off the recorded graph the
+    # field returns the flat `unknown` penalty, and printing it as a distance
+    # reads as "120 hops to go" on a tile that is two steps from the target.
+    known = unknown is None or cost < unknown
+    first = (f"{step:>3}  {where}   {cost:.0f} hops to go" if known
+             else f"{step:>3}  {where}   off the map")
     second = "" if action is None else f"     pressed {action}"
     if predicted is not None:
         second += f"   model predicted ({predicted[0]:.1f}, {predicted[1]:.1f})"
@@ -341,7 +347,8 @@ def main() -> None:
         if not args.skip and settled:
             frames.append(frame_image(
                 env.screen(), args.scale,
-                caption(0, here, cost_of(here), None), font, panel_for(here),
+                caption(0, here, cost_of(here), None,
+                        unknown=args.unknown_cost), font, panel_for(here),
             ))
 
         spent = 0
@@ -372,7 +379,8 @@ def main() -> None:
                         label = f"{label} [{controllers[spent - 1]}]"
                     frames.append(frame_image(
                         env.screen(), args.scale,
-                        caption(spent, here, cost_of(here), label, predicted),
+                        caption(spent, here, cost_of(here), label, predicted,
+                                unknown=args.unknown_cost),
                         font, panel_for(here),
                     ))
                 if (here[0], here[1], here[2]) == TARGET:
