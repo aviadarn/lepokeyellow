@@ -29,6 +29,15 @@ the player is on: dark is closer to the goal, white is ground never walked on
 in the dataset, the ring is the target, the square is the player and the dots
 are where they have already been.
 
+The whole route, as the planner actually played it — bedroom to Oak's lab in
+111 actions, through the cutscene at the north edge of Pallet Town. The
+caption names the controller that chose each action.
+
+![the planner walking the route](media/play_route.gif)
+
+And what one change to the training objective was worth, on the isolated
+navigation task, recorded with identical settings:
+
 | before: MSE + SIGReg | after: + the coordinate loss | the recorded human route |
 |---|---|---|
 | ![before](media/planner_before.gif) | ![after](media/planner_after.gif) | ![route](media/route.gif) |
@@ -166,6 +175,11 @@ uv run python -m scripts.nav_bench checkpoints/yellow_v2/best.pt
 # Watch it, instead of reading a number: route | cem | greedy | random.
 uv run python -m scripts.record_gif checkpoints/yellow_v2/best.pt \
     --policy cem --out media/planner.gif
+
+# Or replay a run that already happened, exactly as it happened.
+uv run python -m scripts.record_gif --policy replay \
+    --log results/play_coords_v3.json --state states/bedroom.state \
+    --target 40,3,5 --out media/play_route.gif
 
 # Play.
 uv run python -m scripts.play checkpoints/yellow_v2/best.pt \

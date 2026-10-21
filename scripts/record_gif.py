@@ -29,6 +29,7 @@ disagree is a frame where the planner was misinformed.
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import numpy as np
@@ -209,7 +210,13 @@ def main() -> None:
     parser.add_argument("--state", default="states/pallet.state")
     parser.add_argument("--data", default="episodes/yellow_v3.h5")
     parser.add_argument("--policy", default="cem",
-                        choices=("cem", "greedy", "route", "random"))
+                        choices=("cem", "greedy", "route", "random", "replay"))
+    parser.add_argument("--log",
+                        help="a results/play_*.json to replay exactly; the "
+                             "controller that chose each action is shown in "
+                             "the caption")
+    parser.add_argument("--target",
+                        help="map,y,x the panel measures distance to")
     parser.add_argument("--route", default="routes/yellow_pikachu.json")
     parser.add_argument("--head", default="mlp", choices=("linear", "mlp"))
     parser.add_argument("--steps", type=int, default=60)
@@ -229,6 +236,10 @@ def main() -> None:
     parser.add_argument("--out", default="media/navigation.gif")
     parser.add_argument("--device", default=default_device())
     args = parser.parse_args()
+
+    global TARGET
+    if args.target:
+        TARGET = tuple(int(part) for part in args.target.split(","))
 
     needs_model = args.policy in ("cem", "greedy")
     if needs_model and not args.checkpoint:
@@ -256,7 +267,18 @@ def main() -> None:
                                       here[1], here[2], args.unknown_cost)
 
     planned: list[int] = []
-    if args.policy == "route":
+    controllers: list[str] = []
+    if args.policy == "replay":
+        # The planner's own run, frame by frame. Re-running the planner would
+        # be a different run; replaying its recorded actions from the same save
+        # state is the one that was measured.
+        if not args.log:
+            raise SystemExit("--policy replay needs --log")
+        entries = json.loads(Path(args.log).read_text())["log"]
+        planned = [ACTIONS.index(entry["action"]) for entry in entries]
+        controllers = [entry["controller"] for entry in entries]
+        planned = planned[: args.skip + args.steps]
+    elif args.policy == "route":
         route = Route.load(args.route)
         # Same rule as collect.py: replaying a route from a different save
         # state produces a confidently wrong recording. Both routes here were
@@ -335,10 +357,12 @@ def main() -> None:
                 if here[1] is not None:
                     trails.setdefault(here[0], []).append((here[1], here[2]))
                 if spent > args.skip:
+                    label = ACTIONS[action_index]
+                    if controllers:
+                        label = f"{label} [{controllers[spent - 1]}]"
                     frames.append(frame_image(
                         env.screen(), args.scale,
-                        caption(spent, here, cost_of(here),
-                                ACTIONS[action_index], predicted),
+                        caption(spent, here, cost_of(here), label, predicted),
                         font, panel_for(here),
                     ))
                 if (here[0], here[1], here[2]) == TARGET:
