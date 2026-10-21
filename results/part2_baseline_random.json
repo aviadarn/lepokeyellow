@@ -1,0 +1,24 @@
+{
+ "objectives": {
+  "trigger_oak": null,
+  "get_starter": null,
+  "get_parcel": null,
+  "deliver_parcel": null,
+  "enter_forest": null
+ },
+ "already_true_at_start": [
+  "get_starter",
+  "trigger_oak"
+ ],
+ "actions": 4000,
+ "by_controller": {
+  "policy": 1226,
+  "no_control": 13,
+  "text": 625,
+  "decline": 2136
+ },
+ "learned_share": 0.3074993729621269,
+ "policy": "random",
+ "seed": 0,
+ "state": "states/oracle/route1.state"
+}

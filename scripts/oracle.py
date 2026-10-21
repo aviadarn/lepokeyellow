@@ -52,7 +52,12 @@ def main() -> None:
 
     env = PokeEnv(args.rom, args.state)
     env.reset()
-    env.settle()
+    if not args.replay:
+        # Never before a replay. settle() ticks frames without an action, and
+        # an open-loop log is frame-phase sensitive: with it, `down` at the
+        # top of the stairs walks two tiles instead of one and the run ends up
+        # in Oak's lab instead of on Route 1. Measured, twice now.
+        env.settle()
     if args.replay:
         log = json.loads(Path(args.replay).read_text())["log"]
         for entry in log:
@@ -67,6 +72,10 @@ def main() -> None:
                 "Open-loop replay is frame-phase sensitive; re-record."
             )
         print(f"replayed {len(log)} actions to {here}", flush=True)
+        Path(args.states_dir).mkdir(parents=True, exist_ok=True)
+        start = Path(args.states_dir) / "route1.state"
+        start.write_bytes(env.snapshot())
+        print(f"wrote {start}", flush=True)
     Path(args.states_dir).mkdir(parents=True, exist_ok=True)
     report = {}
 
