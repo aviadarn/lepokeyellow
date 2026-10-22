@@ -10,14 +10,14 @@
   "get_starter",
   "trigger_oak"
  ],
- "actions": 4000,
+ "actions": 1461,
  "by_controller": {
-  "policy": 1226,
-  "no_control": 13,
-  "text": 625,
-  "decline": 2136
+  "policy": 1364,
+  "no_control": 5,
+  "text": 30,
+  "decline": 62
  },
- "learned_share": 0.3074993729621269,
+ "learned_share": 0.9368131868131868,
  "policy": "random",
  "seed": 0,
  "state": "states/oracle/route1.state"

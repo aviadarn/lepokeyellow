@@ -65,3 +65,14 @@ def test_yellow_event_flags_are_red_minus_one_and_facing_is_not():
 def test_every_new_yellow_address_declares_its_confidence():
     for name in ("event_flags", "num_bag_items", "facing"):
         assert name in YELLOW.ram.confidence
+
+
+def test_reading_yellow_event_indices_out_of_red_is_refused():
+    """games.py keeps a Yellow ROM from being read with Red addresses. The
+    bit *indices* here are Yellow's too, and they were being applied to
+    whatever game the env resolved -- the same silent-plausible-byte failure
+    one level up."""
+    with pytest.raises(RuntimeError, match="event bit indices"):
+        event_bit(env_with(game=RED), GOT_POKEDEX)
+    with pytest.raises(RuntimeError, match="event bit indices"):
+        carrying_parcel(env_with(game=RED))

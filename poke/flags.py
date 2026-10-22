@@ -4,8 +4,10 @@
 party, battle). This module covers the things the *plot* is recorded in, which
 is what decides which objective the player is on.
 
-Bit indices follow pret/pokeyellow's event_constants. The ones below were
-watched flipping on this cartridge, in order, during the parcel errand.
+Bit indices follow pret/pokeyellow's event_constants. Bits 37, 56 and 57 were
+watched flipping on this cartridge, in order, during the parcel errand. The
+catch-training bits (45, 47) fire after the Pokedex, and are listed here for
+the objectives that come later rather than because this errand set them.
 """
 
 from __future__ import annotations
@@ -26,9 +28,25 @@ OAKS_PARCEL = 0x46
 BAG_CAPACITY = 20
 
 
+#: The bit indices below are Yellow's. poke.games exists so a Yellow ROM
+#: cannot be read with Red's addresses; the indices need the same guard, or
+#: pointing this at Red would read a correctly-shifted byte and report the
+#: wrong story.
+SUPPORTED_GAMES = frozenset({"yellow"})
+
+
+def _check_game(env) -> None:
+    if env.game.key not in SUPPORTED_GAMES:
+        raise RuntimeError(
+            f"poke.flags holds Yellow's event bit indices; {env.game.key!r} "
+            "has its own. Confirm them against that ROM before using them."
+        )
+
+
 def event_bit(env, index: int) -> int:
     """One bit of wEventFlags. An unreadable byte reads as 0, not as a crash:
     a missing read means "this has not happened", which is the safe answer."""
+    _check_game(env)
     byte = env.read_ram(env.game.ram.event_flags + index // 8)
     return 0 if byte is None else (byte >> (index % 8)) & 1
 
@@ -58,4 +76,5 @@ def carrying_parcel(env) -> bool:
     never clears when Oak takes the parcel. The bit says "was collected"; the
     bag says "is held".
     """
+    _check_game(env)
     return any(item == OAKS_PARCEL for item, _ in bag_items(env))

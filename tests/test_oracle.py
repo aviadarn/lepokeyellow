@@ -138,3 +138,14 @@ def test_story_key_separates_states_that_differ_only_in_flags():
     before = story_key(env, with_facing=False)
     env.ram[YELLOW.ram.event_flags] = 1
     assert story_key(env, with_facing=False) != before
+
+
+def test_the_node_cap_is_a_memory_budget():
+    """One save state per node, never evicted. The script asked for 20000
+    nodes while the library default was 12000; at ~174 KiB a state that was
+    a 3.4 GB dict nobody had costed."""
+    from poke.oracle import MAX_SEARCH_BYTES, STATE_BYTES, nodes_for
+
+    assert nodes_for() * STATE_BYTES <= MAX_SEARCH_BYTES
+    assert nodes_for(STATE_BYTES * 10) == 10
+    assert nodes_for(0) == 1

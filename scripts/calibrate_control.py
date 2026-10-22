@@ -96,10 +96,18 @@ def tally(rows):
 
 
 def best_threshold(rows, name):
-    """The best 'control iff feature <= t' (or '>= t') rule for one feature."""
+    """The best 'control iff feature <= t' (or '>= t') rule for one feature.
+
+    Among cuts that score the same, the widest-margin one wins. This is not a
+    nicety. The first version took the midpoint of the first two adjacent
+    observed values that tied for best, which put the cut *inside* the
+    overworld's own spread: on Pallet Town's sand the box detector then read a
+    box on walkable ground, and because only the policy can walk off a tile,
+    that reading was absorbing. The margin is what keeps the cut in the gap.
+    """
     values = sorted({row[2][name] for row in rows})
     cuts = [(a + b) / 2 for a, b in zip(values, values[1:])] or values
-    best = (0.0, None, None)
+    scored = []
     for cut in cuts:
         for sense in ("<=", ">"):
             hits = [0, 0]
@@ -110,9 +118,21 @@ def best_threshold(rows, name):
                 hits[int(truth)] += int(predicted == truth)
             recalls = [hits[i] / totals[i] for i in (0, 1) if totals[i]]
             score = sum(recalls) / len(recalls) if recalls else 0.0
-            if score > best[0]:
-                best = (score, cut, sense)
-    return best
+            scored.append((round(score, 6), cut, sense))
+    if not scored:
+        return 0.0, None, None
+    best_score = max(row[0] for row in scored)
+    tied = [row for row in scored if row[0] == best_score]
+
+    def margin(cut):
+        """Distance to the nearest sample the cut is deciding between."""
+        below = [v for v in values if v <= cut]
+        above = [v for v in values if v > cut]
+        if not below or not above:
+            return 0.0
+        return min(cut - max(below), min(above) - cut)
+
+    return max(tied, key=lambda row: margin(row[1]))
 
 
 def score_threshold(rows, name, cut, sense):
@@ -159,8 +179,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rom", default="pokeyellow.gbc")
     parser.add_argument("--state", nargs="+",
-                        default=["states/pikachu.state", "states/oaks_lab.state",
-                                 "states/bedroom.state", "states/pallet.state"],
+                        default=["states/pallet.state", "states/pikachu.state",
+                                 "states/oaks_lab.state", "states/bedroom.state",
+                                 "states/oracle/route1.state",
+                                 "states/oracle/forest_gate.state"],
                         help="fit on all but the last; the last is held out")
     parser.add_argument("--samples", type=int, default=300)
     parser.add_argument("--seed", type=int, default=0)
@@ -207,10 +229,26 @@ def main() -> None:
             "cut": cut, "sense": sense,
         })
     feature_rows.sort(key=lambda row: (-row["holdout_accuracy"], -row["fit_accuracy"]))
+    # The winning feature's own samples, per class, so a unit test can pin the
+    # cut inside the gap without a ROM. Rounded and deduplicated: this is a
+    # fixture, not a dataset.
+    won = feature_rows[0]["feature"]
+    samples = {"with_control": set(), "without_control": set()}
+    for truth, _, features in fit_rows + holdout_rows:
+        key = "with_control" if truth else "without_control"
+        samples[key].add(round(features[won], 6))
+    feature_samples = {
+        "feature": won,
+        "cut": feature_rows[0]["cut"],
+        "sense": feature_rows[0]["sense"],
+        "with_control": sorted(samples["with_control"]),
+        "without_control": sorted(samples["without_control"]),
+    }
 
     report = {
         "winner": best,
         "screen_features": feature_rows,
+        "feature_samples": feature_samples,
         "fit_states": args.state[:-1],
         "holdout_state": args.state[-1],
         "samples_per_state": args.samples,

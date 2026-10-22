@@ -10,7 +10,10 @@ states/
 # Large or regenerable artifacts.
 episodes/
 checkpoints/
-plans/
+# CEM plan JSON, not docs/superpowers/plans -- a bare `plans/` matched at any
+# depth and swallowed the implementation plans, so the plan a branch was built
+# from could not be reviewed from history.
+/plans/
 mlruns/
 .venv/
 __pycache__/

@@ -1,7 +1,7 @@
 import numpy as np
 
 from poke.actions import ACTIONS
-from poke.control import TEXT_BOX_INTERIOR
+from poke.control import TEXT_BOX_REGION
 from poke.games import YELLOW
 from poke.handlers import HandlerState, choose
 from poke.ram import NO_BATTLE, TRAINER_BATTLE, WILD_BATTLE
@@ -20,7 +20,7 @@ class ScreenEnv(FakeEnv):
         })
         self.frame = np.zeros((144, 160, 3), dtype=np.uint8)
         if box:
-            self.frame[TEXT_BOX_INTERIOR] = 255
+            self.frame[TEXT_BOX_REGION] = 255
 
     def screen(self):
         return self.frame
@@ -100,3 +100,41 @@ def test_note_arms_the_warp_no_op_and_tracks_the_a_run():
     state.note(DOWN, moved_map=True)
     assert state.a_run == 0
     assert state.warped
+
+
+def test_the_text_handler_yields_a_turn_rather_than_owning_a_tile_forever():
+    """A false box reading is absorbing unless the handler lets go.
+
+    Measured: the detector reads a box on Pallet Town's sand at (0, 4, 3), the
+    policy is the only thing that can walk off that tile, and the handler never
+    gave the turn back -- 2714 of a 4000-action budget on one square. The
+    detector's accuracy is a separate question; a handler that can hold the pad
+    forever is a bug whatever the detector says.
+    """
+    env, state = ScreenEnv(box=True), HandlerState()
+    owners = []
+    for _ in range(200):
+        claimed = choose(env, state)
+        if claimed is None:
+            owners.append("policy")
+            state.note(ACTIONS.index("up"), moved_map=False)
+        else:
+            owners.append(claimed[1])
+            state.note(claimed[0], moved_map=False)
+    assert "policy" in owners, "the handler never let go of the pad"
+    gaps = [i for i, who in enumerate(owners) if who == "policy"]
+    longest = max([gaps[0]] + [b - a for a, b in zip(gaps, gaps[1:])])
+    assert longest <= 40, f"policy waited {longest} turns for a pad"
+
+
+def test_a_real_dialogue_still_gets_long_runs_of_a():
+    """Yielding must stay rare: Oak's intro is dozens of boxes, and the point
+    of the text handler is that the policy does not have to learn to mash A."""
+    env, state = ScreenEnv(box=True), HandlerState()
+    owners = []
+    for _ in range(100):
+        claimed = choose(env, state)
+        owners.append("policy" if claimed is None else claimed[1])
+        state.note(ACTIONS.index("up") if claimed is None else claimed[0],
+                   moved_map=False)
+    assert owners.count("policy") <= 5

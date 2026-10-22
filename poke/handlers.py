@@ -29,6 +29,13 @@ NOOP = ACTIONS.index("noop")
 TALK_RUN = 8
 # How many down/A pairs to spend getting out of a menu once that happens.
 DECLINE_BUDGET = 24
+# How many consecutive box turns the handler may own before it yields one to
+# the policy. The text detector is a measured approximation, and a false
+# positive on a walkable tile is absorbing if the handler never lets go: only
+# the policy can walk off the tile, and it never gets asked. Measured before
+# this existed -- the detector read a box on Pallet Town's sand at (0, 4, 3)
+# and one run spent 2714 of its 4000 actions on that square.
+BOX_PATIENCE = 32
 
 
 @dataclass
@@ -38,6 +45,7 @@ class HandlerState:
     warped: bool = False
     a_run: int = 0
     decline_left: int = 0
+    box_turns: int = 0
 
     def note(self, action_index: int, moved_map: bool) -> None:
         """Called after each action with whether the map id changed."""
@@ -58,6 +66,14 @@ def choose(env, state: HandlerState) -> tuple[int, str] | None:
         state.warped = False
         return NOOP, "no_control"
     if not text_box_open(env):
+        state.box_turns = 0
+        return None
+    state.box_turns += 1
+    if state.box_turns > BOX_PATIENCE:
+        # Hand one turn back. A real dialogue loses a single A press and the
+        # next turn is the handler's again; a tile the detector is wrong about
+        # becomes walkable instead of a trap.
+        state.box_turns = 0
         return None
     if state.decline_left <= 0 and state.a_run >= TALK_RUN:
         state.decline_left = DECLINE_BUDGET

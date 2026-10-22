@@ -21,28 +21,85 @@ class ContractViolation(Exception):
     pass
 
 
+class ContractAttributeError(ContractViolation, AttributeError):
+    """Denial of an attribute the play-time surface does not carry.
+
+    Also an AttributeError so that `hasattr` answers False instead of
+    exploding: copy, a gym wrapper and a logger all duck-type their way
+    around an object, and only AttributeError is swallowed by that protocol.
+    `read_ram` on a position address stays a plain ContractViolation -- that
+    is a real attempt to cheat, not a feature probe.
+    """
+
+
 class PlayTimeEnv:
-    """Everything `PokeEnv` does, minus what the contract forbids."""
+    """What a policy is allowed to see, and nothing else.
+
+    Deny by default. The first version forwarded everything and named two
+    forbidden attributes, which is a fence with the gate left open: `_env`
+    reached the real object, `pyboy` reached raw memory, `read_ram_range` was
+    a second unguarded read path, and `screen_of_state` rolls back internally.
+    So the allowlist is the interface, and anything not on it raises.
+
+    The wrapped env is kept off the instance dictionary, in a closure, so that
+    there is no attribute to reach it through.
+    """
+
+    #: Everything a policy legitimately needs.
+    ALLOWED = frozenset({"screen", "read_ram", "game", "act_frames"})
+
+    #: Position, and the bytes beside it that stand in for position: the
+    #: map-header pointer right after cur_map is a perfect map-id proxy, and
+    #: the block coordinates sit two past y and x. Blocking three exact
+    #: addresses is a value check an adversary walks around.
+    POSITION_SPAN = 3
 
     def __init__(self, env):
-        self._env = env
+        banned = self._banned_addresses(env)
+
+        def read_ram(addr):
+            if addr in banned:
+                raise ContractViolation(
+                    f"{addr:#06x} is position, or sits inside the bytes that "
+                    "stand in for it. The policy navigates from pixels; map "
+                    "id and coordinates are for scoring, on the real env."
+                )
+            return env.read_ram(addr)
+
+        object.__setattr__(self, "_allowed", {
+            "screen": env.screen,
+            "read_ram": read_ram,
+            "game": env.game,
+            "act_frames": getattr(env, "act_frames", None),
+        })
+
+    @staticmethod
+    def _banned_addresses(env) -> frozenset:
+        ram = env.game.ram
+        span = PlayTimeEnv.POSITION_SPAN
+        return frozenset(
+            base + offset
+            for base in (ram.cur_map, ram.y_coord, ram.x_coord)
+            for offset in range(span)
+        )
 
     def __getattr__(self, name):
-        if name in ("snapshot", "restore"):
-            raise ContractViolation(
-                f"{name}() is rollback, which play time bans: the run is one "
-                "continuous episode. Use it in training code only."
-            )
-        return getattr(self._env, name)
+        allowed = object.__getattribute__(self, "_allowed")
+        if name in allowed:
+            return allowed[name]
+        # AttributeError, not ContractViolation, for the dunders Python itself
+        # probes -- copy, pickle and repr ask for those and must get a plain
+        # "no such attribute" back.
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
+        raise ContractAttributeError(
+            f"{name!r} is not on the play-time surface "
+            f"({', '.join(sorted(allowed))}). Nothing off it is reachable: "
+            "not rollback, not raw memory, not the second read path."
+        )
 
-    def read_ram(self, addr):
-        ram = self._env.game.ram
-        if addr in (ram.cur_map, ram.y_coord, ram.x_coord):
-            raise ContractViolation(
-                f"{addr:#06x} is position. The policy navigates from pixels; "
-                "map id and coordinates are for scoring, on the unguarded env."
-            )
-        return self._env.read_ram(addr)
+    def __setattr__(self, name, value):
+        raise ContractViolation("the play-time env is read-only")
 
 
 class Run:

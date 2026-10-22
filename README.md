@@ -519,6 +519,98 @@ monotonic target is extrapolation, not interpolation — it reported R² −25 w
 the same features beat the mean on absolute error — and a single arbitrary ridge
 strength flipped a conclusion, α=1.0 giving −0.100 where α=100 gives 0.697.
 
+## Part 2: the harness for a learned policy
+
+Everything above steers with demonstration waypoints and arrival read from RAM.
+That is a fair description of a planner, not of a policy, and the honest
+version of the next step is a contract rather than a claim. The design is in
+[docs/superpowers/specs/2026-10-21-part2-world-model-rl-design.md](docs/superpowers/specs/2026-10-21-part2-world-model-rl-design.md);
+this section is what has been built of it.
+
+**At play time** the policy sees pixels and which objective it is on, and
+nothing else. No coordinate, map-id or wall reads, and no save states.
+`poke/contract.py` makes that a rule the code enforces: the policy is handed a
+`PlayTimeEnv` whose surface is `screen`, `read_ram`, `game` and `act_frames`,
+and whose `read_ram` refuses the position addresses and the bytes beside them.
+Anything else raises. **At training time** anything goes -- RAM rewards,
+save-state resets, oracle routes.
+
+```bash
+# Which WRAM byte or screen feature says the player has control? Measured
+# against a snapshot-and-compare probe, fitted on five states, held out on one.
+uv run python -m scripts.calibrate_control --samples 250
+
+# The BFS oracle: milestone save states and the ceiling. Training only.
+uv run python -m scripts.oracle --state states/bedroom.state \
+    --replay results/play_milestones_s1.json
+
+# Play Part 2 under the contract. One continuous run, no rollback.
+uv run python -m scripts.play2 --policy random --budget 1461
+
+# How fast does this machine emulate in parallel?
+uv run python -m scripts.bench_workers --steps 300 --workers 1 2 4 8 12
+```
+
+### The learned share is an upper bound, not a measurement
+
+Every action is logged with the controller that chose it, and `learned_share`
+is the policy's share of the actions somebody owned. Two measured facts bound
+how much that number is worth.
+
+The control probe is an approximation. No WRAM byte reproduces the
+snapshot-and-compare answer: scoring every byte in WRAM, "zero means control"
+topped out at 0.797 balanced accuracy, a best-value-set rule reached 0.878 with
+winners that scored 0.08 on a held-out state, and excluding battle frames
+lifted the best byte to 0.966 -- but every candidate sat in `0xDFEE-0xDFFB`,
+which is the stack. It was reading the return address of whatever routine
+happened to be running. The detector shipped instead is the white fraction of
+the screen's bottom six rows, cut at 0.7725: **0.9503 fit, 0.9835 held
+out**. Quote those two numbers wherever the share is quoted.
+
+And a walking cutscene draws no box, so the probe says the player has control,
+the turn goes to the policy, and it is counted as learned work. That is the
+direction of the error: the share is inflated, not deflated.
+
+The two classes also overlap by one sample -- a walkable tile that reads as
+white as a box. No cut removes it, so `poke.handlers.BOX_PATIENCE` bounds the
+cost instead: after 32 consecutive turns the text handler yields one to the
+policy. Without that, a false box is absorbing, because only the policy can
+walk off a tile. It was: the first cut read a box on Pallet Town's sand and one
+run spent 2714 of 4000 actions on a single square.
+
+### The ceiling is a number, not a run
+
+The BFS oracle reaches Viridian Forest from Route 1 in **487 actions**
+(196 search edges; the rest is the A-mashing each edge spends waiting for
+control), in 13 minutes of search. The policy arms get
+3x that, 1461 actions.
+
+It is not a baseline run, and `scripts/play2.py` offers no oracle policy. The
+oracle's own action log does not reproduce its own route: replaying the parcel
+phase's 87 actions from the Route 1 state ends at (12, 28, 9), still on Route
+1, where the search ended at (42, 5, 2) in the Viridian Mart. The search probes
+control by snapshotting and restoring between actions, and PyBoy save/load is
+not bit-exact for whatever that depends on -- the same break measured earlier
+in this repo, when `has_control()` inside `play.py`'s `step()` stopped the run
+reproducing its own log at action 368.
+
+### The floor
+
+1461 actions each from Route 1 -- the same budget the policy arms get -- under
+the contract: no constant button and no random policy reaches `get_parcel`,
+`deliver_parcel` or `enter_forest`. Random spends 94% of its turns on the
+policy and the rest in the handlers.
+Objectives already true when a run starts are not credited -- Route 1 begins
+with `trigger_oak` and `get_starter` already flagged, and the first version of
+this table had all eight constant buttons "clearing" two objectives apiece.
+
+### Parallel emulation is not the bottleneck
+
+668 actions/s with one worker, 2,388 at four (efficiency 0.89), 3,490 at eight
+(0.65), 4,003 at twelve (0.50). An action is 60 frames, so four workers emulate
+about 143k frames/s while the encoder does 1,758. The RL budget was going to
+assume the emulator was the expensive part. It is the forward pass.
+
 ## Cost
 
 Measured on an Apple M5 (32 GB), torch on MPS.

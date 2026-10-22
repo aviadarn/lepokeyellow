@@ -16,7 +16,7 @@ from poke.actions import ACTIONS
 from poke.env import PokeEnv
 from poke.flags import GOT_POKEDEX, carrying_parcel, event_bit
 from poke.objectives import VIRIDIAN_FOREST
-from poke.oracle import search
+from poke.oracle import MAX_SEARCH_BYTES, nodes_for, search
 
 FOREST_GATE = 50
 
@@ -41,7 +41,10 @@ def main() -> None:
                         help="where to start; the Route 1 state for stage A")
     parser.add_argument("--states-dir", default="states/oracle")
     parser.add_argument("--out", default="results/oracle.json")
-    parser.add_argument("--max-nodes", type=int, default=20000)
+    parser.add_argument("--max-nodes", type=int, default=None,
+                        help="default: whatever fits in "
+                             f"{MAX_SEARCH_BYTES // 1024 ** 3} GiB of save "
+                             f"states ({nodes_for()} nodes)")
     parser.add_argument("--only", nargs="+", default=None,
                         help="run only these phases, e.g. --only forest")
     parser.add_argument("--replay", default=None,

@@ -30,7 +30,9 @@ jobs:
       - run: |
           for s in capture_state smoke_test record_route calibrate_ram collect \
                    eval_baselines train probe finetune_rollout plan_cem \
-                   eval_plan sweep_seeds show_state; do
+                   eval_plan sweep_seeds show_state play play2 oracle \
+                   calibrate_control bench_workers prune_route annotate_route \
+                   record_gif nav_bench; do
             echo "--- $s"
             uv run python -m "scripts.$s" --help > /dev/null
           done

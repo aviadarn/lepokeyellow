@@ -4,7 +4,7 @@ import numpy as np
 
 from poke.actions import ACTIONS
 from poke.contract import ContractViolation
-from poke.control import TEXT_BOX_INTERIOR
+from poke.control import TEXT_BOX_REGION
 from poke.games import YELLOW
 from scripts.play2 import play, policy_for
 from tests.test_oracle import CorridorEnv
@@ -15,7 +15,7 @@ class BoxedCorridorEnv(CorridorEnv):
 
     def screen(self):
         frame = super().screen()
-        frame[TEXT_BOX_INTERIOR] = 255
+        frame[TEXT_BOX_REGION] = 255
         return frame
 
 

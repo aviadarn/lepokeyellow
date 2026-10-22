@@ -27,6 +27,18 @@ HOME_OR_CENTER = frozenset({37, 38, 41})
 # How many no-ops to spend waiting for the fade-in after a warp.
 WARP_SETTLE = 30
 
+# The search keeps one save state per node and never evicts. A PyBoy state is
+# about 174 KiB, so the node cap is really a memory cap and is written as one:
+# 20000 nodes would have been 3.4 GB, and the measured phases already held
+# 760 MB and 1.0 GB without anything noticing.
+STATE_BYTES = 178_101
+MAX_SEARCH_BYTES = 2 * 1024 ** 3
+
+
+def nodes_for(budget_bytes: int = MAX_SEARCH_BYTES) -> int:
+    """How many nodes fit in a memory budget, at one save state each."""
+    return max(1, budget_bytes // STATE_BYTES)
+
 
 @dataclass(frozen=True)
 class SearchResult:
@@ -134,9 +146,11 @@ def transition(env, button: str, cap: int = 400, trace: list | None = None):
 
 
 def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
-           with_facing: bool = True, max_nodes: int = 12000,
+           with_facing: bool = True, max_nodes: int | None = None,
            on_progress=None) -> SearchResult:
     started = time.time()
+    if max_nodes is None:
+        max_nodes = nodes_for()
     root_blob = env.snapshot()
     root = story_key(env, with_facing)
     parents: dict[tuple, tuple] = {root: (None, None, root_blob, [])}

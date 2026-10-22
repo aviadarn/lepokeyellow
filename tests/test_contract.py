@@ -101,3 +101,45 @@ def test_new_tiles_reset_when_the_objective_changes():
     env.write(YELLOW.ram.event_flags + 39 // 8, 1 << (39 % 8))
     run.record(UP, "policy")
     assert run.new_tiles_this_objective == 1
+
+
+def test_the_guard_is_deny_by_default_not_two_blocked_names():
+    """Every route to position the review found, closed.
+
+    __getattr__ only fires for attributes the object does not have, and
+    enumerating two forbidden names leaves the rest of PokeEnv forwarded, so
+    the fence was a suggestion: `_env`, `pyboy`, `read_ram_range` and
+    `screen_of_state` all reached the map id or rolled the emulator back.
+    """
+    guarded = PlayTimeEnv(base_env())
+    for attribute in ("_env", "pyboy", "read_ram_range", "screen_of_state",
+                      "snapshot", "restore", "init_state"):
+        with pytest.raises(ContractViolation):
+            getattr(guarded, attribute)
+
+
+def test_hasattr_answers_false_instead_of_exploding():
+    """hasattr only swallows AttributeError, so a duck-typing caller -- copy,
+    a gym wrapper, a logger -- used to take a ContractViolation in the face."""
+    guarded = PlayTimeEnv(base_env())
+    assert not hasattr(guarded, "snapshot")
+    assert not hasattr(guarded, "pyboy")
+    assert hasattr(guarded, "screen")
+
+
+def test_the_allowed_surface_is_what_a_policy_needs_and_no_more():
+    guarded = PlayTimeEnv(base_env())
+    assert guarded.screen().shape == (144, 160, 3)
+    assert guarded.read_ram(YELLOW.ram.event_flags) == 0
+    assert guarded.game is not None
+
+
+def test_neighbouring_addresses_are_blocked_too():
+    """The map-header pointer at cur_map+1 is a perfect map-id proxy, and the
+    block coords sit just past x. Blocking three exact addresses was a value
+    check an adversary walks around by reading the byte next door."""
+    guarded = PlayTimeEnv(base_env())
+    for addr in (YELLOW.ram.cur_map + 1, YELLOW.ram.cur_map + 2,
+                 YELLOW.ram.y_coord + 2, YELLOW.ram.x_coord + 2):
+        with pytest.raises(ContractViolation, match="position"):
+            guarded.read_ram(addr)

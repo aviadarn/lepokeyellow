@@ -10,9 +10,9 @@
   "get_starter",
   "trigger_oak"
  ],
- "actions": 4000,
+ "actions": 1461,
  "by_controller": {
-  "policy": 4000
+  "policy": 1461
  },
  "learned_share": 1.0,
  "policy": "up",
