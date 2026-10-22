@@ -40,6 +40,24 @@ class FakeHandle:
         self.calls = 0
 
 
+class OrderedHandle(FakeHandle):
+    """Records sends and receives into a shared log, to prove concurrency."""
+
+    def __init__(self, name, log, **kwargs):
+        super().__init__(**kwargs)
+        self.name = name
+        self.log = log
+
+    def send(self, message):
+        super().send(message)
+        self.log.append(("send", self.name, message[0]))
+
+    def recv(self):
+        reply = super().recv()
+        self.log.append(("recv", self.name))
+        return reply
+
+
 class FakeEncoder:
     dim = 4
     num_frames = 2
@@ -52,7 +70,7 @@ class FakeEncoder:
 def trainer(handles, **overrides):
     from poke.rl.archive import Archive
     from poke.rl.policy import ActorCritic
-    config = TrainConfig(rollout_steps=4, **overrides)
+    config = TrainConfig(**{"rollout_steps": 4, **overrides})
     encoder = FakeEncoder()
     policy = ActorCritic(feature_dim=encoder.dim, num_frames=encoder.num_frames, hidden=8)
     return Trainer(handles=handles, policy=policy, encoder=encoder,
@@ -145,3 +163,18 @@ def test_new_cells_are_snapshotted_into_the_archive():
     driver.collect(driver.new_buffer())
     assert len(driver.archive) >= 2, "two maps, two cells at least"
     assert any(message[0] == "snapshot" for message in handles[0].sent)
+
+
+def test_every_worker_is_stepped_before_any_is_waited_on():
+    """Send-then-wait per worker serialises the emulators: worker 1 only starts
+    after worker 0 has finished its 60 frames. Measured at 60 steps/s against
+    a 400 steps/s floor."""
+    log = []
+    handles = [OrderedHandle("a", log), OrderedHandle("b", log)]
+    driver = trainer(handles, rollout_steps=1)
+    driver.collect(driver.new_buffer())
+    steps = [entry for entry in log
+             if entry[0] == "recv" or (entry[0] == "send" and entry[2] == "step")]
+    first_step = next(i for i, e in enumerate(steps) if e[0] == "send")
+    window = steps[first_step:first_step + 4]
+    assert [e[0] for e in window] == ["send", "send", "recv", "recv"], window

@@ -175,18 +175,31 @@ class Trainer:
     def _tensor(self, rows) -> torch.Tensor:
         return torch.from_numpy(np.stack(rows)).float().to(self.device)
 
-    def _ask(self, index: int, message, dropped: set):
-        """Send and receive from one worker, surviving its death."""
+    def _send(self, index: int, message, dropped: set) -> None:
+        """Hand one worker its next job. Never waits."""
+        if index in dropped:
+            return
+        try:
+            self.handles[index].send(message)
+        except (EOFError, OSError, BrokenPipeError):
+            self.handles[index].restart()
+            dropped.add(index)
+
+    def _wait(self, index: int, dropped: set):
+        """Collect one worker's answer, surviving its death."""
         if index in dropped:
             return self._blank()
-        handle = self.handles[index]
         try:
-            handle.send(message)
-            return handle.recv()
+            return self.handles[index].recv()
         except (EOFError, OSError, BrokenPipeError):
-            handle.restart()
+            self.handles[index].restart()
             dropped.add(index)
             return self._blank()
+
+    def _ask(self, index: int, message, dropped: set):
+        """Send and wait, for the one-off calls: reset, snapshot."""
+        self._send(index, message, dropped)
+        return self._wait(index, dropped)
 
     # -- the archive -------------------------------------------------------
 
@@ -236,19 +249,24 @@ class Trainer:
             self.hidden = out["hidden"]
             actions = out["action"].tolist()
 
-            replies = [self._ask(index, ("step", actions[index]), dropped)
-                       for index in range(len(self.handles))]
+            # Send to every worker before waiting on any of them. Sending and
+            # waiting one at a time serialises the emulators: worker 1 would
+            # only start its 60 frames once worker 0 had finished. Measured at
+            # 60 driver steps/s that way, against a 400 floor.
+            for index in range(len(self.handles)):
+                self._send(index, ("step", actions[index]), dropped)
+            replies = [self._wait(index, dropped) for index in range(len(self.handles))]
             embeddings = self.encoder.embed(np.stack([r["frame"] for r in replies]))
 
-            rewards, dones = [], []
+            rewards = [float(reply["reward"]) for reply in replies]
+            if self.bonus is not None:
+                # Policy transitions only: a handler turn is a text box, and a
+                # text box is a noisy TV. One forward for the whole step.
+                extra = self.bonus.bonus_many(previous, actions, embeddings)
+                rewards = [r + (0.0 if i in dropped else extra[i])
+                           for i, r in enumerate(rewards)]
+            dones = []
             for index, reply in enumerate(replies):
-                reward = float(reply["reward"])
-                if self.bonus is not None and index not in dropped:
-                    # Policy transitions only: a handler turn is a text box,
-                    # and a text box is a noisy TV.
-                    reward += self.bonus.bonus(previous[index], actions[index],
-                                               embeddings[index])
-                rewards.append(reward)
                 dones.append(float(reply["done"]))
                 self.completed.update(reply["info"]["completed"])
                 self.prev_action[index] = actions[index]
@@ -312,6 +330,9 @@ def main() -> None:
     parser.add_argument("--resume", default=None)
     parser.add_argument("--seed", type=int, default=defaults.seed)
     parser.add_argument("--device", default=default_device())
+    parser.add_argument("--half", action="store_true",
+                        help="fp16 encoder: the driver's cost per tick is one "
+                             "forward of it")
     parser.add_argument("--log", default="results/part2_rl_train.json")
     args = parser.parse_args()
 
@@ -322,7 +343,7 @@ def main() -> None:
                          bonus_coef=args.bonus_coef, max_hours=args.max_hours,
                          kill_after_hours=args.kill_after_hours, seed=args.seed)
 
-    encoder = FrozenEncoder(config.checkpoint, device=args.device)
+    encoder = FrozenEncoder(config.checkpoint, device=args.device, half=args.half)
     policy = ActorCritic(feature_dim=encoder.dim, num_frames=encoder.num_frames).to(args.device)
     optimizer = torch.optim.Adam(policy.parameters(), lr=config.ppo.lr)
     bonus = WorldModelBonus(encoder.model, device=args.device, coef=config.bonus_coef)

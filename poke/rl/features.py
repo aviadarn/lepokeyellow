@@ -42,7 +42,8 @@ def checkpoint_geometry(blob: dict) -> tuple[int, int | None]:
 
 
 class FrozenEncoder:
-    def __init__(self, checkpoint, device: str | None = None, expect_frames: int = 4):
+    def __init__(self, checkpoint, device: str | None = None, expect_frames: int = 4,
+                 half: bool = False):
         self.path = Path(checkpoint)
         blob = torch.load(self.path, map_location="cpu", weights_only=False)
         dim, frames = checkpoint_geometry(blob)
@@ -59,6 +60,13 @@ class FrozenEncoder:
         self.model.load_state_dict(blob["jepa"])
         self.model.eval().to(self.device)
         self.model.requires_grad_(False)
+        # The encoder is frozen, so half precision costs only precision. What
+        # it buys is the per-call latency that bounds the training loop: the
+        # driver's cost per tick is one forward of this model, measured larger
+        # than the four emulators it describes.
+        self.half = half
+        if half:
+            self.model.half()
 
     @property
     def out_dim(self) -> int:
@@ -74,7 +82,9 @@ class FrozenEncoder:
         """
         pixels = np.asarray(frames, dtype=np.float32) / 127.5 - 1.0
         batch = torch.from_numpy(pixels).unsqueeze(1).to(self.device)
-        out = self.model.encode(batch)
+        if self.half:
+            batch = batch.half()
+        out = self.model.encode(batch).float()
         return out.detach().to("cpu").numpy().astype(np.float32)
 
 

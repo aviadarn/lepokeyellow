@@ -96,3 +96,26 @@ def test_the_module_admits_the_choice_was_not_measured():
     assert CHOSEN["signal"] == "prediction_error"
     assert CHOSEN["measured"] is False
     assert "comparison" in CHOSEN["why"]
+
+
+def test_bonus_many_matches_calling_bonus_one_at_a_time():
+    """The driver pays four envs per step; four separate predictor forwards on
+    MPS cost more than the emulators do."""
+    prev = np.zeros((3, 2), dtype=np.float32)
+    nexts = np.array([[1.0, 0.0], [2.0, 0.0], [3.0, 0.0]], dtype=np.float32)
+    one_by_one = WorldModelBonus(FakePredictor([0.0, 0.0]), device="cpu", coef=1.0)
+    batched = WorldModelBonus(FakePredictor([0.0, 0.0]), device="cpu", coef=1.0)
+    warm(one_by_one)
+    warm(batched)
+    singles = [one_by_one.bonus(prev[i], 0, nexts[i]) for i in range(3)]
+    many = batched.bonus_many(prev, [0, 0, 0], nexts)
+    assert many == pytest.approx(singles)
+
+
+def test_bonus_many_calls_the_predictor_once():
+    predictor = FakePredictor([0.0, 0.0])
+    bonus = WorldModelBonus(predictor, device="cpu", coef=1.0)
+    before = predictor.calls
+    bonus.bonus_many(np.zeros((4, 2), dtype=np.float32), [0, 1, 2, 3],
+                     np.zeros((4, 2), dtype=np.float32))
+    assert predictor.calls - before == 1

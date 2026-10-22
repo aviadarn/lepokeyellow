@@ -68,3 +68,19 @@ def test_the_stack_rolls_oldest_out():
 def test_pushing_before_reset_is_an_error():
     with pytest.raises(RuntimeError):
         EmbeddingStack(num_frames=2, dim=1).push(np.zeros(1, dtype=np.float32))
+
+
+def test_half_precision_embeds_to_the_same_shape_and_dtype(checkpoint):
+    """The encoder is frozen, so fp16 inference costs nothing but precision,
+    and the per-call MPS latency is what bounds the training loop."""
+    encoder = FrozenEncoder(checkpoint, device="cpu", half=True)
+    out = encoder.embed(np.zeros((2, 144, 160), dtype=np.uint8))
+    assert out.shape == (2, 192)
+    assert out.dtype == np.float32, "the policy always sees float32"
+
+
+def test_half_precision_stays_close_to_full(checkpoint):
+    frames = np.full((2, 144, 160), 128, dtype=np.uint8)
+    full = FrozenEncoder(checkpoint, device="cpu").embed(frames)
+    half = FrozenEncoder(checkpoint, device="cpu", half=True).embed(frames)
+    assert np.abs(full - half).max() < 0.1

@@ -77,13 +77,36 @@ class WorldModelBonus:
 
     def bonus(self, prev_embedding, action_index: int, next_embedding) -> float:
         """How wrong the predictor was about this transition, scaled."""
-        initial = torch.from_numpy(np.asarray(prev_embedding, dtype=np.float32)).unsqueeze(0)
-        button = torch.from_numpy(to_multihot(action_index)).view(1, 1, -1)
+        return self.bonus_many(np.asarray(prev_embedding)[None, ...], [action_index],
+                               np.asarray(next_embedding)[None, ...])[0]
+
+    def _dtype(self):
+        """The predictor's precision. It may be fp16 -- the encoder is frozen,
+        so the driver is free to halve it, and then its inputs must follow."""
+        try:
+            return next(self.jepa.parameters()).dtype
+        except (AttributeError, StopIteration):
+            return torch.float32
+
+    def bonus_many(self, prev_embeddings, action_indices, next_embeddings) -> list[float]:
+        """One predictor forward for a whole rollout step.
+
+        The driver pays every env on every step. Four separate forwards on MPS
+        cost more wall-clock than the four emulators they describe -- measured
+        at 60 driver steps/s against a 400 floor -- and the predictor batches
+        over the leading dimension anyway.
+        """
+        dtype = self._dtype()
+        initial = torch.from_numpy(np.asarray(prev_embeddings, dtype=np.float32)).to(dtype)
+        buttons = torch.from_numpy(
+            np.stack([to_multihot(index) for index in action_indices])).unsqueeze(1).to(dtype)
         with torch.no_grad():
-            predicted = self.jepa.rollout(initial.to(self.device), button.to(self.device))[:, 0]
-        target = torch.from_numpy(np.asarray(next_embedding, dtype=np.float32)).unsqueeze(0)
-        error = float(((predicted.cpu() - target) ** 2).mean())
-        self.norm.update(error)
-        if self.norm.count < WARMUP:
-            return 0.0
-        return self.coef * min(self.norm.normalise(error), CLIP)
+            predicted = self.jepa.rollout(initial.to(self.device), buttons.to(self.device))[:, 0]
+        target = torch.from_numpy(np.asarray(next_embeddings, dtype=np.float32))
+        errors = ((predicted.float().cpu() - target) ** 2).mean(dim=-1).tolist()
+        out = []
+        for error in errors:
+            self.norm.update(float(error))
+            out.append(0.0 if self.norm.count < WARMUP
+                       else self.coef * min(self.norm.normalise(float(error)), CLIP))
+        return out
