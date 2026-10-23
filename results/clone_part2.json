@@ -1,0 +1,16 @@
+{
+ "demos": 208,
+ "per_objective": {
+  "get_parcel": 47,
+  "deliver_parcel": 60,
+  "enter_forest": 101
+ },
+ "epochs": 300,
+ "lr": 0.001,
+ "first_loss": 1.9432,
+ "final_loss": 0.0005,
+ "train_accuracy": 1.0,
+ "encoder": "checkpoints/part2/best.pt",
+ "half": false,
+ "caveat": "Training accuracy on 208 pairs is not evidence of play. One optimal trajectory per objective, no recovery behaviour; scripts/eval_part2.py under the contract is the measurement."
+}

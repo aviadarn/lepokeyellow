@@ -116,11 +116,16 @@ def main() -> None:
     parser.add_argument("--seeds", type=int, default=10)
     parser.add_argument("--budget", type=int, default=BUDGET)
     parser.add_argument("--device", default=default_device())
+    parser.add_argument("--half", action="store_true",
+                        help="fp16 encoder, matching a run trained with --half. "
+                             "Training used it and eval did not, so the policy "
+                             "was evaluated on an observation it was never "
+                             "trained against")
     parser.add_argument("--gif-dir", default="media")
     parser.add_argument("--out", default="results/part2_rl_eval.json")
     args = parser.parse_args()
 
-    encoder = FrozenEncoder(args.encoder, device=args.device)
+    encoder = FrozenEncoder(args.encoder, device=args.device, half=args.half)
     net = ActorCritic(feature_dim=encoder.dim, num_frames=encoder.num_frames).to(args.device)
     blob = torch.load(args.policy, map_location="cpu", weights_only=False)
     net.load_state_dict(blob["policy"])
@@ -151,6 +156,8 @@ def main() -> None:
     report["budget"] = args.budget
     report["ceiling_actions"] = 487
     report["encoder"] = args.encoder
+    report["half"] = args.half
+    report["device"] = args.device
     report["policy_checkpoint"] = args.policy
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(report, indent=1))
