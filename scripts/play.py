@@ -46,7 +46,7 @@ from poke.goals import default_device
 from poke.jepa import JEPA
 from poke.maps import name as map_name
 from poke.milestones import chain_from
-from poke.record import RecordingEnv
+from poke.record import RecordingEnv, pause_recording
 from poke.writer import EpisodeWriter
 from poke.ram import TRAINER_BATTLE, battle_kind, coords, cur_map, in_battle, party_count
 from poke.waypoints import build as build_waypoints
@@ -376,13 +376,16 @@ class Player:
         """Two buttons, one snapshot, compare screens. Side-effect free."""
         blob = self.env.snapshot()
         screens = []
-        try:
-            for button in ("down", "right"):
+        # Three actions nobody chose. Under --record they would otherwise be
+        # written into the dataset as demonstrations of the search.
+        with pause_recording(self.env):
+            try:
+                for button in ("down", "right"):
+                    self.env.restore(blob)
+                    self.env.step(ACTIONS.index(button))
+                    screens.append(self.env.screen()[:, :, 0].tobytes())
+            finally:
                 self.env.restore(blob)
-                self.env.step(ACTIONS.index(button))
-                screens.append(self.env.screen()[:, :, 0].tobytes())
-        finally:
-            self.env.restore(blob)
         return screens[0] != screens[1]
 
     def run_pursuit(self, points, probe, lookup, milestone, budget: int) -> bool:

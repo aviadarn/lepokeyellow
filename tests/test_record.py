@@ -95,3 +95,24 @@ def test_the_step_count_is_what_was_recorded_not_what_was_played():
     with env.paused():
         env.step(0)
     assert len(env) == 0
+
+
+def test_pause_recording_works_on_an_env_that_is_not_recorded():
+    """Call sites should not have to know whether they are being recorded."""
+    from poke.record import pause_recording
+
+    plain = StepEnv()
+    with pause_recording(plain):
+        plain.step(1)
+    assert plain.taken == [1]
+
+
+def test_pause_recording_pauses_a_recorded_env():
+    """A rollback probe plays actions nobody chose. They are not demos."""
+    from poke.record import pause_recording
+
+    env = RecordingEnv(StepEnv())
+    env.step(1)
+    with pause_recording(env):
+        env.step(2)
+    assert [step.action for step in env.steps] == [1]

@@ -19,10 +19,21 @@ the clone it produces still sees nothing but pixels.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 
 import numpy as np
+
+
+def pause_recording(env):
+    """Suspend recording on `env` for a block, whether or not it records.
+
+    A planner that probes by snapshotting, pressing two buttons and restoring
+    plays three actions nobody chose. Call sites should not have to know
+    whether they are being recorded, so this is a no-op on a plain env.
+    """
+    paused = getattr(env, "paused", None)
+    return paused() if callable(paused) else nullcontext()
 
 
 @dataclass
