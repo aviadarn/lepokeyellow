@@ -149,3 +149,31 @@ def test_the_node_cap_is_a_memory_budget():
     assert nodes_for() * STATE_BYTES <= MAX_SEARCH_BYTES
     assert nodes_for(STATE_BYTES * 10) == 10
     assert nodes_for(0) == 1
+
+
+def test_the_result_carries_the_state_each_edge_was_decided_from():
+    """Demonstrations need the frame a button was chosen from.
+
+    Replaying the oracle's action list from the start does not reproduce its
+    route -- measured in this repo, the parcel phase's 87 actions end on the
+    wrong tile -- because the search restores between actions and PyBoy's
+    save/load is not bit-exact for whatever that depends on. Restoring the
+    parent state of each edge sidesteps it: drift cannot accumulate across
+    edges when every edge starts from a stored state.
+    """
+    env = CorridorEnv()
+    result = search(env, lambda: env.ram[YELLOW.ram.x_coord] == 3,
+                    allowed={1}, buttons=("left", "right"))
+    assert result.found
+    assert len(result.edge_blobs) == len(result.path), \
+        "one parent state per edge, in the same order"
+    # The first edge is decided from the start state.
+    env.restore(result.edge_blobs[0])
+    assert env.ram[YELLOW.ram.x_coord] == 0
+    # Restoring edge i and pressing path[i] must land where edge i+1 starts.
+    for index in range(len(result.path) - 1):
+        env.restore(result.edge_blobs[index])
+        env.step(ACTIONS.index(result.path[index]))
+        here = env.ram[YELLOW.ram.x_coord]
+        env.restore(result.edge_blobs[index + 1])
+        assert env.ram[YELLOW.ram.x_coord] == here, f"edge {index} does not join up"

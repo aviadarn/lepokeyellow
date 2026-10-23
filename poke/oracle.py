@@ -48,6 +48,14 @@ class SearchResult:
     #: Every button actually pressed, including the A presses `transition`
     #: spent waiting for control. This is the replayable one.
     actions: list[str] = field(default_factory=list)
+    #: The state each edge was decided FROM, one per entry in `path`.
+    #: Demonstrations need the frame a button was chosen from, and replaying
+    #: `actions` from the start state does not reproduce the route -- the
+    #: search restores between actions and save/load is not bit-exact for
+    #: whatever that depends on. Restoring per edge cannot accumulate drift.
+    edge_blobs: list = field(default_factory=list)
+    #: The literal buttons spent on each edge, aligned with `edge_blobs`.
+    edge_traces: list = field(default_factory=list)
     expanded: int = 0
     nodes: int = 0
     emulated_actions: int = 0
@@ -187,6 +195,8 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
 
     path: list[str] = []
     actions: list[str] = []
+    edge_blobs: list = []
+    edge_traces: list = []
     end = None
     if found is not None:
         node = found
@@ -198,11 +208,21 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
         edges.reverse()
         path = [button for button, _ in edges]
         actions = [pressed for _, trace in edges for pressed in trace]
+        # Walk the chain again from the root, collecting the state each edge
+        # starts from: parents[node] holds the state node was reached IN, so
+        # an edge's parent state is the one stored against its parent key.
+        chain = [found]
+        while parents[chain[-1]][0] is not None:
+            chain.append(parents[chain[-1]][0])
+        chain.reverse()
+        edge_blobs = [parents[key][2] for key in chain[:-1]]
+        edge_traces = [trace for _, trace in edges]
         env.restore(parents[found][2])
         end = _pos(env)
 
     return SearchResult(
-        found=found is not None, path=path, actions=actions, expanded=expanded,
+        found=found is not None, path=path, actions=actions,
+        edge_blobs=edge_blobs, edge_traces=edge_traces, expanded=expanded,
         nodes=len(parents), emulated_actions=emulated,
         maps_seen=dict(maps_seen), seconds=round(time.time() - started, 1),
         end=end,
