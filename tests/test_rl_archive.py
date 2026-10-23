@@ -119,3 +119,45 @@ def test_stats_report_cells_maps_and_bytes():
     assert stats["cells"] == 2
     assert stats["maps"] == [1, 12]
     assert stats["bytes"] == sum(len(c.blob) for c in archive.cells.values())
+
+
+def test_an_archive_round_trips_through_a_file(tmp_path):
+    """Pausing a run cost 278 cells across 11 maps, the Viridian Mart among
+    them: the policy's weights survived and its curriculum did not."""
+    archive = Archive(capacity=7, rng=random.Random(0))
+    archive.add(FakeEnv(tile=(12, 0, 0)))
+    archive.add(FakeEnv(tile=(42, 5, 2)))
+    key = archive.key_for(FakeEnv(tile=(12, 0, 0)))
+    for _ in range(3):
+        archive.note_visit(key)
+
+    path = tmp_path / "archive.pkl"
+    archive.save(path)
+    back = Archive.load(path, rng=random.Random(0))
+
+    assert len(back) == 2
+    assert back.capacity == 7
+    assert back.cells[key].visits == 3
+    assert back.cells[key].blob == archive.cells[key].blob
+    assert back.stats()["maps"] == [12, 42]
+
+
+def test_loading_a_missing_archive_gives_an_empty_one(tmp_path):
+    """A first run has no archive to restore, and that is not an error."""
+    back = Archive.load(tmp_path / "nothing.pkl")
+    assert len(back) == 0
+
+
+def test_save_is_atomic_enough_to_survive_a_kill(tmp_path):
+    """Written to a temporary name and renamed: a kill mid-write leaves the
+    previous archive intact rather than a truncated one."""
+    path = tmp_path / "archive.pkl"
+    first = Archive()
+    first.add(FakeEnv(tile=(12, 0, 0)))
+    first.save(path)
+    before = path.read_bytes()
+    second = Archive()
+    second.add(FakeEnv(tile=(1, 1, 1)))
+    second.save(path)
+    assert path.read_bytes() != before
+    assert not list(path.parent.glob("*.tmp")), "no temporary file left behind"

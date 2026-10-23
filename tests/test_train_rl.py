@@ -178,3 +178,22 @@ def test_every_worker_is_stepped_before_any_is_waited_on():
     first_step = next(i for i, e in enumerate(steps) if e[0] == "send")
     window = steps[first_step:first_step + 4]
     assert [e[0] for e in window] == ["send", "send", "recv", "recv"], window
+
+
+def test_the_archive_lives_beside_the_checkpoint():
+    from scripts.train_rl import archive_path
+    assert archive_path("checkpoints/rl").name == "archive.pkl"
+    assert archive_path("checkpoints/rl").parent.name == "rl"
+
+
+def test_a_resumed_driver_keeps_counting_from_where_it_stopped():
+    """The first resume restarted the step counter at zero, so the log said
+    8,192 steps for a run that had already done 747,520."""
+    from scripts.train_rl import apply_resume
+    driver = trainer([FakeHandle()])
+    assert driver.steps == 0
+    apply_resume(driver, {"steps": 747520, "completed": {"get_parcel"}, "updates": 730})
+    assert driver.steps == 747520
+    assert driver.completed == {"get_parcel"}
+    driver.collect(driver.new_buffer())
+    assert driver.steps == 747520 + 4, "the resumed run adds to the old total"

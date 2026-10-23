@@ -20,8 +20,11 @@ emulators.
 
 from __future__ import annotations
 
+import os
+import pickle
 import random
 from dataclasses import dataclass
+from pathlib import Path
 
 from poke.control import has_control
 from poke.objectives import current
@@ -86,6 +89,44 @@ class Archive:
 
     def __len__(self) -> int:
         return len(self.cells)
+
+    # -- persistence -------------------------------------------------------
+    #
+    # The archive is the run's curriculum, and it was memory-only until a pause
+    # proved what that costs: 278 cells across 11 maps, the Viridian Mart among
+    # them, gone while the policy's weights came back intact. A resume then
+    # keeps what the policy learned and throws away where it learned it.
+
+    def save(self, path) -> None:
+        """Write the archive beside the checkpoint, atomically.
+
+        Via a temporary name and a rename, because this is written while eight
+        emulators are running and a kill mid-write would otherwise leave a
+        truncated file where the previous good one was.
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        with open(temporary, "wb") as handle:
+            pickle.dump({"capacity": self.capacity, "added": self.added,
+                         "rejected_without_control": self.rejected_without_control,
+                         "cells": list(self.cells.values())},
+                        handle, protocol=pickle.HIGHEST_PROTOCOL)
+        os.replace(temporary, path)
+
+    @classmethod
+    def load(cls, path, rng=None) -> "Archive":
+        """Restore an archive, or return an empty one if there is none."""
+        path = Path(path)
+        if not path.exists():
+            return cls(rng=rng)
+        with open(path, "rb") as handle:
+            blob = pickle.load(handle)
+        archive = cls(capacity=blob["capacity"], rng=rng)
+        archive.added = blob["added"]
+        archive.rejected_without_control = blob["rejected_without_control"]
+        archive.cells = {cell.key: cell for cell in blob["cells"]}
+        return archive
 
     def stats(self) -> dict:
         return {

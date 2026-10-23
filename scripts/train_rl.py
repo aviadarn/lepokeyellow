@@ -58,6 +58,8 @@ class TrainConfig:
     kill_after_hours: float | None = 3.0
     kill_unless: str = "get_parcel"
     checkpoint_every: int = 10
+    #: Updates between archive writes. It is 50 MB, so less often than weights.
+    archive_every: int = 100
     seed: int = 0
     ppo: PPOConfig = field(default_factory=PPOConfig)
 
@@ -299,6 +301,22 @@ class Trainer:
         return {"dropped_workers": sorted(dropped), "usable_envs": usable}
 
 
+def archive_path(out_dir) -> Path:
+    """Where the run's curriculum lives, beside its weights."""
+    return Path(out_dir) / "archive.pkl"
+
+
+def apply_resume(driver, state) -> None:
+    """Carry a checkpoint's progress into a fresh driver.
+
+    The step count is part of that progress. Without it a resumed run's log
+    restarts at zero, which reads as a run that has done nothing when it has
+    done three quarters of a million steps.
+    """
+    driver.completed = set(state["completed"])
+    driver.steps = int(state["steps"])
+
+
 def save_checkpoint(path, policy, optimizer, updates, steps, completed):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     torch.save({"policy": policy.state_dict(), "optimizer": optimizer.state_dict(),
@@ -347,7 +365,11 @@ def main() -> None:
     policy = ActorCritic(feature_dim=encoder.dim, num_frames=encoder.num_frames).to(args.device)
     optimizer = torch.optim.Adam(policy.parameters(), lr=config.ppo.lr)
     bonus = WorldModelBonus(encoder.model, device=args.device, coef=config.bonus_coef)
-    archive = Archive()
+    # The archive is the curriculum: restore it with the weights, or a resumed
+    # run keeps what the policy learned and forgets where it learned it.
+    archive = Archive.load(archive_path(config.out_dir)) if args.resume else Archive()
+    if len(archive):
+        print(f"restored archive: {archive.stats()}", flush=True)
     handles = [WorkerHandle(config.rom, config.state, config.episode_len)
                for _ in range(config.workers)]
 
@@ -356,7 +378,7 @@ def main() -> None:
         state = load_checkpoint(args.resume, policy, optimizer)
 
     driver = Trainer(handles, policy, encoder, archive, bonus, config, device=args.device)
-    driver.completed = set(state["completed"])
+    apply_resume(driver, state)
     started = time.time()
     history = []
     reason = None
@@ -383,10 +405,15 @@ def main() -> None:
             if state["updates"] % config.checkpoint_every == 0:
                 save_checkpoint(Path(config.out_dir) / "last.pt", policy, optimizer,
                                 state["updates"], driver.steps, driver.completed)
+            if state["updates"] % config.archive_every == 0:
+                # Bigger than the checkpoint and slower to write, so less
+                # often: 278 cells is about 50 MB.
+                archive.save(archive_path(config.out_dir))
             reason = should_stop(elapsed, driver.completed, config)
     finally:
         save_checkpoint(Path(config.out_dir) / "last.pt", policy, optimizer,
                         state["updates"], driver.steps, driver.completed)
+        archive.save(archive_path(config.out_dir))
         for handle in handles:
             handle.close()
 
