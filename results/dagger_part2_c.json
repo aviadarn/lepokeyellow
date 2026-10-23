@@ -1,0 +1,418 @@
+{
+ "state": "states/oracle/route1.state",
+ "encoder": "checkpoints/part2/best.pt",
+ "rounds": [
+  {
+   "round": 6,
+   "rollout": {
+    "objectives": {
+     "trigger_oak": null,
+     "get_starter": null,
+     "get_parcel": 99,
+     "deliver_parcel": null,
+     "enter_forest": null
+    },
+    "actions": 1461,
+    "by_controller": {
+     "policy": 1391,
+     "battle": 54,
+     "no_control": 4,
+     "text": 10,
+     "decline": 2
+    },
+    "learned_share": 0.9547014413177762
+   },
+   "policy_turns": 1391,
+   "distinct_states": 75,
+   "revisits": 1316,
+   "relabelled": [
+    {
+     "turn": 23,
+     "revisits": 5,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 3290,
+     "seconds": 225.5,
+     "steps": 29,
+     "steps_before_filter": 100,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 55,
+     "revisits": 2,
+     "objective": "deliver_parcel",
+     "found": true,
+     "nodes": 5652,
+     "seconds": 390.7,
+     "steps": 61,
+     "steps_before_filter": 172,
+     "context": 16,
+     "end": [
+      40,
+      3,
+      5
+     ]
+    },
+    {
+     "turn": 78,
+     "revisits": 0,
+     "objective": "deliver_parcel",
+     "found": true,
+     "nodes": 4872,
+     "seconds": 378.8,
+     "steps": 42,
+     "steps_before_filter": 123,
+     "context": 16,
+     "end": [
+      40,
+      3,
+      5
+     ]
+    },
+    {
+     "turn": 79,
+     "revisits": 0,
+     "objective": "deliver_parcel",
+     "found": true,
+     "nodes": 5148,
+     "seconds": 354.7,
+     "steps": 41,
+     "steps_before_filter": 142,
+     "context": 16,
+     "end": [
+      40,
+      3,
+      5
+     ]
+    },
+    {
+     "turn": 80,
+     "revisits": 1,
+     "objective": "deliver_parcel",
+     "found": true,
+     "nodes": 5156,
+     "seconds": 368.3,
+     "steps": 41,
+     "steps_before_filter": 122,
+     "context": 16,
+     "end": [
+      40,
+      3,
+      5
+     ]
+    },
+    {
+     "turn": 82,
+     "revisits": 1308,
+     "objective": "deliver_parcel",
+     "found": true,
+     "nodes": 5098,
+     "seconds": 373.7,
+     "steps": 42,
+     "steps_before_filter": 143,
+     "context": 16,
+     "end": [
+      40,
+      3,
+      5
+     ]
+    }
+   ],
+   "new_steps": 352,
+   "dataset_files": [
+    "episodes/demos_part2.h5",
+    "episodes/dagger_r1.h5",
+    "episodes/dagger_r2.h5",
+    "episodes/dagger_r3.h5",
+    "episodes/dagger_r4.h5",
+    "episodes/dagger_r5.h5",
+    "episodes/dagger_r6.h5"
+   ],
+   "dataset_steps": 1546,
+   "first_loss": 1.5356,
+   "final_loss": 0.0139,
+   "gif": "media/dagger_r6.gif"
+  },
+  {
+   "round": 7,
+   "rollout": {
+    "objectives": {
+     "trigger_oak": null,
+     "get_starter": null,
+     "get_parcel": null,
+     "deliver_parcel": null,
+     "enter_forest": null
+    },
+    "actions": 1461,
+    "by_controller": {
+     "policy": 1430,
+     "battle": 30,
+     "no_control": 1
+    },
+    "learned_share": 0.9794520547945206
+   },
+   "policy_turns": 1430,
+   "distinct_states": 39,
+   "revisits": 1391,
+   "relabelled": [
+    {
+     "turn": 33,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 1768,
+     "seconds": 110.0,
+     "steps": 16,
+     "steps_before_filter": 56,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 34,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 1624,
+     "seconds": 96.4,
+     "steps": 14,
+     "steps_before_filter": 54,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 35,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 1367,
+     "seconds": 76.5,
+     "steps": 13,
+     "steps_before_filter": 53,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 36,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 1138,
+     "seconds": 65.9,
+     "steps": 12,
+     "steps_before_filter": 52,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 37,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 1098,
+     "seconds": 59.8,
+     "steps": 11,
+     "steps_before_filter": 51,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 38,
+     "revisits": 1391,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 688,
+     "seconds": 33.5,
+     "steps": 9,
+     "steps_before_filter": 49,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    }
+   ],
+   "new_steps": 171,
+   "dataset_files": [
+    "episodes/demos_part2.h5",
+    "episodes/dagger_r1.h5",
+    "episodes/dagger_r2.h5",
+    "episodes/dagger_r3.h5",
+    "episodes/dagger_r4.h5",
+    "episodes/dagger_r5.h5",
+    "episodes/dagger_r6.h5",
+    "episodes/dagger_r7.h5"
+   ],
+   "dataset_steps": 1621,
+   "first_loss": 1.4463,
+   "final_loss": 0.0328,
+   "gif": "media/dagger_r7.gif"
+  },
+  {
+   "round": 8,
+   "rollout": {
+    "objectives": {
+     "trigger_oak": null,
+     "get_starter": null,
+     "get_parcel": null,
+     "deliver_parcel": null,
+     "enter_forest": null
+    },
+    "actions": 1461,
+    "by_controller": {
+     "policy": 1441,
+     "battle": 20
+    },
+    "learned_share": 0.9863107460643394
+   },
+   "policy_turns": 1441,
+   "distinct_states": 22,
+   "revisits": 1419,
+   "relabelled": [
+    {
+     "turn": 9,
+     "revisits": 1,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 4648,
+     "seconds": 361.3,
+     "steps": 41,
+     "steps_before_filter": 112,
+     "context": 9,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 17,
+     "revisits": 3,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 3536,
+     "seconds": 252.3,
+     "steps": 36,
+     "steps_before_filter": 96,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 22,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 3612,
+     "seconds": 257.0,
+     "steps": 35,
+     "steps_before_filter": 95,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 23,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 3607,
+     "seconds": 249.5,
+     "steps": 35,
+     "steps_before_filter": 75,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 24,
+     "revisits": 0,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 3714,
+     "seconds": 256.6,
+     "steps": 37,
+     "steps_before_filter": 106,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    },
+    {
+     "turn": 25,
+     "revisits": 1415,
+     "objective": "get_parcel",
+     "found": true,
+     "nodes": 3680,
+     "seconds": 253.0,
+     "steps": 36,
+     "steps_before_filter": 96,
+     "context": 16,
+     "end": [
+      42,
+      5,
+      2
+     ]
+    }
+   ],
+   "new_steps": 309,
+   "dataset_files": [
+    "episodes/demos_part2.h5",
+    "episodes/dagger_r1.h5",
+    "episodes/dagger_r2.h5",
+    "episodes/dagger_r3.h5",
+    "episodes/dagger_r4.h5",
+    "episodes/dagger_r5.h5",
+    "episodes/dagger_r6.h5",
+    "episodes/dagger_r7.h5",
+    "episodes/dagger_r8.h5"
+   ],
+   "dataset_steps": 1841,
+   "first_loss": 1.3729,
+   "final_loss": 0.0221,
+   "gif": "media/dagger_r8.gif"
+  }
+ ],
+ "states_per_round": 6,
+ "pick": "stuck",
+ "budget": 1461,
+ "context": 16,
+ "what": "DAgger: the oracle relabels the states the clone reaches.",
+ "contract": "training only: the relabelling search uses snapshots"
+}

@@ -1,0 +1,77 @@
+{
+ "objective": "get_parcel",
+ "conditions": {
+  "behaviour clone": {
+   "per_seed": [
+    0,
+    0,
+    0
+   ],
+   "pooled": [
+    0,
+    33
+   ],
+   "reports": [
+    "results/seeds/clone_seed0.json",
+    "results/seeds/clone_seed1.json",
+    "results/seeds/clone_seed2.json"
+   ]
+  },
+  "DAgger rounds 1-5": {
+   "per_seed": [
+    5,
+    0,
+    5
+   ],
+   "pooled": [
+    10,
+    33
+   ],
+   "reports": [
+    "results/seeds/dagger5_seed0.json",
+    "results/seeds/dagger5_seed1.json",
+    "results/seeds/dagger5_seed2.json"
+   ]
+  },
+  "DAgger rounds 1-8": {
+   "per_seed": [
+    1,
+    3,
+    0
+   ],
+   "pooled": [
+    4,
+    33
+   ],
+   "reports": [
+    "results/seeds/dagger8_seed0.json",
+    "results/seeds/dagger8_seed1.json",
+    "results/seeds/dagger8_seed2.json"
+   ]
+  }
+ },
+ "fisher_two_sided": [
+  {
+   "between": [
+    "behaviour clone",
+    "DAgger rounds 1-5"
+   ],
+   "p": 0.00088
+  },
+  {
+   "between": [
+    "behaviour clone",
+    "DAgger rounds 1-8"
+   ],
+   "p": 0.11355
+  },
+  {
+   "between": [
+    "DAgger rounds 1-5",
+    "DAgger rounds 1-8"
+   ],
+   "p": 0.13048
+  }
+ ],
+ "what": "Each condition is several TRAINING seeds of the same dataset, each scored over ten sampling seeds and a greedy run."
+}

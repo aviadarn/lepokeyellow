@@ -748,20 +748,38 @@ second is what DAgger fixes -- clone, roll out, re-solve from the states the
 clone actually reaches, and add those -- and the oracle can be re-run from any
 state, which is what that needs.
 
-### DAgger: the first objective a learned policy has cleared
+### DAgger: the first objective a learned policy reaches, and how unstable that is
 
-Five rounds of it -- roll the clone out under the contract, keep a save state
-behind each new decision, restore the states it got stuck in and run the
-oracle from them, retrain on everything. `scripts/dagger.py`.
+Roll the clone out under the contract, keep a save state behind each new
+decision, restore the states it got stuck in and run the oracle from them,
+retrain on everything. `scripts/dagger.py`, eight rounds, six searches each.
 
-**`get_parcel` on 5 of 11 runs.** Greedy takes it in 99 actions against the
-oracle's 87, and the four sampled seeds that get it take 99, 227, 394 and 982.
-Nothing yet reaches `deliver_parcel`, and the design's bar is five of ten on
-`enter_forest`, so this is not a pass; it is the first objective a policy has
-reached at all under this contract, against 0 for every baseline, 0 for nine
-hours of PPO and 0 for the behaviour clone.
+**It works, and the per-run number is not what it first looked like.** The
+first eval of the five-round checkpoint scored `get_parcel` on 5 of 11 runs,
+and that is what this section originally reported. Retraining the same dataset
+under two more training seeds gives 0 and 5. The spread that matters here is
+not the ten sampling seeds `scripts/eval_part2.py` already varies -- it is the
+training seed, and one eval of one checkpoint does not measure the dataset
+that produced it. Training is deterministic, so the first number reproduces
+exactly; it was simply the best of three draws, reported as the result.
 
-The distance, measured greedy from `states/oracle/route1.state`:
+Three training seeds per condition, each scored over ten sampling seeds and a
+greedy run, pooled by `scripts/seed_spread.py`:
+
+| | per seed | `get_parcel` | vs. the clone |
+|---|---|---|---|
+| behaviour clone | 0, 0, 0 | 0 / 33 | -- |
+| DAgger rounds 1-5 | 5, 0, 5 | **10 / 33** | p = 0.0009 |
+| DAgger rounds 1-8 | 1, 3, 0 | 4 / 33 | p = 0.11 |
+
+Fisher's exact, two-sided, which is the smallest honest test at these counts.
+Five rounds of DAgger is the first thing in this repo that moves an objective
+off zero by more than one draw's luck: the clone reaches `get_parcel` on none
+of its thirty-three runs, and nine hours of PPO and every scripted baseline
+reach it on none of theirs. Rounds 6 to 8 did not help, and may have hurt --
+10/33 against 4/33 is p = 0.13, which three seeds cannot settle either way.
+
+Distance on a seed that works, greedy from `states/oracle/route1.state`:
 
 | | distinct tiles | best y on Route 1 | maps reached |
 |---|---|---|---|
@@ -769,21 +787,23 @@ The distance, measured greedy from `states/oracle/route1.state`:
 | 2 rounds | 17 | 20 | 12 |
 | 5 rounds | 69 | 0 | 12, 1, 42 |
 
-Route 1 runs y=35 at the start down to y=0 at Viridian. The behaviour clone
-covered seven of those thirty-five and stopped; after five rounds the clone
-walks the whole route, enters Viridian and enters the Mart.
+Route 1 runs y=35 at the start down to y=0 at Viridian. The clone covered
+seven of those thirty-five tiles and stopped; after five rounds it walks the
+whole route, enters Viridian, enters the Mart and takes the parcel in 99
+actions against the oracle's 87.
 
-Two things the failure taught before it started working.
+Three things the rounds taught on the way.
 
 **The frozen encoder was not the bottleneck**, which was the obvious suspect:
 it was measured recovering which room a frame is in and not where in the room,
 and Route 1 is one room. `scripts/probe_observability.py` asks whether the
 expert's button is a function of what the policy sees -- leave-one-out 1-NN
-over the demonstrations. The encoder's window scores **0.847** against a 0.549
-majority baseline, *better* than the true (map, y, x) position at 0.829, with
-9 exactly-conflicting steps against position's 88. A four-frame window carries
-the direction of travel, which a coordinate does not, and a tile crossed by
-two different optimal routes genuinely wants two different buttons.
+over the demonstrations. On the original set the encoder's window scores
+**0.847** against a 0.549 majority baseline, *better* than the true (map, y,
+x) position at 0.829, with 9 exactly-conflicting steps against position's 88.
+A four-frame window carries the direction of travel, which a coordinate does
+not, and a tile crossed by two different optimal routes genuinely wants two
+different buttons.
 
 **The search budget was going to the states that already worked.** Five of
 round 2's six relabelled states came from turns 0-14, because almost every
@@ -793,6 +813,20 @@ it: the states the rollout returned to most, which are the absorbing ones.
 Rounds 3 and 4 then relabelled turns 13-21, and by round 5 the rollout reached
 49 distinct states and the searches launched from turns 50-57 needed only
 13-16 actions to finish -- the clone had walked almost the whole leg itself.
+
+**Round 6 picked up the next objective on its own, and that did not help
+either.** The loop reads the objective from event flags, so once a rollout
+carried the parcel its searches became `deliver_parcel` searches: five of
+round 6's six, ending in Oak's Lab, 227 new steps for a return leg that until
+then had only its sixty original demonstrations. The suspicion was that the
+new data contradicted the old, since both legs walk the same corridor in
+opposite directions and 59 of the 289 demonstrated tiles do carry opposite
+majority actions under the two objectives. The probe says no: leave-one-out
+1-NN over the aggregated set goes *up* when rounds 6 to 8 are added, 0.882 to
+0.898 against a 0.500 majority baseline, with 21 exactly-conflicting steps in
+1,841. The sprite faces north on the way out and south on the way back, so the
+frames separate the legs and the labels stay a function. Whatever those rounds
+cost, it was not label noise.
 
 A detail that mattered more than it looks. A relabelled episode starts in the
 middle of a run, and replayed from a fresh GRU and a fresh frame window it is
@@ -805,11 +839,17 @@ nothing. Sixteen rather than the whole prefix is a memory and compute cap, and
 a GRU warmed on sixteen oscillating steps approximates one warmed on four
 hundred rather than equalling it.
 
-What stops it now is the next leg, not this one. Every relabelling so far has
-been a `get_parcel` search, because no rollout had the parcel to relabel from;
-the return to Oak still has only its sixty original demonstrations. The loop
-reads the objective from event flags, so rounds run from here pick up
-`deliver_parcel` on their own.
+What the loop cannot reach from here is structural rather than mysterious.
+DAgger relabels only the objective the rollout is currently on, so the
+dataset's shape follows how far the policy gets: after eight rounds it holds
+44 episodes of `get_parcel`, 6 of `deliver_parcel`, and still exactly 1 of
+`enter_forest` -- the original demonstration. `train_clone` takes one optimizer
+step per episode, so the objective the design actually grades gets one
+gradient step in fifty-one. Reaching it needs rollouts that begin past the
+parcel, which means seeding the loop from oracle states at the later
+objectives instead of only from Route 1. That is a training-time use of save
+states, like every demonstration here; the eval stays one continuous episode
+from `states/oracle/route1.state`.
 
 ### Why, as far as the logs say
 

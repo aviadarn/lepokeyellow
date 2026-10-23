@@ -1,0 +1,263 @@
+{
+ "seeds": 10,
+ "reached": {
+  "trigger_oak": 0,
+  "get_starter": 0,
+  "get_parcel": 0,
+  "deliver_parcel": 0,
+  "enter_forest": 0
+ },
+ "passes_done_threshold": false,
+ "median_learned_share": 0.9801505817932923,
+ "actions_to_forest": [],
+ "runs": [
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 0,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_0.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 1,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_1.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 2,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_2.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 3,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_3.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 4,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_4.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1395,
+    "battle": 66
+   },
+   "learned_share": 0.9548254620123203,
+   "seed": 5,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_5.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 6,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_6.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 7,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_7.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 8,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_8.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1432,
+    "battle": 29
+   },
+   "learned_share": 0.9801505817932923,
+   "seed": 9,
+   "greedy": false,
+   "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_9.gif"
+  }
+ ],
+ "greedy": {
+  "objectives": {
+   "trigger_oak": null,
+   "get_starter": null,
+   "get_parcel": null,
+   "deliver_parcel": null,
+   "enter_forest": null
+  },
+  "already_true_at_start": [
+   "get_starter",
+   "trigger_oak"
+  ],
+  "actions": 1461,
+  "by_controller": {
+   "policy": 1432,
+   "battle": 29
+  },
+  "learned_share": 0.9801505817932923,
+  "seed": "greedy",
+  "greedy": true,
+  "gif": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.gifs/part2_rl_greedy.gif"
+ },
+ "budget": 1461,
+ "ceiling_actions": 487,
+ "encoder": "checkpoints/part2/best.pt",
+ "half": false,
+ "device": "mps",
+ "policy_checkpoint": "/private/tmp/claude-502/-Users-aviad-Documents/6bc1050f-6581-4fec-8ecb-e23238f6da08/scratchpad/seeds/bc_s1.pt"
+}
