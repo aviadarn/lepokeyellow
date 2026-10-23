@@ -197,3 +197,17 @@ def test_a_resumed_driver_keeps_counting_from_where_it_stopped():
     assert driver.completed == {"get_parcel"}
     driver.collect(driver.new_buffer())
     assert driver.steps == 747520 + 4, "the resumed run adds to the old total"
+
+
+def test_the_rollout_records_the_hidden_state_it_started_from():
+    """Episodes outlive rollouts, so the GRU state a rollout begins from is
+    the one the previous rollout ended on -- never zero. PPO replayed from
+    zero for the whole 9-hour run, which makes the first epoch's importance
+    ratio something other than 1 and the trust region meaningless."""
+    driver = trainer([FakeHandle()])
+    driver.collect(driver.new_buffer())
+    carried = driver.hidden.clone()
+    assert not torch.allclose(carried, torch.zeros_like(carried))
+    driver.collect(driver.new_buffer())
+    assert torch.allclose(driver.rollout_hidden0, carried), \
+        "the second rollout starts from where the first ended"

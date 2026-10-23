@@ -147,6 +147,7 @@ class Trainer:
         self.stacks = [EmbeddingStack(encoder.num_frames, encoder.dim) for _ in handles]
         self.prev_action = [0] * len(handles)
         self.hidden = policy.initial_hidden(len(handles), device)
+        self.rollout_hidden0 = self.hidden.clone()
         self.completed: set[str] = set()
         self.steps = 0
         self.episodes = 0
@@ -244,6 +245,11 @@ class Trainer:
             previous = np.stack(embeddings)
         else:
             obs, previous = self.last_obs, self.last_embeddings
+
+        # The hidden state this rollout is generated FROM. PPO's importance
+        # ratio is only 1 on the first epoch if evaluate() replays from this
+        # exact state; episodes outlive rollouts, so it is not zero.
+        self.rollout_hidden0 = self.hidden.detach().clone()
 
         for t in range(buffer.steps):
             with torch.no_grad():
@@ -391,7 +397,7 @@ def main() -> None:
                 _, last_value, _ = policy(driver.last_obs, driver.hidden)
             buffer.compute_returns(last_value, torch.zeros_like(last_value), config.ppo)
             stats = ppo_update(policy, optimizer, buffer, config.ppo,
-                               policy.initial_hidden(len(handles), args.device))
+                               driver.rollout_hidden0, usable=report["usable_envs"])
             state["updates"] += 1
             elapsed = (time.time() - started) / 3600.0
             row = {"update": state["updates"], "steps": driver.steps,

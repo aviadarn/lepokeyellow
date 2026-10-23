@@ -66,41 +66,69 @@ class RolloutBuffer:
         self.dones[t] = done
 
     def compute_returns(self, last_value, last_done, config: PPOConfig) -> None:
-        """Generalised advantage estimation, backwards, done-masked."""
+        """Generalised advantage estimation, backwards, done-masked.
+
+        One convention throughout: `dones[t]` means *the action at t ended the
+        episode*. So the mask belongs on what comes after t, never on t itself.
+        An earlier version multiplied the whole term by `1 - dones[t]`, which
+        zeroed the terminal step -- and the terminal step is where this task
+        pays `enter_forest` its +1, so the goal produced no gradient at all.
+
+        `last_done` is unused under this convention and kept for the signature:
+        whether the rollout's final action ended its episode is already in
+        `dones[-1]`.
+        """
         advantage = torch.zeros(self.envs, device=self.device)
         for t in reversed(range(self.steps)):
-            if t == self.steps - 1:
-                next_value, next_done = last_value, last_done
-            else:
-                next_value, next_done = self.values[t + 1], self.dones[t + 1]
-            alive = 1.0 - self.dones[t]
-            delta = self.rewards[t] + config.gamma * next_value * (1.0 - next_done) - self.values[t]
-            # `alive` zeroes the whole term on a terminal step: nothing after
-            # an episode ends is evidence about the action that ended it.
-            advantage = alive * (delta + config.gamma * config.gae_lambda
-                                 * (1.0 - next_done) * advantage)
+            next_value = last_value if t == self.steps - 1 else self.values[t + 1]
+            # Zero for a step that ended the episode: no bootstrap, no chain
+            # across the boundary. The reward at t is still paid.
+            nonterminal = 1.0 - self.dones[t]
+            delta = self.rewards[t] + config.gamma * next_value * nonterminal - self.values[t]
+            advantage = delta + config.gamma * config.gae_lambda * nonterminal * advantage
             self.advantages[t] = advantage
         self.returns = self.advantages + self.values
 
     @staticmethod
-    def env_batches(envs: int, size: int):
-        for start in range(0, envs, size):
-            yield list(range(start, min(start + size, envs)))
+    def env_batches(envs, size: int):
+        """Split env columns into minibatches. `envs` is a count or an
+        explicit list of column indices (a count means all of them)."""
+        columns = list(range(envs)) if isinstance(envs, int) else list(envs)
+        for start in range(0, len(columns), size):
+            yield columns[start:start + size]
 
 
 def ppo_update(policy, optimizer, buffer: RolloutBuffer, config: PPOConfig,
-               hidden0: torch.Tensor) -> dict:
-    """One PPO pass over a filled buffer. Returns the diagnostics worth logging."""
+               hidden0: torch.Tensor, usable: list[int] | None = None) -> dict:
+    """One PPO pass over a filled buffer. Returns the diagnostics worth logging.
+
+    `hidden0` must be the hidden state the rollout was *generated* from. Pass a
+    zero state and `evaluate` replays the sequence from a policy that never
+    produced the data: the first epoch's importance ratio is not 1, so the
+    trust region is measured against the wrong reference.
+
+    `usable` names the env columns worth training on -- everything except
+    workers that died mid-rollout, whose columns are blank frames and a zero
+    objective one-hot. Those columns also have to stay out of the advantage
+    normalisation, or they move the baseline for every live column.
+    """
+    columns = list(range(buffer.envs)) if usable is None else list(usable)
+    if not columns:
+        return {key: 0.0 for key in
+                ("policy_loss", "value_loss", "entropy", "approx_kl", "clip_fraction")}
+    live = torch.tensor(columns, device=buffer.device)
     advantages = buffer.advantages
-    normalised = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+    kept = advantages[:, live]
+    normalised = (advantages - kept.mean()) / (kept.std() + 1e-8)
 
     stats = {"policy_loss": 0.0, "value_loss": 0.0, "entropy": 0.0,
              "approx_kl": 0.0, "clip_fraction": 0.0}
     passes = 0
     for _ in range(config.epochs):
-        for envs in RolloutBuffer.env_batches(buffer.envs, config.minibatch_envs):
+        for envs in RolloutBuffer.env_batches(columns, config.minibatch_envs):
             index = torch.tensor(envs, device=buffer.device)
-            out = policy.evaluate(buffer.obs[:, index], hidden0[index], buffer.actions[:, index])
+            out = policy.evaluate(buffer.obs[:, index], hidden0[index],
+                                  buffer.actions[:, index], dones=buffer.dones[:, index])
             ratio = (out["logprobs"] - buffer.logprobs[:, index]).exp()
             policy_loss = surrogate(ratio, normalised[:, index], config.clip)
             value_loss = nn.functional.mse_loss(out["values"], buffer.returns[:, index])

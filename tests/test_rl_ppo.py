@@ -106,3 +106,69 @@ def test_minibatches_split_by_env_not_by_time():
     replays from belongs to a different episode."""
     config = PPOConfig(minibatch_envs=2)
     assert list(RolloutBuffer.env_batches(envs=4, size=config.minibatch_envs)) == [[0, 1], [2, 3]]
+
+
+def _buffer(rewards, dones, obs_dim=4):
+    """A one-env buffer with zero values, so GAE reduces to discounted sums."""
+    buffer = RolloutBuffer(steps=len(rewards), envs=1, obs_dim=obs_dim)
+    for t, (reward, done) in enumerate(zip(rewards, dones)):
+        buffer.add(t, torch.zeros(1, obs_dim), torch.zeros(1, dtype=torch.long),
+                   torch.zeros(1), torch.zeros(1),
+                   torch.tensor([reward]), torch.tensor([done]))
+    return buffer
+
+
+def test_the_reward_that_ends_the_episode_is_not_discarded():
+    """TrainEnv ends the episode on the step that pays enter_forest's +1.
+    `alive = 1 - dones[t]` zeroed exactly that step, so the one reward the
+    whole run is chasing produced no advantage and no return target."""
+    config = PPOConfig(gamma=1.0, gae_lambda=1.0)
+    buffer = _buffer(rewards=[0.0, 0.0, 1.0], dones=[0.0, 0.0, 1.0])
+    buffer.compute_returns(torch.zeros(1), torch.ones(1), config)
+    assert buffer.advantages[2].item() == pytest.approx(1.0), "the goal step pays"
+    assert buffer.returns[0].item() == pytest.approx(1.0), "and it reaches step 0"
+
+
+def test_an_episode_boundary_does_not_leak_reward_backwards():
+    """Two episodes in one rollout: the second's reward must not be credited
+    to actions taken in the first."""
+    config = PPOConfig(gamma=1.0, gae_lambda=1.0)
+    buffer = _buffer(rewards=[0.0, 1.0, 0.0, 2.0], dones=[0.0, 1.0, 0.0, 0.0])
+    buffer.compute_returns(torch.zeros(1), torch.zeros(1), config)
+    assert [round(v, 5) for v in buffer.advantages[:, 0].tolist()] == [1.0, 1.0, 2.0, 2.0]
+
+
+def test_evaluate_forgets_the_previous_episode_at_a_done():
+    """The driver clears a column's GRU row when its episode ends. evaluate()
+    replays the rollout and must clear it at the same place, or the replayed
+    hidden state is one that never existed."""
+    policy = ActorCritic(feature_dim=4, num_frames=1, hidden=8)
+    obs = torch.randn(3, 1, policy.obs_dim)
+    actions = torch.zeros(3, 1, dtype=torch.long)
+    dones = torch.tensor([[1.0], [0.0], [0.0]])
+    one = policy.evaluate(obs, torch.ones(1, 8), actions, dones=dones)
+    other = policy.evaluate(obs, torch.full((1, 8), -3.0), actions, dones=dones)
+    assert not torch.allclose(one["logprobs"][0], other["logprobs"][0]), \
+        "before the boundary the two histories differ"
+    assert torch.allclose(one["logprobs"][1:], other["logprobs"][1:]), \
+        "after it they must not"
+
+
+def test_the_update_skips_a_dropped_workers_column():
+    """Review focus 5: a dead worker's column is blank frames, a zero
+    objective one-hot and zero rewards. Training on it shifts the advantage
+    normalisation for every live column."""
+    seen = []
+    policy = ActorCritic(feature_dim=4, num_frames=1, hidden=8)
+    real_evaluate = policy.evaluate
+
+    def spy(obs_seq, hidden0, actions, dones=None):
+        seen.append(obs_seq.size(1))
+        return real_evaluate(obs_seq, hidden0, actions, dones=dones)
+
+    policy.evaluate = spy
+    buffer = RolloutBuffer(steps=2, envs=4, obs_dim=policy.obs_dim)
+    config = PPOConfig(epochs=1, minibatch_envs=2)
+    ppo_update(policy, torch.optim.Adam(policy.parameters()), buffer, config,
+               policy.initial_hidden(4, "cpu"), usable=[0, 1, 2])
+    assert sum(seen) == 3, f"one epoch must cover exactly the 3 usable columns, saw {seen}"

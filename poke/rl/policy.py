@@ -75,13 +75,19 @@ class ActorCritic(nn.Module):
         }
 
     def evaluate(self, obs_seq: torch.Tensor, hidden0: torch.Tensor,
-                 actions: torch.Tensor) -> dict:
+                 actions: torch.Tensor, dones: torch.Tensor | None = None) -> dict:
         """Replay [T, B, obs] through the GRU from a stored hidden state.
 
         PPO needs the logprobs of actions already taken, under the current
         weights. With a recurrent policy that means replaying the sequence in
         order -- shuffling timesteps into minibatches would feed the GRU a
         hidden state from a different trajectory.
+
+        `dones[t]` means the action at t ended that column's episode, and the
+        driver clears the column's GRU row when that happens. Without the same
+        clearing here, the replay carries a hidden state across a boundary the
+        collection run did not: the logprobs are then of a policy that never
+        acted.
         """
         logprobs, values, entropies = [], [], []
         hidden = hidden0
@@ -91,6 +97,8 @@ class ActorCritic(nn.Module):
             logprobs.append(distribution.log_prob(actions[step]))
             values.append(value)
             entropies.append(distribution.entropy())
+            if dones is not None:
+                hidden = hidden * (1.0 - dones[step]).unsqueeze(-1)
         return {
             "logprobs": torch.stack(logprobs),
             "values": torch.stack(values),
