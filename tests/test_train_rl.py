@@ -211,3 +211,40 @@ def test_the_rollout_records_the_hidden_state_it_started_from():
     driver.collect(driver.new_buffer())
     assert torch.allclose(driver.rollout_hidden0, carried), \
         "the second rollout starts from where the first ended"
+
+
+def test_the_report_distinguishes_this_run_from_the_ones_before_it():
+    """A resumed run inherits the update counter and restarts the step
+    counter, so updates x rollout did not equal steps and the headline
+    "8,941 updates in nine hours" described two runs. 8,211 of them
+    happened in those hours."""
+    from scripts.train_rl import run_report
+
+    report = run_report(reason="time", updates=8941, steps=8408064, episodes=20548,
+                        hours=9.001, completed={"get_parcel"}, archive={}, history=[],
+                        resumed_from={"updates": 730, "steps": 747520})
+    assert report["updates"] == 8941, "the total across both runs"
+    assert report["updates_this_run"] == 8211
+    assert report["steps_this_run"] == 8408064
+    assert report["resumed"] is True
+
+
+def test_a_fresh_run_reports_no_resume():
+    from scripts.train_rl import run_report
+
+    report = run_report(reason="time", updates=12, steps=1024, episodes=3, hours=0.1,
+                        completed=set(), archive={}, history=[], resumed_from=None)
+    assert report["resumed"] is False
+    assert report["updates_this_run"] == 12
+
+
+def test_the_report_keeps_every_logged_update():
+    """It kept the last 200 of 8,941 rows -- twelve minutes of a nine-hour
+    run -- and the README then quoted trends from a window that could not
+    show them."""
+    from scripts.train_rl import run_report
+
+    history = [{"update": i} for i in range(1000)]
+    report = run_report(reason="time", updates=1000, steps=10, episodes=1, hours=1.0,
+                        completed=set(), archive={}, history=history, resumed_from=None)
+    assert len(report["history"]) == 1000

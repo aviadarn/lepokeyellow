@@ -61,3 +61,36 @@ def test_every_phase_names_the_objective_it_demonstrates():
     keys = {objective.key for objective in CHAIN}
     for phase, objective in PHASE_OBJECTIVE.items():
         assert objective in keys, f"{phase} -> {objective} is not an objective"
+
+
+class BoxEnv(ReplayEnv):
+    """Control is free on even counter values, a box is drawn on odd ones."""
+
+    def screen(self):
+        frame = np.zeros((144, 160, 3), dtype=np.uint8)
+        if self.value % 2:
+            frame[96:144, :, 0] = 255          # white paper, two shades
+        else:
+            frame[96:144, :, 0] = 255
+            frame[96:144, ::3, 0] = 170        # scenery: four shades
+            frame[96:144, ::5, 0] = 85
+            frame[96:144, ::7, 0] = 0
+        return frame
+
+
+def test_each_step_records_whether_the_policy_would_have_owned_the_turn():
+    """Under the contract the harness owns text and battles. A clone trained
+    on those learns to mash A, which is the degenerate behaviour we are
+    trying to get away from."""
+    env = BoxEnv()
+    steps = demo_steps(env, edge_blobs=[0, 1], edge_traces=[["up"], ["a"]])
+    assert [s.policy_turn for s in steps] == [True, False]
+
+
+def test_policy_turns_filters_the_harness_work_out():
+    from scripts.collect_demos import policy_turns
+
+    env = BoxEnv()
+    steps = demo_steps(env, edge_blobs=[0, 1], edge_traces=[["up"], ["a"]])
+    kept = policy_turns(steps)
+    assert len(kept) == 1 and kept[0].action_name == "up"

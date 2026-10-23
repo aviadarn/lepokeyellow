@@ -638,9 +638,13 @@ is a separate plan.
 
 ### What was trained
 
-Nine wall-clock hours on an M-series Mac: 8,941 PPO updates, **8.41M
+Nine wall-clock hours on an M-series Mac: **8,211 PPO updates**, **8.41M
 environment steps**, 20,548 episodes, 259 steps/s across 8 emulator workers with
-an fp16 encoder. The policy is a 597k-parameter actor-critic -- a linear body
+an fp16 encoder. The run is a resume -- the weights continue an earlier 0.85 h
+leg of 730 updates and 747,520 steps, and the archive started empty because it
+was memory-only until after that pause. The report said "8,941 updates" for
+nine hours by printing an inherited counter beside a fresh one; `run_report`
+now reports both separately. The policy is a 597k-parameter actor-critic -- a linear body
 into a GRU cell, 7 actions -- reading a 4-frame window of 192-dim embeddings,
 the objective one-hot and the previous action. Episodes are 512 actions, started
 from a Go-Explore archive keyed by `(objective, map, y//4, x//4)` and seeded
@@ -707,15 +711,38 @@ run 2,714 of 4,000 actions. The cut was recalibrated; the tile still fails.
 ### Why, as far as the logs say
 
 The archive stopped growing at hour 6 -- 168 cells, unchanged for the last three
-hours -- while policy entropy fell from 0.96 to 0.48 against ln(7) = 1.95. The
-policy went near-deterministic on a route that pays tile reward and never
-touches the objective. From an archive state near Oak's Lab it can collect the
+hours. Policy entropy is the weaker claim: over the whole leg it starts at
+0.383, runs a median of 0.736 and ends at 0.312, against ln(7) = 1.95, and it
+is not a decline but a wobble -- in the final twelve minutes alone it spans
+0.220 to 1.214. An earlier version of this section said it "fell from 0.96 to
+0.48", which is neither endpoint of anything; the committed report kept only
+the last 200 of 8,941 rows, so the window it was read from was too short to
+show a trend at all. The report keeps every row now. From an archive state near Oak's Lab it can collect the
 parcel; from Route 1 it has no reason to go there, because the only signal
 pointing south is a +1 that 8.41M steps of exploration never found from that
 start.
 
-That is a statement about this reward and this budget, not about the
-representation. Separating the two needs arms 1 and 2.
+**That is not a statement about this reward and this budget alone, and an
+earlier version of this section said it was.** Three other suspects are live,
+and none was ruled out:
+
+- *The optimiser was broken.* A review found that GAE discarded every episode's
+  terminal transition -- the step that pays `enter_forest` its +1 -- so the goal
+  produced no gradient at all, and that PPO replayed each rollout from a zero
+  GRU state while the driver carried the real one, making the importance ratio
+  something other than 1 before any weight changed. Both are fixed; neither was
+  fixed when this run happened.
+- *The representation is untested.* The encoder ran **1 of its 6 epochs**,
+  stopped to free wall-clock. Part 1's encoder reached a validation prediction
+  loss of 0.0102; this one stopped at 0.0317.
+- *The harness was trapping the route.* The control detector false-positived on
+  the Pallet Town entrance, which is on the only path from the start state to
+  `get_parcel`, so an episode heading for the objective lost 32 of every 33
+  turns on arrival.
+
+So this run does not show that the reward is the problem, and it certainly does
+not show anything about the world model. Separating any of it needs the fixes
+above and arms 1 and 2.
 
 And it is confounded by the detector. The false-positive band sits between Route
 1 and Oak's Lab, so it is on the only path from the Stage A start state to

@@ -32,6 +32,7 @@ from pathlib import Path
 import numpy as np
 
 from poke.actions import ACTIONS, to_multihot
+from poke.control import has_control
 from poke.env import PokeEnv
 from poke.oracle import nodes_for, search
 from poke.ram import coords, cur_map, party_count
@@ -51,6 +52,17 @@ class DemoStep:
     frame: np.ndarray
     action_name: str
     location: tuple | None = None
+    #: True when the policy would have owned this turn under the contract.
+    #: The scripted harness owns text and battles, and more than half the
+    #: oracle's actions are the A presses it spends waiting for control. A
+    #: clone trained on those learns to mash A, which is exactly the
+    #: degenerate behaviour the trained policy already fell into.
+    policy_turn: bool = True
+
+
+def policy_turns(steps: list["DemoStep"]) -> list["DemoStep"]:
+    """Just the turns a contract-bound policy would be asked to choose."""
+    return [step for step in steps if step.policy_turn]
 
 
 def demo_steps(env, edge_blobs, edge_traces) -> list[DemoStep]:
@@ -64,12 +76,16 @@ def demo_steps(env, edge_blobs, edge_traces) -> list[DemoStep]:
         env.restore(blob)
         for button in trace:
             frame = np.ascontiguousarray(env.screen()[:, :, 0])
-            where = None
             try:
                 where = (cur_map(env), *coords(env))
             except Exception:
                 where = None
-            steps.append(DemoStep(frame=frame, action_name=button, location=where))
+            try:
+                owned = has_control(env)
+            except Exception:
+                owned = True
+            steps.append(DemoStep(frame=frame, action_name=button, location=where,
+                                  policy_turn=owned))
             env.step(ACTIONS.index(button))
     return steps
 
@@ -82,6 +98,11 @@ def main() -> None:
     parser.add_argument("--report", default="results/demos_part2.json")
     parser.add_argument("--max-nodes", type=int, default=None)
     parser.add_argument("--only", nargs="+", default=None)
+    parser.add_argument("--keep-harness-turns", action="store_true",
+                        help="also write the turns the scripted harness owns "
+                             "-- text and battles. Off by default: they are "
+                             "mostly A presses, and a clone trained on them "
+                             "learns the harness's job, not the route")
     args = parser.parse_args()
 
     from scripts.oracle import phases
@@ -106,7 +127,8 @@ def main() -> None:
                 report["phases"][name] = {"found": False, "nodes": result.nodes,
                                           "seconds": result.seconds, "steps": 0}
                 break
-            steps = demo_steps(env, result.edge_blobs, result.edge_traces)
+            all_steps = demo_steps(env, result.edge_blobs, result.edge_traces)
+            steps = all_steps if args.keep_harness_turns else policy_turns(all_steps)
             for step in steps:
                 writer.add_step(step.frame, to_multihot(ACTIONS.index(step.action_name)),
                                 party_count(env), False, step.location)
@@ -114,6 +136,8 @@ def main() -> None:
             total += len(steps)
             report["phases"][name] = {
                 "found": True, "edges": len(result.path), "steps": len(steps),
+                "steps_before_filter": len(all_steps),
+                "harness_turns_dropped": len(all_steps) - len(steps),
                 "nodes": result.nodes, "seconds": result.seconds,
                 "end": result.end, "objective": PHASE_OBJECTIVE[name],
             }

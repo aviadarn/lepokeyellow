@@ -337,6 +337,39 @@ def load_checkpoint(path, policy, optimizer) -> dict:
             "completed": set(blob["completed"])}
 
 
+def run_report(reason, updates, steps, episodes, hours, completed, archive,
+               history, resumed_from=None, bonus=None, encoder=None) -> dict:
+    """What the run is allowed to claim about itself.
+
+    A resumed run inherits the update counter from the checkpoint and starts
+    its step counter at zero, so `updates` spans every run that produced
+    these weights while `steps` and `hours` describe this one. Reporting the
+    two side by side made the headline "8,941 PPO updates in nine hours",
+    when 8,211 of them happened in those hours.
+
+    The history is every row. It used to be the last 200 of 8,941 -- twelve
+    minutes of a nine-hour run -- and trends were then quoted from a window
+    too short to contain them.
+    """
+    before = (resumed_from or {}).get("updates", 0)
+    return {
+        "stopped": reason,
+        "updates": updates,
+        "updates_this_run": updates - before,
+        "steps": steps,
+        "steps_this_run": steps,
+        "episodes": episodes,
+        "hours": hours,
+        "resumed": resumed_from is not None,
+        "resumed_from": resumed_from,
+        "completed": sorted(completed),
+        "bonus": bonus,
+        "encoder": encoder,
+        "archive": archive,
+        "history": history,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     defaults = TrainConfig()
@@ -380,8 +413,16 @@ def main() -> None:
                for _ in range(config.workers)]
 
     state = {"updates": 0, "steps": 0, "completed": set()}
+    resumed_from = None
     if args.resume:
         state = load_checkpoint(args.resume, policy, optimizer)
+        # What this run inherited, so the report can separate it from what
+        # this run did. The counters mean different things: updates carries
+        # over, steps does not.
+        resumed_from = {"updates": int(state.get("updates", 0)),
+                        "steps": int(state.get("steps", 0)),
+                        "completed": sorted(state.get("completed", set())),
+                        "checkpoint": args.resume}
 
     driver = Trainer(handles, policy, encoder, archive, bonus, config, device=args.device)
     apply_resume(driver, state)
@@ -424,18 +465,19 @@ def main() -> None:
             handle.close()
 
     Path(args.log).parent.mkdir(parents=True, exist_ok=True)
-    Path(args.log).write_text(json.dumps({
-        "stopped": reason,
-        "updates": state["updates"],
-        "steps": driver.steps,
-        "episodes": driver.episodes,
-        "hours": round((time.time() - started) / 3600.0, 3),
-        "completed": sorted(driver.completed),
-        "bonus": CHOSEN["signal"],
-        "encoder": config.checkpoint,
-        "archive": archive.stats(),
-        "history": history[-200:],
-    }, indent=1))
+    Path(args.log).write_text(json.dumps(run_report(
+        reason=reason,
+        updates=state["updates"],
+        steps=driver.steps,
+        episodes=driver.episodes,
+        hours=round((time.time() - started) / 3600.0, 3),
+        completed=driver.completed,
+        archive=archive.stats(),
+        history=history,
+        resumed_from=resumed_from,
+        bonus=CHOSEN["signal"],
+        encoder=config.checkpoint,
+    ), indent=1))
     print("stopped:", reason, "completed:", sorted(driver.completed))
 
 
