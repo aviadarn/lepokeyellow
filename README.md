@@ -679,12 +679,21 @@ Two failure modes, and the per-run controller counts separate them cleanly.
 
 Seven seeds spend almost the whole budget under policy control (1,385-1,451 of
 1,461 actions) and walk **north** -- up Route 1, into Viridian City, around the
-Pokémon Center and the Mart until the budget ends. `get_parcel` is south, in
-Oak's Lab. This is the tile bonus doing exactly what it was paid to do: north is
-where the unvisited tiles are, and the archive's 11 maps are the record of it.
+Pokémon Center and the Mart until the budget ends.
 
-Three seeds and the greedy run do the opposite and go south into Pallet, which is
-the right direction, and are then taken away from the policy entirely. Greedy
+North is the right way. An earlier version of this section said `get_parcel`
+was south in Oak's lab and that the north walk was the tile bonus leading the
+policy astray. Both are wrong, and the objective's own description says so:
+"cross Route 1 to Viridian and pick up Oak's Parcel". The parcel is handed over
+in the Viridian Mart, map 42, which is where the oracle's first phase ends.
+`deliver_parcel` is the leg that goes back south to Oak's lab. So those seven
+seeds reached the right city and never completed the pickup -- the parcel needs
+the player inside the Mart, at the counter, pressing A -- which is a different
+and smaller failure than walking the wrong way.
+
+Three seeds and the greedy run go south into Pallet instead, which is the wrong
+direction for the first objective, and are then taken away from the policy
+entirely. Greedy
 spends 49 of 1,461 actions on the policy and 1,411 in the text and decline
 handlers; its GIF holds two distinct frames.
 
@@ -707,6 +716,37 @@ the two houses. The band sits at y=3-4, exactly where you arrive from Route 1.
 instead of never, but 1-in-33 control is not control. (0, 4, 3) is in that list:
 it is the same tile this README already names as the case that cost one Part 1
 run 2,714 of 4,000 actions. The cut was recalibrated; the tile still fails.
+
+### The clone: knowing the route is not walking it
+
+208 demonstrations cloned into the same network, fitted to a training accuracy
+of 1.0, then run under the contract: **0 of 11**, same as the floor.
+
+The eleven runs are not eleven runs. Cross-entropy to a loss of 0.0005 leaves
+the logits nearly one-hot, so sampling and argmax agree and every seed replays
+the same trajectory -- identical controller counts, identical learned share,
+0.980 in all eleven. That is worth knowing before reading a clone's seed
+spread as evidence of anything.
+
+What it does: five correct decisions. From the Route 1 start it walks north,
+the right way, from (12, 35, 10) to (12, 28, 9) -- and then oscillates between
+(12, 28, 9) and (12, 28, 11) for the remaining four hundred actions.
+
+This is the compounding-error failure that pure behaviour cloning always has,
+arriving earlier than expected. The dataset is one optimal trajectory per
+objective; it contains no frame showing how to recover, because the oracle
+never made a mistake to recover from. Six decisions in, the clone is on a
+screen its training set does not contain, and nothing it learned applies.
+
+The learned share is the part worth keeping: **0.980**, against 0.034 for the
+runs the old detector trapped. The policy now owns 1,432 of 1,461 actions.
+Whatever is wrong is the policy's, not the harness taking its turns.
+
+So two different failures have now been separated. The RL policy could not
+find the route. The clone knows the route and cannot stay on it. Only the
+second is what DAgger fixes -- clone, roll out, re-solve from the states the
+clone actually reaches, and add those -- and the oracle can be re-run from any
+state, which is what that needs.
 
 ### Why, as far as the logs say
 
@@ -744,15 +784,14 @@ So this run does not show that the reward is the problem, and it certainly does
 not show anything about the world model. Separating any of it needs the fixes
 above and arms 1 and 2.
 
-And it is confounded by the detector. The false-positive band sits between Route
-1 and Oak's Lab, so it is on the only path from the Stage A start state to
-`get_parcel`: an episode that heads for the objective loses 32 of every 33 turns
-on arrival, while an episode that heads north keeps all of them. Training
-episodes seeded from archive states already inside Pallet or the lab are not
-taxed, which is how `get_parcel` was reached in training and never in a contract
-run from Route 1. How much of the north preference is the tile bonus and how
-much is the detector, this run cannot say. Fixing the detector comes before
-reading anything more into these numbers.
+And it is confounded by the detector. The false-positive band sits at Pallet
+Town's entrance, which is on the path to `deliver_parcel` -- the return leg to
+Oak's lab -- so any episode that got as far as carrying the parcel home lost 32
+of every 33 turns on arrival. It does not explain the first objective, which
+lies north. Training episodes seeded from archive states already inside Pallet
+or the lab are not taxed, which is part of how `get_parcel` was reached in
+training and never in a contract run from Route 1. Fixing the detector comes
+before reading anything more into these numbers.
 
 
 ## Cost
