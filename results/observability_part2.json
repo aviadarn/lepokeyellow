@@ -1,0 +1,32 @@
+{
+ "demos": [
+  "episodes/demos_part2.h5",
+  "episodes/dagger_r1.h5",
+  "episodes/dagger_r2.h5"
+ ],
+ "steps": 719,
+ "steps_with_a_recorded_position": 719,
+ "label_counts": {
+  "up": 395,
+  "left": 102,
+  "right": 142,
+  "noop": 18,
+  "a": 22,
+  "down": 40
+ },
+ "majority_baseline": 0.5494,
+ "from_the_encoder": 0.847,
+ "from_the_true_position": 0.8289,
+ "encoder_conflicts": {
+  "groups": 3,
+  "conflicting_steps": 9,
+  "largest_group": 4
+ },
+ "position_conflicts": {
+  "groups": 15,
+  "conflicting_steps": 88,
+  "largest_group": 12
+ },
+ "what": "Leave-one-out 1-NN: does the nearest other observation in the whole dataset want the same button?",
+ "why": "Cloning and DAgger both assume the mapping is a function. The encoder was measured recovering which room a frame is in and not where in the room; Route 1 is one room."
+}

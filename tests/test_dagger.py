@@ -150,6 +150,43 @@ def test_the_context_records_what_the_learner_pressed_not_what_it_should_have():
     assert [action for _, action in probe.visits[1].context] == [3]
 
 
+def test_each_visit_counts_the_turns_the_learner_spent_in_it():
+    env = StoryEnv([(1, 1), (2, 1), (1, 1), (1, 1)])
+    probe = SnapshotProbe(walker(env), env)
+    for _ in range(4):
+        probe("guarded", [0.0] * 5)
+    spent = {visit.turn: visit.revisits for visit in probe.visits}
+    assert spent == {0: 2, 1: 0}, "the learner came back to the first state twice"
+
+
+def test_the_stuck_states_are_the_ones_worth_asking_the_expert_about():
+    """Measured: round 2 relabelled six states and five of them were from
+    turns 0-14, the prefix the clone already walks correctly. Almost every
+    distinct state of a stuck rollout happens early, so spreading over them
+    spends the search budget on the part that works."""
+    from poke.rl.dagger import by_time_spent
+
+    visits = [Visit(b"", (), turn, "get_parcel") for turn in (0, 4, 9, 20)]
+    for visit, spent in zip(visits, (0, 0, 300, 2)):
+        visit.revisits = spent
+    picked = by_time_spent(visits, 2)
+    assert [visit.turn for visit in picked] == [9, 20], "in turn order, stuck first"
+
+
+def test_a_tie_on_time_spent_prefers_the_later_state():
+    from poke.rl.dagger import by_time_spent
+
+    visits = [Visit(b"", (), turn, "get_parcel") for turn in (0, 7)]
+    assert [v.turn for v in by_time_spent(visits, 1)] == [7]
+
+
+def test_asking_for_more_stuck_states_than_exist_takes_them_all():
+    from poke.rl.dagger import by_time_spent
+
+    visits = [Visit(b"", (), turn, "get_parcel") for turn in (0, 7)]
+    assert [v.turn for v in by_time_spent(visits, 9)] == [0, 7]
+
+
 def test_spread_takes_everything_when_fewer_states_than_asked_for():
     assert spread([1, 2, 3], 10) == [1, 2, 3]
 

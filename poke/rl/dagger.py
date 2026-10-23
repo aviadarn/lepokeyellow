@@ -41,6 +41,9 @@ class Visit:
     turn: int
     #: Read from event flags, which is what the contract allows.
     objective: str
+    #: How many later turns came back to this same state. The absorbing
+    #: states of a stuck rollout are the ones with a count in the hundreds.
+    revisits: int = 0
     #: (frame, action) for the learner's own turns just before this one.
     #: A relabelled episode replayed from a fresh GRU and a fresh frame
     #: window is a different input than the same game state is at play time;
@@ -69,7 +72,7 @@ class SnapshotProbe:
         self._env = env
         self._key = key or (lambda env: story_key(env, with_facing=True))
         self.visits: list[Visit] = []
-        self._seen: set = set()
+        self._seen: dict = {}
         # 16 and not the whole prefix: a frame is 23 KiB and a blob 174 KiB,
         # so the cap is what keeps a long rollout's visits inside a gigabyte,
         # and a GRU warmed on sixteen oscillating steps is an approximation
@@ -82,12 +85,13 @@ class SnapshotProbe:
         key = self._key(self._env)
         if key in self._seen:
             self.revisits += 1
+            self._seen[key].revisits += 1
         else:
-            self._seen.add(key)
-            self.visits.append(Visit(blob=self._env.snapshot(), key=key,
-                                     turn=self.turns,
-                                     objective=current(self._env).key,
-                                     context=list(self._context)))
+            visit = Visit(blob=self._env.snapshot(), key=key, turn=self.turns,
+                          objective=current(self._env).key,
+                          context=list(self._context))
+            self._seen[key] = visit
+            self.visits.append(visit)
         frame = np.ascontiguousarray(self._env.screen()[:, :, 0])
         action = self.policy(guarded, objective_one_hot)
         self._context.append((frame, action))
@@ -112,3 +116,24 @@ def spread(items, count: int) -> list:
         return [items[0]]
     step = (len(items) - 1) / (count - 1)
     return [items[round(index * step)] for index in range(count)]
+
+
+def by_time_spent(visits, count: int) -> list:
+    """The `count` states the learner spent the most turns in, in turn order.
+
+    `spread` was the first rule and the measurement killed it: five of round
+    2's six relabelled states came from turns 0 to 14, because almost every
+    distinct state of a stuck rollout happens before it gets stuck. Spreading
+    over distinct states therefore spends the search budget on the prefix the
+    clone already walks correctly.
+
+    Time spent is the right weight. A state the rollout returned to three
+    hundred times is the absorbing one, and every solution found from it is a
+    full path to the goal, so the route beyond it is re-taught anyway. Ties go
+    to the later state, which is the further one along the route.
+    """
+    if count <= 0:
+        return []
+    ranked = sorted(visits, key=lambda visit: (visit.revisits, visit.turn),
+                    reverse=True)[:count]
+    return sorted(ranked, key=lambda visit: visit.turn)

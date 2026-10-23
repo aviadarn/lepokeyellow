@@ -45,7 +45,7 @@ from poke.objectives import CHAIN
 from poke.oracle import nodes_for, search
 from poke.ram import coords, cur_map, party_count
 from poke.rl.clone import save_clone, train_clone
-from poke.rl.dagger import SnapshotProbe, spread
+from poke.rl.dagger import SnapshotProbe, by_time_spent, spread
 from poke.rl.features import FrozenEncoder
 from poke.rl.policy import ActorCritic
 from poke.writer import EpisodeWriter
@@ -153,6 +153,15 @@ def main() -> None:
                         help="the dataset so far; each round appends a file")
     parser.add_argument("--episodes-dir", default="episodes")
     parser.add_argument("--rounds", type=int, default=2)
+    parser.add_argument("--start-round", type=int, default=1,
+                        help="numbering for this run's round files, so a "
+                             "continuation does not overwrite earlier ones")
+    parser.add_argument("--pick", default="stuck", choices=("stuck", "spread"),
+                        help="which visited states to relabel. `stuck` takes "
+                             "the ones the rollout spent the most turns in; "
+                             "`spread` takes them evenly over the rollout, "
+                             "which measurement showed spends the budget on "
+                             "the prefix the clone already walks correctly")
     parser.add_argument("--states", type=int, default=6,
                         help="states relabelled per round. One oracle search "
                              "costs about five minutes.")
@@ -171,12 +180,13 @@ def main() -> None:
     encoder = FrozenEncoder(args.encoder, device=args.device, half=args.half)
     demo_files = list(args.demos)
     report = {"state": args.state, "encoder": args.encoder, "rounds": [],
-              "states_per_round": args.states, "budget": args.budget,
+              "states_per_round": args.states, "pick": args.pick,
+              "budget": args.budget,
               "context": args.context,
               "what": "DAgger: the oracle relabels the states the clone reaches.",
               "contract": "training only: the relabelling search uses snapshots"}
 
-    for index in range(1, args.rounds + 1):
+    for index in range(args.start_round, args.start_round + args.rounds):
         print(f"=== round {index} ===", flush=True)
         env = PokeEnv(args.rom, args.state)
         env.reset()
@@ -191,7 +201,8 @@ def main() -> None:
         print(f"{probe.turns} policy turns, {len(probe.visits)} distinct states, "
               f"{probe.revisits} revisits", flush=True)
 
-        chosen = spread(probe.visits, args.states)
+        pick = by_time_spent if args.pick == "stuck" else spread
+        chosen = pick(probe.visits, args.states)
         relabelled, episodes = [], []
         for visit in chosen:
             steps, result = relabel(env, visit, max_nodes=args.max_nodes)
@@ -203,7 +214,8 @@ def main() -> None:
                     [ContextStep(frame, action) for frame, action in context] + kept,
                     visit.objective, len(context)))
             relabelled.append({
-                "turn": visit.turn, "objective": visit.objective,
+                "turn": visit.turn, "revisits": visit.revisits,
+                "objective": visit.objective,
                 "found": result.found, "nodes": result.nodes,
                 "seconds": result.seconds, "steps": len(kept),
                 "steps_before_filter": len(steps), "context": len(context),
