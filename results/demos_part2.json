@@ -1,0 +1,53 @@
+{
+ "state": "states/oracle/route1.state",
+ "phases": {
+  "parcel": {
+   "found": true,
+   "edges": 46,
+   "steps": 47,
+   "steps_before_filter": 87,
+   "harness_turns_dropped": 40,
+   "nodes": 4179,
+   "seconds": 284.3,
+   "end": [
+    42,
+    5,
+    2
+   ],
+   "objective": "get_parcel"
+  },
+  "pokedex": {
+   "found": true,
+   "edges": 53,
+   "steps": 60,
+   "steps_before_filter": 249,
+   "harness_turns_dropped": 189,
+   "nodes": 5610,
+   "seconds": 372.0,
+   "end": [
+    40,
+    3,
+    5
+   ],
+   "objective": "deliver_parcel"
+  },
+  "forest": {
+   "found": true,
+   "edges": 96,
+   "steps": 101,
+   "steps_before_filter": 159,
+   "harness_turns_dropped": 58,
+   "nodes": 7964,
+   "seconds": 327.7,
+   "end": [
+    51,
+    47,
+    16
+   ],
+   "objective": "enter_forest"
+  }
+ },
+ "steps": 208,
+ "what": "Oracle solution for Part 2 as (frame, button) pairs.",
+ "contract": "training only: the search uses snapshots"
+}
