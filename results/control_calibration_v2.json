@@ -1,0 +1,45 @@
+{
+ "what": "Text-box detector: the shipped white-fraction cut against the two-shade rule, on the rollback probe.",
+ "fit_states": [
+  "states/bedroom.state",
+  "states/oaks_lab.state",
+  "states/pallet.state",
+  "states/oracle/route1.state",
+  "states/oracle/parcel.state",
+  "states/oracle/forest_gate.state"
+ ],
+ "holdout_state": "states/pikachu.state",
+ "samples": {
+  "fit": 1314,
+  "fit_boxes": 347,
+  "fit_walkable": 967,
+  "holdout": 218,
+  "holdout_boxes": 106,
+  "holdout_walkable": 112
+ },
+ "constants": {
+  "BOX_SHADES": 2,
+  "WHITE_FLOOR": 0.4,
+  "WHITE_CUT": 0.7724609375
+ },
+ "rules": {
+  "white_cut": {
+   "fit_balanced_accuracy": 0.9497,
+   "holdout_balanced_accuracy": 0.5106
+  },
+  "two_shade": {
+   "fit_balanced_accuracy": 0.9683,
+   "holdout_balanced_accuracy": 0.5106
+  }
+ },
+ "caveat": "Ground truth is the rollback probe: two buttons, two screens. In a menu the d-pad moves a cursor, so it reports control while a box is drawn. Those samples count against both rules equally.",
+ "walkable_called_a_box": {
+  "white_cut": 36,
+  "two_shade": 0
+ },
+ "walkable_samples": 967,
+ "unlabelable_menu_fraction": {
+  "fit": 0.0,
+  "holdout": 0.875
+ }
+}

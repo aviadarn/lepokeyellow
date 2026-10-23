@@ -563,20 +563,37 @@ topped out at 0.797 balanced accuracy, a best-value-set rule reached 0.878 with
 winners that scored 0.08 on a held-out state, and excluding battle frames
 lifted the best byte to 0.966 -- but every candidate sat in `0xDFEE-0xDFFB`,
 which is the stack. It was reading the return address of whatever routine
-happened to be running. The detector shipped instead is the white fraction of
-the screen's bottom six rows, cut at 0.7725: **0.9503 fit, 0.9835 held
-out**. Quote those two numbers wherever the share is quoted.
+happened to be running. The detector shipped first was the white fraction of
+the screen's bottom six rows, cut at 0.7725: 0.9503 fit, 0.9835 held out.
+
+**Those numbers were true and the detector was wrong.** Whiteness was never
+the signal. Pallet Town's entrance is 82% white -- whiter than plenty of real
+boxes -- so 36 of 967 walkable samples read as a text box, and a trained
+policy later spent 1,411 of its 1,461 actions on one of them. A Gen-1 box is
+drawn in two shades, white paper and black frame-and-glyphs; scenery uses all
+four the DMG has. The detector is now the shade count with a white floor:
+**0.9683 fit against the old rule's 0.9497 on the same samples, and 0 of 967
+walkable samples called a box, against 36.** `scripts/calibrate_box.py`,
+`results/control_calibration_v2.json`.
+
+The zero is the number that matters, not the percentage point. A walkable tile
+read as a box is *absorbing*: the handler owns every turn it claims and only
+the policy can step off a tile, so one bad tile ends the run.
+`poke.handlers.BOX_PATIENCE` bounds that at one policy turn in thirty-three,
+which is what kept the earlier failure survivable -- a Part 1 run spent 2,714
+of 4,000 actions on a single Pallet Town square -- but one turn in
+thirty-three is not control, and bounding the cost was mistaken for fixing it.
+
+There is no honest held-out number for the new rule, and the report says so.
+The ground truth is the rollback probe: press two buttons, compare screens. In
+a menu the d-pad moves a cursor, so two buttons give two screens and the probe
+reports control with a box plainly on screen. 87.5% of the holdout state's
+"walkable" samples are menus, and both rules score 0.5106 there -- that
+measures the probe, not the detector.
 
 And a walking cutscene draws no box, so the probe says the player has control,
 the turn goes to the policy, and it is counted as learned work. That is the
 direction of the error: the share is inflated, not deflated.
-
-The two classes also overlap by one sample -- a walkable tile that reads as
-white as a box. No cut removes it, so `poke.handlers.BOX_PATIENCE` bounds the
-cost instead: after 32 consecutive turns the text handler yields one to the
-policy. Without that, a false box is absorbing, because only the policy can
-walk off a tile. It was: the first cut read a box on Pallet Town's sand and one
-run spent 2714 of 4000 actions on a single square.
 
 ### The ceiling is a number, not a run
 
@@ -646,7 +663,9 @@ but pixels:
 | floor: random, and each of 8 constant buttons | 0 | 0 | 0 |
 
 The policy scores the floor. Median learned share is 0.969, and the control
-detector that produces it is **0.9503 fit, 0.9835 held out** -- the share is an
+detector that produces it was the white-fraction rule at **0.9503 fit, 0.9835
+held out** -- which is the rule the section above shows was trapping this very
+run; the share is an
 upper bound, as above, so "the policy chose 97% of these actions" is itself
 generous.
 

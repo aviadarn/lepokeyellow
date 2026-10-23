@@ -58,44 +58,107 @@ def test_the_probe_never_snapshots():
     assert has_control(NoRollbackEnv())
 
 
-def test_the_measured_accuracy_travels_with_the_threshold():
+def test_the_measured_accuracy_travels_with_the_rule():
     """A tuned constant with no recorded accuracy is a magic number."""
-    from poke import control
-
     import json
     from pathlib import Path
 
+    from poke import control
+
     report = json.loads(Path(control.MEASURED["report"]).read_text())
-    winner = report["screen_features"][0]
-    assert control.MEASURED["fit_balanced_accuracy"] == winner["fit_accuracy"]
-    assert control.MEASURED["holdout_balanced_accuracy"] == winner["holdout_accuracy"]
-    assert control.WHITE_CUT == winner["cut"]
+    assert report["constants"]["BOX_SHADES"] == control.BOX_SHADES
+    assert report["constants"]["WHITE_FLOOR"] == control.WHITE_FLOOR
+    assert (control.MEASURED["fit_balanced_accuracy"]
+            == report["rules"]["two_shade"]["fit_balanced_accuracy"])
+    assert (control.MEASURED["superseded"]["fit_balanced_accuracy"]
+            == report["rules"]["white_cut"]["fit_balanced_accuracy"])
 
 
-def test_the_cut_sits_in_the_gap_between_the_recorded_classes():
-    """The calibration's own samples, replayed without a ROM.
+def test_no_walkable_tile_reads_as_a_text_box():
+    """The real regression, and the one the old version of this test missed.
 
-    This is the regression test for the Critical the review found: the first
-    cut sat inside the overworld's spread, so Pallet Town's sand read as a
-    text box, and because only the policy can walk off a tile the reading was
-    absorbing. The cut must sit above the walkable mass.
+    It used to assert the cut sat above the *recorded* walkable samples, and
+    it passed -- while an agent sat trapped on Pallet Town's entrance for
+    1,411 of 1,461 actions. The samples simply did not include that tile.
+    The check that matters is the count over a walk that does visit it, and
+    for an absorbing failure the only acceptable count is zero: the handler
+    owns every turn it claims, and only the policy can step off a tile.
     """
     import json
     from pathlib import Path
 
     from poke import control
 
-    report = json.loads(Path("results/control_calibration.json").read_text())
-    samples = report["feature_samples"]
-    assert samples["feature"] == "white_bottom"
-    assert samples["cut"] == control.WHITE_CUT
-
-    walkable = samples["with_control"]
-    absorbing = [value for value in walkable if value > control.WHITE_CUT]
-    assert len(absorbing) <= control.MEASURED["overlapping_samples"], (
-        f"{len(absorbing)} walkable samples read as a text box; the handler "
-        "owns every turn it claims, so each one is a tile the policy can be "
-        "trapped on"
+    report = json.loads(Path(control.MEASURED["report"]).read_text())
+    trapped = report["walkable_called_a_box"]["two_shade"]
+    assert trapped == control.MEASURED["walkable_called_a_box"]
+    assert trapped == 0, (
+        f"{trapped} of {report['walkable_samples']} walkable samples read as "
+        "a text box; each one is a tile the policy can be trapped on"
     )
-    below = [value for value in walkable if value <= control.WHITE_CUT]
-    assert max(below) < control.WHITE_CUT
+    assert report["walkable_called_a_box"]["white_cut"] == 36, (
+        "the rule this replaced, on the same samples"
+    )
+
+
+def test_the_holdout_split_is_recorded_as_unusable():
+    """Honesty about what was not measured.
+
+    The rollback probe cannot label a menu: the d-pad moves a cursor, so two
+    buttons give two screens and it reports control with a box on screen.
+    The holdout state is 87.5% menus, so both rules score chance there. That
+    is a fact about the probe, and it belongs beside the number it voids.
+    """
+    from poke import control
+
+    assert control.MEASURED["holdout_balanced_accuracy"] is None
+    assert control.MEASURED["holdout_is_menus"] > 0.5
+
+
+def _bottom(shades):
+    """A screen whose bottom six rows carry exactly `shades` (value, count)."""
+    frame = np.zeros((144, 160, 3), dtype=np.uint8)
+    region = np.full((48, 160), 255, dtype=np.uint8)
+    flat = region.reshape(-1)
+    at = 0
+    for value, count in shades:
+        flat[at:at + count] = value
+        at += count
+    frame[96:144, :, 0] = region
+    return frame
+
+
+class PaintedEnv(FakeEnv):
+    def __init__(self, frame):
+        super().__init__(YELLOW, {YELLOW.ram.in_battle: NO_BATTLE})
+        self.frame = frame
+
+    def screen(self):
+        return self.frame
+
+
+def test_pale_scenery_in_four_shades_is_not_a_text_box():
+    """Pallet Town's entrance. 82% of the bottom rows are white and there is
+    no box on screen; the white-fraction cut called it a box and the handler
+    then owned 32 of every 33 turns. Measured on the cartridge at (0, 4, 11),
+    where the agent spent 1,411 of 1,461 actions.
+
+    A Gen-1 box is drawn in two shades -- white paper, black glyphs. Scenery
+    uses all four the DMG has.
+    """
+    frame = _bottom([(170, 700), (85, 500), (0, 182)])
+    white = float((frame[TEXT_BOX_REGION] == 255).mean())
+    assert white > WHITE_CUT, "this frame is whiter than the old cut, by construction"
+    assert not text_box_open(PaintedEnv(frame))
+    assert has_control(PaintedEnv(frame))
+
+
+def test_white_paper_with_black_glyphs_is_a_text_box():
+    frame = _bottom([(0, 900)])
+    assert text_box_open(PaintedEnv(frame))
+
+
+def test_a_dark_fade_is_not_a_text_box():
+    """Two shades, but no paper: the screen is fading, not talking."""
+    frame = _bottom([(0, 7000)])
+    assert not text_box_open(PaintedEnv(frame))
