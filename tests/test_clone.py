@@ -69,3 +69,27 @@ def test_the_clone_saves_a_checkpoint_the_evaluator_can_load():
     fresh = ActorCritic(feature_dim=4, num_frames=2, hidden=8)
     fresh.load_state_dict(blob["policy"])
     assert blob["feature_dim"] == 4 and blob["num_frames"] == 2
+
+
+def test_context_steps_carry_the_sequence_but_are_not_scored():
+    """DAgger's relabelled episodes are warmed with the frames the learner
+    actually passed through. Those turns have the learner's own actions on
+    them, not the expert's, so they must move the GRU and the frame window
+    and contribute nothing to the loss."""
+    frames = np.stack([np.full((144, 160), v, dtype=np.uint8) for v in (1, 2, 3, 4)])
+    actions = [ACTIONS.index("a")] * 4
+    policy, history = train_clone(FakeEncoder(), [(frames, actions, "get_parcel", 4)],
+                                  epochs=3, lr=1e-2, seed=0)
+    assert history == [0.0, 0.0, 0.0], "nothing scored, nothing learned"
+
+
+def test_a_warmed_episode_sees_the_window_the_learner_had():
+    """At the first scored step the window must hold the learner's preceding
+    frames, not the expert's first frame tiled four times."""
+    frames = np.stack([np.full((144, 160), v, dtype=np.uint8) for v in (1, 2, 3)])
+    actions = [ACTIONS.index("left"), ACTIONS.index("right"), ACTIONS.index("up")]
+    obs, _ = episode_observations(FakeEncoder(), frames, actions,
+                                  objective_key="get_parcel", n_actions=7)
+    # FakeEncoder has num_frames=2: step 2's window is frames 2 and 3.
+    assert obs[2, :8].tolist() == [2.0] * 4 + [3.0] * 4
+    assert obs[2, 13 + ACTIONS.index("right")] == 1.0, "the learner's own last press"

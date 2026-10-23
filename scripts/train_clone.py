@@ -27,7 +27,14 @@ from poke.goals import default_device
 
 
 def load_episodes(path):
-    """[(frames, action indices, objective key)] from a demonstration file."""
+    """[(frames, action indices, objective key, context length)] from a file.
+
+    `context` is how many leading steps are the learner's own turns, replayed
+    to warm the GRU and the frame window and scored on nothing --
+    `scripts/dagger.py` writes it into `episode_meta.goal_step`. An ordinary
+    demonstration file records -1 there, meaning "not a DAgger episode", which
+    is zero warm-up and not a negative one.
+    """
     episodes = []
     with h5py.File(path, "r") as file:
         spans = file["episodes"][:]
@@ -38,13 +45,16 @@ def load_episodes(path):
             key = row["name"].decode() if isinstance(row["name"], bytes) else row["name"]
             chunk = frames[start:start + length, :, :, 0]
             labels = [action_index(a) for a in actions[start:start + length]]
-            episodes.append((np.asarray(chunk), labels, key))
+            context = max(int(row["goal_step"]), 0)
+            episodes.append((np.asarray(chunk), labels, key, context))
     return episodes
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--demos", default="episodes/demos_part2.h5")
+    parser.add_argument("--demos", nargs="+", default=["episodes/demos_part2.h5"],
+                        help="one or more demonstration files; DAgger rounds "
+                             "each write their own")
     parser.add_argument("--encoder", default="checkpoints/part2/best.pt")
     parser.add_argument("--out", default="checkpoints/rl/clone.pt")
     parser.add_argument("--report", default="results/clone_part2.json")
@@ -59,8 +69,10 @@ def main() -> None:
     args = parser.parse_args()
 
     encoder = FrozenEncoder(args.encoder, device=args.device, half=args.half)
-    episodes = load_episodes(args.demos)
-    counts = {key: len(actions) for _, actions, key in episodes}
+    episodes = [episode for path in args.demos for episode in load_episodes(path)]
+    counts: dict[str, int] = {}
+    for _, actions, key, context in episodes:
+        counts[key] = counts.get(key, 0) + len(actions) - context
     print(f"{sum(counts.values())} demonstrations: {counts}", flush=True)
 
     policy, history = train_clone(encoder, episodes, epochs=args.epochs,
@@ -75,14 +87,16 @@ def main() -> None:
     correct = total = 0
     from poke.rl.clone import episode_observations
     with torch.no_grad():
-        for frames, actions, key in episodes:
+        for frames, actions, key, context in episodes:
             obs, targets = episode_observations(encoder, frames, actions, key,
                                                 policy.n_actions)
             hidden = policy.initial_hidden(1, "cpu")
             for step in range(len(targets)):
                 logits, _, hidden = policy(torch.from_numpy(obs[step]).unsqueeze(0), hidden)
-                correct += int(logits.argmax(-1).item() == int(targets[step]))
-                total += 1
+                # Warm-up turns move the state and are not scored, here either.
+                if step >= context:
+                    correct += int(logits.argmax(-1).item() == int(targets[step]))
+                    total += 1
 
     report = {
         "demos": sum(counts.values()),

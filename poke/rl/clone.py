@@ -54,6 +54,18 @@ def objective_one_hot(key: str) -> list[float]:
                      + ", ".join(o.key for o in CHAIN))
 
 
+def unpack(episode):
+    """(frames, actions, objective key, context length) from an episode.
+
+    Episodes from `scripts/collect_demos.py` are three-tuples and start at the
+    beginning of their own trajectory. A DAgger episode carries a fourth
+    element: how many leading steps are the learner's own turns, replayed to
+    warm the GRU and the frame window and scored on nothing.
+    """
+    frames, actions, key, *rest = episode
+    return frames, actions, key, int(rest[0]) if rest else 0
+
+
 def episode_observations(encoder, frames, actions, objective_key: str,
                          n_actions: int | None = None):
     """[(T, obs_dim) observations, (T,) action targets] for one episode."""
@@ -85,21 +97,25 @@ def train_clone(encoder, episodes, epochs: int = 400, lr: float = 1e-3,
                          hidden=hidden)
     optimizer = torch.optim.Adam(policy.parameters(), lr=lr)
     prepared = []
-    for frames, actions, key in episodes:
+    for episode in episodes:
+        frames, actions, key, context = unpack(episode)
         obs, targets = episode_observations(encoder, frames, actions, key,
                                             policy.n_actions)
-        prepared.append((torch.from_numpy(obs), torch.from_numpy(targets)))
+        prepared.append((torch.from_numpy(obs), torch.from_numpy(targets), context))
 
     history = []
     for epoch in range(epochs):
         total, steps = 0.0, 0
-        for obs, targets in prepared:
+        for obs, targets, context in prepared:
+            if context >= obs.size(0):
+                continue
             hidden_state = policy.initial_hidden(1, obs.device)
             logits = []
             for step in range(obs.size(0)):
                 logit, _, hidden_state = policy(obs[step].unsqueeze(0), hidden_state)
                 logits.append(logit)
-            loss = nn.functional.cross_entropy(torch.cat(logits), targets)
+            loss = nn.functional.cross_entropy(torch.cat(logits)[context:],
+                                               targets[context:])
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             nn.utils.clip_grad_norm_(policy.parameters(), 0.5)
