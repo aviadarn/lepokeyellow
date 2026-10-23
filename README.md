@@ -748,6 +748,69 @@ second is what DAgger fixes -- clone, roll out, re-solve from the states the
 clone actually reaches, and add those -- and the oracle can be re-run from any
 state, which is what that needs.
 
+### DAgger: the first objective a learned policy has cleared
+
+Five rounds of it -- roll the clone out under the contract, keep a save state
+behind each new decision, restore the states it got stuck in and run the
+oracle from them, retrain on everything. `scripts/dagger.py`.
+
+**`get_parcel` on 5 of 11 runs.** Greedy takes it in 99 actions against the
+oracle's 87, and the four sampled seeds that get it take 99, 227, 394 and 982.
+Nothing yet reaches `deliver_parcel`, and the design's bar is five of ten on
+`enter_forest`, so this is not a pass; it is the first objective a policy has
+reached at all under this contract, against 0 for every baseline, 0 for nine
+hours of PPO and 0 for the behaviour clone.
+
+The distance, measured greedy from `states/oracle/route1.state`:
+
+| | distinct tiles | best y on Route 1 | maps reached |
+|---|---|---|---|
+| behaviour clone | 6 | 28 | 12 |
+| 2 rounds | 17 | 20 | 12 |
+| 5 rounds | 69 | 0 | 12, 1, 42 |
+
+Route 1 runs y=35 at the start down to y=0 at Viridian. The behaviour clone
+covered seven of those thirty-five and stopped; after five rounds the clone
+walks the whole route, enters Viridian and enters the Mart.
+
+Two things the failure taught before it started working.
+
+**The frozen encoder was not the bottleneck**, which was the obvious suspect:
+it was measured recovering which room a frame is in and not where in the room,
+and Route 1 is one room. `scripts/probe_observability.py` asks whether the
+expert's button is a function of what the policy sees -- leave-one-out 1-NN
+over the demonstrations. The encoder's window scores **0.847** against a 0.549
+majority baseline, *better* than the true (map, y, x) position at 0.829, with
+9 exactly-conflicting steps against position's 88. A four-frame window carries
+the direction of travel, which a coordinate does not, and a tile crossed by
+two different optimal routes genuinely wants two different buttons.
+
+**The search budget was going to the states that already worked.** Five of
+round 2's six relabelled states came from turns 0-14, because almost every
+distinct state of a stuck rollout happens before it gets stuck, and the first
+selection rule spread evenly over distinct states. `by_time_spent` replaced
+it: the states the rollout returned to most, which are the absorbing ones.
+Rounds 3 and 4 then relabelled turns 13-21, and by round 5 the rollout reached
+49 distinct states and the searches launched from turns 50-57 needed only
+13-16 actions to finish -- the clone had walked almost the whole leg itself.
+
+A detail that mattered more than it looks. A relabelled episode starts in the
+middle of a run, and replayed from a fresh GRU and a fresh frame window it is
+a different input than that same game state is at play time, where the window
+holds the last four frames and the hidden state carries hundreds of oscillating
+steps -- which is exactly the state a recovery has to be conditioned on. So
+each visit keeps the learner's own preceding sixteen turns and the episode
+replays them before the expert's, moving the GRU and the window and scored on
+nothing. Sixteen rather than the whole prefix is a memory and compute cap, and
+a GRU warmed on sixteen oscillating steps approximates one warmed on four
+hundred rather than equalling it.
+
+What stops it now is the next leg, not this one. Every relabelling so far has
+been a `get_parcel` search, because no rollout had the parcel to relabel from;
+the return to Oak still has only its sixty original demonstrations. The loop
+reads the objective from event flags, so rounds run from here pick up
+`deliver_parcel` on their own.
+
 ### Why, as far as the logs say
 
 The archive stopped growing at hour 6 -- 168 cells, unchanged for the last three
