@@ -1,0 +1,287 @@
+{
+ "seeds": 10,
+ "reached": {
+  "trigger_oak": 0,
+  "get_starter": 0,
+  "get_parcel": 0,
+  "deliver_parcel": 0,
+  "enter_forest": 0
+ },
+ "passes_done_threshold": false,
+ "median_learned_share": 0.9691780821917808,
+ "actions_to_forest": [],
+ "runs": [
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1418,
+    "no_control": 1,
+    "text": 12,
+    "decline": 30
+   },
+   "learned_share": 0.9712328767123287,
+   "seed": 0,
+   "greedy": false,
+   "gif": "media/part2_rl_0.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1412,
+    "no_control": 1,
+    "text": 16,
+    "decline": 32
+   },
+   "learned_share": 0.9671232876712329,
+   "seed": 1,
+   "greedy": false,
+   "gif": "media/part2_rl_1.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 56,
+    "battle": 40,
+    "no_control": 1,
+    "text": 344,
+    "decline": 1020
+   },
+   "learned_share": 0.038356164383561646,
+   "seed": 2,
+   "greedy": false,
+   "gif": "media/part2_rl_2.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1436,
+    "no_control": 1,
+    "text": 8,
+    "decline": 16
+   },
+   "learned_share": 0.9835616438356164,
+   "seed": 3,
+   "greedy": false,
+   "gif": "media/part2_rl_3.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1451,
+    "no_control": 1,
+    "text": 8,
+    "decline": 1
+   },
+   "learned_share": 0.9938356164383562,
+   "seed": 4,
+   "greedy": false,
+   "gif": "media/part2_rl_4.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1422,
+    "battle": 20,
+    "no_control": 1,
+    "text": 8,
+    "decline": 10
+   },
+   "learned_share": 0.9739726027397261,
+   "seed": 5,
+   "greedy": false,
+   "gif": "media/part2_rl_5.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1450,
+    "no_control": 2,
+    "text": 8,
+    "decline": 1
+   },
+   "learned_share": 0.9938313913639479,
+   "seed": 6,
+   "greedy": false,
+   "gif": "media/part2_rl_6.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 291,
+    "battle": 40,
+    "no_control": 1,
+    "text": 288,
+    "decline": 841
+   },
+   "learned_share": 0.19931506849315067,
+   "seed": 7,
+   "greedy": false,
+   "gif": "media/part2_rl_7.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 1385,
+    "no_control": 3,
+    "text": 33,
+    "decline": 40
+   },
+   "learned_share": 0.9499314128943759,
+   "seed": 8,
+   "greedy": false,
+   "gif": "media/part2_rl_8.gif"
+  },
+  {
+   "objectives": {
+    "trigger_oak": null,
+    "get_starter": null,
+    "get_parcel": null,
+    "deliver_parcel": null,
+    "enter_forest": null
+   },
+   "already_true_at_start": [
+    "get_starter",
+    "trigger_oak"
+   ],
+   "actions": 1461,
+   "by_controller": {
+    "policy": 52,
+    "battle": 20,
+    "no_control": 1,
+    "text": 352,
+    "decline": 1036
+   },
+   "learned_share": 0.03561643835616438,
+   "seed": 9,
+   "greedy": false,
+   "gif": "media/part2_rl_9.gif"
+  }
+ ],
+ "greedy": {
+  "objectives": {
+   "trigger_oak": null,
+   "get_starter": null,
+   "get_parcel": null,
+   "deliver_parcel": null,
+   "enter_forest": null
+  },
+  "already_true_at_start": [
+   "get_starter",
+   "trigger_oak"
+  ],
+  "actions": 1461,
+  "by_controller": {
+   "policy": 49,
+   "no_control": 1,
+   "text": 355,
+   "decline": 1056
+  },
+  "learned_share": 0.03356164383561644,
+  "seed": "greedy",
+  "greedy": true,
+  "gif": "media/part2_rl_greedy.gif"
+ },
+ "budget": 1461,
+ "ceiling_actions": 487,
+ "encoder": "checkpoints/part2/best.pt",
+ "policy_checkpoint": "checkpoints/rl/last.pt"
+}

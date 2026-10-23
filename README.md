@@ -611,6 +611,76 @@ this table had all eight constant buttons "clearing" two objectives apiece.
 about 143k frames/s while the encoder does 1,758. The RL budget was going to
 assume the emulator was the expensive part. It is the forward pass.
 
+## Part 2 under the contract: the policy does not finish it
+
+One arm was trained, the design's arm 3: the frozen JEPA encoder's features as
+the observation, plus a Plan2Explore-style intrinsic bonus from the same world
+model's latent prediction error. Arms 1 and 2 were not run, by scope ruling, so
+**nothing here shows the world model helped.** The comparison that would show it
+is a separate plan.
+
+### What was trained
+
+Nine wall-clock hours on an M-series Mac: 8,941 PPO updates, **8.41M
+environment steps**, 20,548 episodes, 259 steps/s across 8 emulator workers with
+an fp16 encoder. The policy is a 597k-parameter actor-critic -- a linear body
+into a GRU cell, 7 actions -- reading a 4-frame window of 192-dim embeddings,
+the objective one-hot and the previous action. Episodes are 512 actions, started
+from a Go-Explore archive keyed by `(objective, map, y//4, x//4)` and seeded
+from `states/oracle/route1.state`.
+
+In training the policy did reach `get_parcel`, and the archive grew to 168 cells
+across 11 maps, the Viridian Mart among them. It never reached `enter_forest`;
+the archive only ever held cells under objectives 2 and 3.
+
+### What it scored
+
+Eleven contract runs from Route 1 -- ten sampling seeds and one greedy -- each a
+single continuous episode with the 1,461-action budget, no rollback, nothing read
+but pixels:
+
+| | `get_parcel` | `deliver_parcel` | `enter_forest` |
+|---|---|---|---|
+| oracle ceiling (487 actions, uses rollback) | reached | reached | reached |
+| trained policy, 10 seeds + greedy | **0/11** | **0/11** | **0/11** |
+| floor: random, and each of 8 constant buttons | 0 | 0 | 0 |
+
+The policy scores the floor. Median learned share is 0.969, and the control
+detector that produces it is **0.9503 fit, 0.9835 held out** -- the share is an
+upper bound, as above, so "the policy chose 97% of these actions" is itself
+generous.
+
+### What the GIFs show
+
+Two failure modes, and the per-run controller counts separate them cleanly.
+
+Seven seeds spend almost the whole budget under policy control (1,385-1,451 of
+1,461 actions) and walk **north** -- up Route 1, into Viridian City, around the
+Pokémon Center and the Mart until the budget ends. `get_parcel` is south, in
+Oak's Lab. This is the tile bonus doing exactly what it was paid to do: north is
+where the unvisited tiles are, and the archive's 11 maps are the record of it.
+
+Three seeds and the greedy run do the opposite and go south into Pallet, which is
+the right direction, then stop in front of the player's house and read its sign
+for the rest of the run. Greedy spends 49 actions on the policy and 1,411 in the
+text and decline handlers; its GIF holds two distinct frames. This is the
+"standing on one tile pressing A" mode, bounded but not prevented by
+`poke.handlers.BOX_PATIENCE`.
+
+### Why, as far as the logs say
+
+The archive stopped growing at hour 6 -- 168 cells, unchanged for the last three
+hours -- while policy entropy fell from 0.96 to 0.48 against ln(7) = 1.95. The
+policy went near-deterministic on a route that pays tile reward and never
+touches the objective. From an archive state near Oak's Lab it can collect the
+parcel; from Route 1 it has no reason to go there, because the only signal
+pointing south is a +1 that 8.41M steps of exploration never found from that
+start.
+
+That is a statement about this reward and this budget, not about the
+representation. Separating the two needs arms 1 and 2.
+
+
 ## Cost
 
 Measured on an Apple M5 (32 GB), torch on MPS.
