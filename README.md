@@ -661,11 +661,29 @@ Oak's Lab. This is the tile bonus doing exactly what it was paid to do: north is
 where the unvisited tiles are, and the archive's 11 maps are the record of it.
 
 Three seeds and the greedy run do the opposite and go south into Pallet, which is
-the right direction, then stop in front of the player's house and read its sign
-for the rest of the run. Greedy spends 49 actions on the policy and 1,411 in the
-text and decline handlers; its GIF holds two distinct frames. This is the
-"standing on one tile pressing A" mode, bounded but not prevented by
-`poke.handlers.BOX_PATIENCE`.
+the right direction, and are then taken away from the policy entirely. Greedy
+spends 49 of 1,461 actions on the policy and 1,411 in the text and decline
+handlers; its GIF holds two distinct frames.
+
+That is not the policy pressing A at a sign. **The control detector
+false-positives on the tiles where Route 1 enters Pallet Town.** Walking south
+puts the player at (0, 4, 11); the bottom six rows there are Pallet's pale
+ground and a roof, 0.818 white against the 0.7725 cut, and no text box is on
+screen at all. The detector says a box is open, so `choose()` claims the turn,
+and `BOX_PATIENCE = 32` hands the policy one turn in thirty-three -- which is
+the measured 49/1,461. The policy's one action is `down`, into the house wall
+below it. The state is absorbing.
+
+It is a false positive, not a real box: from that state `up` moves the player to
+y=3 and `left` moves them to x=9. A real box freezes both. Over a 900-action
+handler-free random walk, 5 of 147 visited Pallet tiles read as a box -- (3,8),
+(3,10), (4,3), (4,8), (4,9), plus (4,11) above -- against 0 of 80 on Route 1 and
+the two houses. The band sits at y=3-4, exactly where you arrive from Route 1.
+
+`BOX_PATIENCE` was added for this and it is why the run ends at 1,461 actions
+instead of never, but 1-in-33 control is not control. (0, 4, 3) is in that list:
+it is the same tile this README already names as the case that cost one Part 1
+run 2,714 of 4,000 actions. The cut was recalibrated; the tile still fails.
 
 ### Why, as far as the logs say
 
@@ -679,6 +697,16 @@ start.
 
 That is a statement about this reward and this budget, not about the
 representation. Separating the two needs arms 1 and 2.
+
+And it is confounded by the detector. The false-positive band sits between Route
+1 and Oak's Lab, so it is on the only path from the Stage A start state to
+`get_parcel`: an episode that heads for the objective loses 32 of every 33 turns
+on arrival, while an episode that heads north keeps all of them. Training
+episodes seeded from archive states already inside Pallet or the lab are not
+taxed, which is how `get_parcel` was reached in training and never in a contract
+run from Route 1. How much of the north preference is the tile bonus and how
+much is the detector, this run cannot say. Fixing the detector comes before
+reading anything more into these numbers.
 
 
 ## Cost
