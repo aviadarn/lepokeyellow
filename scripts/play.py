@@ -46,6 +46,8 @@ from poke.goals import default_device
 from poke.jepa import JEPA
 from poke.maps import name as map_name
 from poke.milestones import chain_from
+from poke.record import RecordingEnv
+from poke.writer import EpisodeWriter
 from poke.ram import TRAINER_BATTLE, battle_kind, coords, cur_map, in_battle, party_count
 from poke.waypoints import build as build_waypoints
 from poke.waypoints import gate, localise
@@ -1081,6 +1083,35 @@ def continuation(spec: str, offset: int) -> list:
     return points
 
 
+def write_demos(env, args, game, reached) -> int:
+    """Write the recorded run as a behaviour-cloning episode.
+
+    One episode per milestone the planner pursued, so a clone can be
+    conditioned on the objective the way the RL policy is. A milestone the
+    run never reached still writes its steps: failing to reach the forest
+    does not make the walk to the gate a bad demonstration.
+    """
+    from poke.actions import to_multihot
+
+    writer = EpisodeWriter(args.record, args.rom, args.state, args.act_frames,
+                           args.seed, game.key, task="demo")
+    order, grouped = [], {}
+    for step in env.steps:
+        key = step.label or "start"
+        if key not in grouped:
+            grouped[key] = []
+            order.append(key)
+        grouped[key].append(step)
+    for key in order:
+        steps = grouped[key]
+        for step in steps:
+            writer.add_step(step.frame, to_multihot(step.action), 0,
+                            False, step.location)
+        writer.end_episode("demo", key, key in reached, -1, -1)
+    writer.close()
+    return len(env.steps)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1263,6 +1294,10 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--act-frames", type=int, default=60)
     parser.add_argument("--out", default="results/play.json")
+    parser.add_argument("--record", default=None,
+                        help="write the run as a demonstration episode (.h5) "
+                             "for behaviour cloning: every action with the "
+                             "frame it was chosen from")
     parser.add_argument("--game")
     parser.add_argument("--device", default=default_device())
     args = parser.parse_args()
@@ -1292,6 +1327,10 @@ def main() -> None:
 
     env = PokeEnv(args.rom, args.state, headless=True,
                   act_frames=args.act_frames, game=args.game)
+    if args.record:
+        # Wraps the env, so the planner below is unchanged and every action
+        # it takes is captured with the frame it was chosen from.
+        env = RecordingEnv(env, locate=lambda e: (cur_map(e), *coords(e)))
     player = Player(model, env, device, args)
     started = time.perf_counter()
     reached: list[str] = []
@@ -1363,6 +1402,8 @@ def main() -> None:
 
         for milestone in chain:
             print(f"-> {milestone.key}: {milestone.description}")
+            if args.record:
+                env.label(milestone.key)
             if waypoints is not None and args.controller == "pursuit":
                 ok = player.run_pursuit(waypoints, coord_probe, lookup,
                                         milestone, args.budget)
@@ -1399,6 +1440,10 @@ def main() -> None:
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
+    if args.record:
+        written = write_demos(env, args, game, reached)
+        print(f"recorded {written} demonstration steps to {args.record}")
+
     out.write_text(json.dumps({
         "game": game.key,
         "checkpoint": str(Path(args.checkpoint).resolve()),
