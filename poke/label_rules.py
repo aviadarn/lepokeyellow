@@ -54,12 +54,17 @@ def scroll(frames: np.ndarray, match: float = 0.97) -> np.ndarray:
     return out
 
 
-def step_starts(directions: np.ndarray, still: int = 3) -> np.ndarray:
+def step_starts(directions: np.ndarray, still: int = 3, window: int = 8,
+                min_scrolls: int = 4) -> np.ndarray:
     """(m, 2) rows [frame, bit]: where a walk starts or turns.
 
     A start is a scrolling frame after at least `still` frames without
     scrolling (the player stood, so the game read the d-pad), or one whose
-    direction differs from the last scrolling frame's.
+    direction differs from the last scrolling frame's -- and only if the
+    next `window` frames scroll that way at least `min_scrolls` times and
+    never another way. A step scrolls 2 px on every other frame for 16
+    frames; on the video, single shifted-looking frames and a hit shaking
+    the screen up and down were 18 % of "steps" before this.
     """
     rows = []
     last_dir, since = -1, still
@@ -68,14 +73,19 @@ def step_starts(directions: np.ndarray, still: int = 3) -> np.ndarray:
             since += 1
             continue
         if since >= still or d != last_dir:
-            rows.append((t, int(d)))
+            ahead = directions[t:t + window]
+            if (ahead == d).sum() >= min_scrolls and ((ahead < 0) | (ahead == d)).all():
+                rows.append((t, int(d)))
         last_dir, since = int(d), 0
     return np.array(rows, np.int64).reshape(-1, 2)
 
 
-#: Frames before a step's first scrolling frame in which its direction must
-#: be held (t-3 .. t-1), and the ones the rule holds it on when it is not.
-WALK_LEAD = (1, 2, 3)
+#: Frames around a step's first scrolling frame t in which its direction
+#: must be held (t-3 .. t: the game reads the pad before moving, and the
+#: capture emulator and PyBoy can disagree by a frame -- on the video the
+#: model puts 67.5 % of step presses on t itself; true synthetic labels pass
+#: either way), and the ones the rule holds it on when it is not.
+WALK_LEAD = (0, 1, 2, 3)
 WALK_HOLD = (1, 2)
 DIRECTIONS = 0b1111
 
@@ -85,7 +95,7 @@ def _held_before(masks: np.ndarray, t: int, bit: int) -> bool:
 
 
 def walking_agreement(masks: np.ndarray, starts: np.ndarray) -> float:
-    """Share of step starts whose direction the labels hold in t-3 .. t-1."""
+    """Share of step starts whose direction the labels hold in t-3 .. t."""
     if not len(starts):
         return 1.0
     return float(np.mean([_held_before(masks, int(t), int(bit)) for t, bit in starts]))

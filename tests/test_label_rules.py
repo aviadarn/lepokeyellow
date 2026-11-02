@@ -169,3 +169,23 @@ def test_a_press_just_before_the_arrow_shows_counts():
     early = np.zeros(40, np.int64)
     early[9:14] = A_BIT
     assert text_agreement(early, spans) == 1.0
+
+
+def test_a_walk_scrolls_one_way_on_every_other_frame():
+    walk = np.array([-1] * 4 + [2, -1] * 8, np.int8)
+    assert step_starts(walk).tolist() == [[4, 2]]
+
+
+def test_shakes_and_blips_are_not_steps():
+    # Seen on the video: a hit shaking the screen up and down, and a lone
+    # frame that happens to look shifted.
+    shake = np.array([-1] * 4 + [1, -1, 0, -1] * 4, np.int8)
+    blip = np.array([-1] * 4 + [3] + [-1] * 15, np.int8)
+    assert step_starts(shake).tolist() == [] and step_starts(blip).tolist() == []
+
+
+def test_a_press_on_the_first_scrolling_frame_counts():
+    # The capture emulator and PyBoy can disagree by a frame.
+    masks = np.zeros(20, np.int64)
+    masks[10] = LEFT
+    assert walking_agreement(masks, np.array([[10, 2]])) == 1.0

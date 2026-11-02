@@ -1,6 +1,6 @@
 {
  "walking_true": 0.99,
- "walking_true_starts": 301,
+ "walking_true_starts": 300,
  "episodes": [
   "ep_00000.npz",
   "ep_00001.npz",
@@ -11,32 +11,32 @@
   "ep_00006.npz",
   "ep_00007.npz"
  ],
- "walking_inserted_frames": 22,
- "walking_inserted_precision": 0.0909,
- "walking_agreement_v3_before": 0.9796,
+ "walking_inserted_frames": 8,
+ "walking_inserted_precision": 0.0,
+ "walking_agreement_v3_before": 0.9918,
  "walking_agreement_v3_after": 1.0,
- "walking_agreement_true_degraded": 0.9296,
- "walking_val_starts": 540,
+ "walking_agreement_true_degraded": 0.9426,
+ "walking_val_starts": 488,
  "walking_val_episodes": 16,
  "walking_precision_by_floor": {
   "0.05": {
-   "inserted": 22,
-   "precision": 0.0909
+   "inserted": 8,
+   "precision": 0.0
   },
   "0.2": {
-   "inserted": 20,
+   "inserted": 8,
    "precision": 0.0
   },
   "0.3": {
-   "inserted": 18,
+   "inserted": 8,
    "precision": 0.0
   },
   "0.5": {
-   "inserted": 18,
+   "inserted": 8,
    "precision": 0.0
   },
   "0.7": {
-   "inserted": 14,
+   "inserted": 4,
    "precision": 0.0
   }
  },
@@ -52,5 +52,8 @@
  "text_v2_inserted_taps": 1,
  "text_v2_inserted_precision": 1.0,
  "text_agreement_v2_before": 0.9792,
- "text_agreement_v2_after": 1.0
+ "text_agreement_v2_after": 1.0,
+ "text_ablation_tests": 42,
+ "text_ablation_timing_within_8": 1.0,
+ "text_ablation_button_is_a": 0.9048
 }
