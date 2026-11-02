@@ -1,0 +1,340 @@
+2026-11-02 13:28:56 === uv run python -m scripts.synth_collect --episodes 160 --first 20000 --frames 3000 --bump-a 0.6 --tag bump --workers 4 --skip-existing
+160 episodes x 3000 frames, 235 start states
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+2026-11-02 13:28:57 watchdog v3: group 35060, swap baseline 5147M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 8219M
+ep 20003 px_err 0.0033 unk 184320 {'play': 1.9, 'mattered': 7.2, 'total': 30.2}  Route2_w0
+ep 20000 px_err 0.0009 unk      0 {'play': 1.9, 'mattered': 7.0, 'total': 30.7}  IndigoPlateau_w0
+ep 20002 px_err 0.0003 unk      0 {'play': 1.9, 'mattered': 7.1, 'total': 30.9}  SaffronCity_w4
+ep 20001 px_err 0.0002 unk      0 {'play': 1.9, 'mattered': 7.4, 'total': 30.9}  SaffronCity_w0
+ep 20004 px_err 0.0024 unk 115200 {'play': 2.1, 'mattered': 8.4, 'total': 32.0}  Route2_w3
+ep 20005 px_err 0.0050 unk      0 {'play': 2.2, 'mattered': 7.9, 'total': 31.5}  Route4_w0
+ep 20007 px_err 0.0022 unk 115200 {'play': 2.2, 'mattered': 8.2, 'total': 31.8}  Route5_w0
+ep 20006 px_err 0.0009 unk      0 {'play': 2.2, 'mattered': 8.4, 'total': 32.2}  Route4_w1
+ep 20008 px_err 0.0014 unk      0 {'play': 2.1, 'mattered': 8.0, 'total': 31.6}  Route5_w2
+ep 20009 px_err 0.0060 unk  92160 {'play': 2.1, 'mattered': 7.7, 'total': 32.0}  Route6_w0
+ep 20011 px_err 0.0066 unk 161280 {'play': 2.1, 'mattered': 7.7, 'total': 31.9}  Route7_w0
+ep 20010 px_err 0.0064 unk 345600 {'play': 2.1, 'mattered': 8.1, 'total': 32.3}  Route6_w2
+ep 20012 px_err 0.0067 unk      0 {'play': 2.1, 'mattered': 7.4, 'total': 32.7}  Route7_w2
+ep 20013 px_err 0.0013 unk      0 {'play': 2.2, 'mattered': 8.1, 'total': 33.8}  Route8_w0
+ep 20014 px_err 0.0057 unk      0 {'play': 2.1, 'mattered': 7.8, 'total': 33.3}  Route8_w2
+ep 20015 px_err 0.0066 unk      0 {'play': 2.1, 'mattered': 7.7, 'total': 33.6}  Route10_w0
+ep 20016 px_err 0.0013 unk      0 {'play': 2.1, 'mattered': 7.5, 'total': 32.1}  Route10_w2
+ep 20017 px_err 0.0012 unk      0 {'play': 2.1, 'mattered': 7.5, 'total': 32.2}  Route11_w0
+ep 20018 px_err 0.0056 unk 115200 {'play': 2.1, 'mattered': 7.9, 'total': 32.5}  Route11_w2
+ep 20019 px_err 0.0053 unk 230400 {'play': 2.1, 'mattered': 8.0, 'total': 32.7}  Route12_w0
+ep 20020 px_err 0.0215 unk 1428480 {'play': 2.1, 'mattered': 8.0, 'total': 33.0}  Route12_w2
+ep 20021 px_err 0.0294 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 32.7}  Route15_w0
+ep 20022 px_err 0.0053 unk  92160 {'play': 2.0, 'mattered': 8.0, 'total': 32.4}  Route15_w2
+ep 20023 px_err 0.0047 unk      0 {'play': 2.0, 'mattered': 8.4, 'total': 32.3}  Route16_w0
+ep 20024 px_err 0.0062 unk      0 {'play': 2.0, 'mattered': 8.0, 'total': 33.3}  Route16_w4
+ep 20027 px_err 0.0064 unk      0 {'play': 2.2, 'mattered': 7.7, 'total': 32.2}  Route19_w0
+ep 20026 px_err 0.0050 unk      0 {'play': 2.2, 'mattered': 7.8, 'total': 32.8}  Route18_w2
+ep 20025 px_err 0.0075 unk      0 {'play': 2.2, 'mattered': 7.8, 'total': 33.2}  Route18_w0
+ep 20028 px_err 0.0041 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 32.4}  Route20_w0
+ep 20029 px_err 0.0043 unk      0 {'play': 2.1, 'mattered': 7.4, 'total': 31.8}  Route22_w0
+ep 20031 px_err 0.0014 unk      0 {'play': 2.1, 'mattered': 7.7, 'total': 32.1}  Route23_w2
+ep 20030 px_err 0.0046 unk      0 {'play': 2.1, 'mattered': 7.6, 'total': 32.4}  Route23_w0
+ep 20032 px_err 0.0019 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 30.7}  Route25_w0
+ep 20033 px_err 0.0028 unk      0 {'play': 1.9, 'mattered': 6.9, 'total': 30.4}  RedsHouse1F_w0
+ep 20034 px_err 0.0075 unk 506880 {'play': 2.0, 'mattered': 7.3, 'total': 31.0}  RedsHouse2F_w0
+ep 20035 px_err 0.0027 unk      0 {'play': 2.0, 'mattered': 7.3, 'total': 30.9}  BluesHouse_w0
+ep 20036 px_err 0.0046 unk      0 {'play': 2.0, 'mattered': 7.5, 'total': 30.4}  OaksLab_w0
+ep 20037 px_err 0.0008 unk      0 {'play': 2.0, 'mattered': 7.2, 'total': 30.4}  ViridianPokecenter_w0
+ep 20039 px_err 0.0019 unk 115200 {'play': 2.0, 'mattered': 8.0, 'total': 30.5}  ViridianSchoolHouse_w0
+ep 20038 px_err 0.0019 unk 115200 {'play': 2.0, 'mattered': 8.3, 'total': 30.7}  ViridianMart_w0
+ep 20041 px_err 0.0023 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 31.5}  ViridianGym_w0
+ep 20040 px_err 0.0025 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 31.6}  ViridianNicknameHouse_w0
+ep 20042 px_err 0.0080 unk      0 {'play': 2.0, 'mattered': 7.1, 'total': 31.3}  DiglettsCaveRoute2_w0
+ep 20043 px_err 0.0056 unk 230400 {'play': 2.0, 'mattered': 8.0, 'total': 31.7}  ViridianForestNorthGate_w0
+ep 20045 px_err 0.0108 unk 391680 {'play': 2.0, 'mattered': 7.3, 'total': 30.7}  Route2Gate_w0
+ep 20044 px_err 0.0004 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 30.9}  Route2TradeHouse_w0
+ep 20046 px_err 0.0063 unk 345600 {'play': 2.0, 'mattered': 7.8, 'total': 31.0}  ViridianForestSouthGate_w0
+ep 20047 px_err 0.0043 unk 138240 {'play': 2.0, 'mattered': 7.6, 'total': 30.6}  ViridianForest_w0
+ep 20049 px_err 0.0002 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 30.7}  Museum2F_w0
+ep 20048 px_err 0.0045 unk 276480 {'play': 2.0, 'mattered': 7.6, 'total': 31.1}  Museum1F_w0
+ep 20050 px_err 0.0004 unk      0 {'play': 2.0, 'mattered': 7.5, 'total': 31.0}  PewterGym_w0
+ep 20051 px_err 0.0109 unk 737280 {'play': 2.1, 'mattered': 8.2, 'total': 31.5}  PewterNidoranHouse_w0
+ep 20053 px_err 0.0004 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 30.9}  PewterSpeechHouse_w0
+ep 20052 px_err 0.0005 unk      0 {'play': 2.0, 'mattered': 7.5, 'total': 31.4}  PewterMart_w0
+ep 20054 px_err 0.0004 unk      0 {'play': 1.9, 'mattered': 6.7, 'total': 30.1}  PewterPokecenter_w0
+ep 20055 px_err 0.0050 unk      0 {'play': 2.0, 'mattered': 7.9, 'total': 31.4}  MtMoon1F_w0
+ep 20056 px_err 0.0030 unk 138240 {'play': 2.1, 'mattered': 7.2, 'total': 32.2}  MtMoonB1F_w0
+ep 20057 px_err 0.0022 unk  92160 {'play': 2.0, 'mattered': 7.6, 'total': 32.8}  MtMoonB2F_w0
+ep 20058 px_err 0.0001 unk      0 {'play': 2.1, 'mattered': 7.8, 'total': 32.8}  CeruleanTrashedHouse_w0
+ep 20059 px_err 0.0010 unk      0 {'play': 2.0, 'mattered': 8.3, 'total': 32.3}  CeruleanMelaniesHouse_w0
+ep 20060 px_err 0.0010 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 31.3}  CeruleanPokecenter_w0
+ep 20062 px_err 0.0005 unk      0 {'play': 2.1, 'mattered': 7.8, 'total': 31.2}  BikeShop_w0
+ep 20061 px_err 0.0018 unk 115200 {'play': 2.1, 'mattered': 8.3, 'total': 31.5}  CeruleanGym_w0
+ep 20063 px_err 0.0054 unk 368640 {'play': 2.2, 'mattered': 8.8, 'total': 31.3}  CeruleanMart_w0
+ep 20064 px_err 0.0030 unk      0 {'play': 2.0, 'mattered': 7.3, 'total': 31.0}  MtMoonPokecenter_w0
+ep 20066 px_err 0.0065 unk 253440 {'play': 2.0, 'mattered': 7.6, 'total': 30.9}  UndergroundPathRoute5_w0
+ep 20065 px_err 0.0059 unk 115200 {'play': 2.0, 'mattered': 8.1, 'total': 31.6}  Route5Gate_w0
+ep 20067 px_err 0.0256 unk 1635840 {'play': 2.0, 'mattered': 9.3, 'total': 31.8}  Daycare_w0
+ep 20068 px_err 0.0021 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 33.6}  Route6Gate_w0
+ep 20069 px_err 0.0070 unk 184320 {'play': 2.0, 'mattered': 7.5, 'total': 33.3}  UndergroundPathRoute6_w0
+ep 20070 px_err 0.0045 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 32.9}  Route7Gate_w0
+ep 20071 px_err 0.0064 unk      0 {'play': 2.0, 'mattered': 8.6, 'total': 33.9}  UndergroundPathRoute7_w0
+ep 20072 px_err 0.0004 unk      0 {'play': 2.4, 'mattered': 8.1, 'total': 33.3}  Route8Gate_w0
+ep 20073 px_err 0.0009 unk      0 {'play': 2.4, 'mattered': 8.1, 'total': 34.3}  UndergroundPathRoute8_w0
+ep 20074 px_err 0.0068 unk      0 {'play': 2.4, 'mattered': 7.8, 'total': 34.1}  RockTunnelPokecenter_w0
+ep 20075 px_err 0.0037 unk 161280 {'play': 2.1, 'mattered': 8.2, 'total': 32.5}  RockTunnel1F_w0
+ep 20076 px_err 0.0010 unk      0 {'play': 2.1, 'mattered': 7.4, 'total': 33.6}  PowerPlant_w0
+ep 20077 px_err 0.0046 unk      0 {'play': 2.0, 'mattered': 7.3, 'total': 33.7}  Route11Gate1F_w0
+ep 20078 px_err 0.0249 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 34.5}  DiglettsCaveRoute11_w0
+ep 20079 px_err 0.0047 unk      0 {'play': 2.0, 'mattered': 8.1, 'total': 34.2}  Route11Gate2F_w0
+ep 20080 px_err 0.0033 unk 115200 {'play': 2.1, 'mattered': 8.2, 'total': 34.5}  Route12Gate1F_w0
+ep 20081 px_err 0.0043 unk      0 {'play': 2.1, 'mattered': 8.1, 'total': 33.9}  BillsHouse_w0
+ep 20082 px_err 0.0431 unk      0 {'play': 2.1, 'mattered': 8.9, 'total': 34.7}  VermilionPokecenter_w0
+ep 20083 px_err 0.0036 unk 115200 {'play': 2.1, 'mattered': 10.0, 'total': 34.5}  PokemonFanClub_w0
+ep 20084 px_err 0.0224 unk      0 {'play': 2.2, 'mattered': 7.8, 'total': 33.0}  VermilionMart_w0
+ep 20085 px_err 0.0062 unk      0 {'play': 2.2, 'mattered': 8.2, 'total': 33.2}  VermilionGym_w0
+ep 20086 px_err 0.0301 unk      0 {'play': 2.1, 'mattered': 8.1, 'total': 33.2}  VermilionPidgeyHouse_w0
+ep 20087 px_err 0.0422 unk      0 {'play': 2.1, 'mattered': 8.1, 'total': 32.9}  VermilionDock_w0
+ep 20088 px_err 0.0268 unk  92160 {'play': 2.1, 'mattered': 7.5, 'total': 30.1}  SSAnne1F_w0
+ep 20089 px_err 0.0188 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 30.0}  SSAnne2F_w0
+ep 20090 px_err 0.0132 unk      0 {'play': 2.0, 'mattered': 7.3, 'total': 29.6}  SSAnne3F_w0
+ep 20091 px_err 0.0024 unk 138240 {'play': 2.1, 'mattered': 8.5, 'total': 30.5}  SSAnneB1F_w0
+ep 20092 px_err 0.0379 unk      0 {'play': 2.0, 'mattered': 7.2, 'total': 29.4}  SSAnneBow_w0
+ep 20093 px_err 0.0026 unk  69120 {'play': 2.1, 'mattered': 7.7, 'total': 30.5}  SSAnneKitchen_w0
+ep 20094 px_err 0.0200 unk      0 {'play': 2.1, 'mattered': 7.5, 'total': 29.9}  SSAnneCaptainsRoom_w0
+ep 20095 px_err 0.0005 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 30.0}  SSAnne1FRooms_w0
+ep 20096 px_err 0.0089 unk 115200 {'play': 2.1, 'mattered': 7.8, 'total': 32.0}  SSAnne2FRooms_w0
+ep 20097 px_err 0.0245 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 31.6}  SSAnneB1FRooms_w0
+ep 20098 px_err 0.0005 unk      0 {'play': 2.0, 'mattered': 8.2, 'total': 32.4}  VictoryRoad1F_w0
+ep 20099 px_err 0.0042 unk  92160 {'play': 2.1, 'mattered': 8.7, 'total': 32.6}  UndergroundPathNorthSouth_w0
+ep 20100 px_err 0.0018 unk  92160 {'play': 2.6, 'mattered': 8.6, 'total': 32.5}  UndergroundPathWestEast_w0
+ep 20101 px_err 0.0007 unk      0 {'play': 2.4, 'mattered': 8.3, 'total': 32.5}  CeladonMart1F_w0
+ep 20102 px_err 0.0010 unk      0 {'play': 2.2, 'mattered': 8.3, 'total': 31.9}  CeladonMart2F_w0
+ep 20103 px_err 0.0054 unk 368640 {'play': 2.3, 'mattered': 10.2, 'total': 32.9}  CeladonMart3F_w0
+ep 20104 px_err 0.0010 unk      0 {'play': 2.0, 'mattered': 7.3, 'total': 31.3}  CeladonMart4F_w0
+ep 20105 px_err 0.0012 unk      0 {'play': 2.0, 'mattered': 7.0, 'total': 30.5}  CeladonMartRoof_w0
+ep 20106 px_err 0.0186 unk 1198080 {'play': 2.0, 'mattered': 8.2, 'total': 31.4}  CeladonMartElevator_w0
+ep 20107 px_err 0.0050 unk 299520 {'play': 2.0, 'mattered': 8.3, 'total': 31.2}  CeladonMansion1F_w0
+ep 20108 px_err 0.0007 unk      0 {'play': 2.0, 'mattered': 7.3, 'total': 29.9}  CeladonMansion2F_w0
+ep 20109 px_err 0.0148 unk 1013760 {'play': 2.0, 'mattered': 7.8, 'total': 30.7}  CeladonMansion3F_w0
+ep 20110 px_err 0.0007 unk      0 {'play': 2.0, 'mattered': 7.2, 'total': 30.4}  CeladonMansionRoof_w0
+ep 20111 px_err 0.0020 unk  92160 {'play': 2.0, 'mattered': 8.1, 'total': 30.3}  CeladonMansionRoofHouse_w0
+ep 20112 px_err 0.0018 unk 115200 {'play': 2.4, 'mattered': 8.5, 'total': 33.1}  CeladonPokecenter_w0
+ep 20113 px_err 0.0016 unk      0 {'play': 2.5, 'mattered': 7.6, 'total': 32.4}  CeladonGym_w0
+ep 20114 px_err 0.0008 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 31.7}  GameCorner_w0
+ep 20115 px_err 0.0012 unk      0 {'play': 2.1, 'mattered': 9.5, 'total': 32.5}  CeladonMart5F_w0
+ep 20116 px_err 0.0007 unk      0 {'play': 2.0, 'mattered': 7.1, 'total': 30.9}  GameCornerPrizeRoom_w0
+ep 20117 px_err 0.0013 unk      0 {'play': 2.2, 'mattered': 7.3, 'total': 31.5}  CeladonDiner_w0
+ep 20118 px_err 0.0023 unk      0 {'play': 2.2, 'mattered': 7.2, 'total': 31.5}  CeladonChiefHouse_w0
+ep 20119 px_err 0.0268 unk 1843200 {'play': 2.0, 'mattered': 8.9, 'total': 31.0}  CeladonHotel_w0
+ep 20120 px_err 0.0012 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 31.6}  LavenderPokecenter_w0
+ep 20121 px_err 0.0010 unk      0 {'play': 2.0, 'mattered': 7.7, 'total': 31.2}  PokemonTower1F_w0
+ep 20122 px_err 0.0021 unk      0 {'play': 2.0, 'mattered': 7.1, 'total': 30.7}  PokemonTower2F_w0
+ep 20123 px_err 0.0010 unk      0 {'play': 2.0, 'mattered': 8.7, 'total': 30.6}  PokemonTower3F_w0
+ep 20124 px_err 0.0029 unk  92160 {'play': 2.1, 'mattered': 7.4, 'total': 30.3}  PokemonTower4F_w0
+ep 20125 px_err 0.0021 unk  92160 {'play': 2.1, 'mattered': 7.9, 'total': 30.7}  PokemonTower5F_w0
+ep 20126 px_err 0.0006 unk      0 {'play': 2.0, 'mattered': 8.0, 'total': 31.2}  PokemonTower6F_w0
+ep 20127 px_err 0.0030 unk 184320 {'play': 2.0, 'mattered': 8.2, 'total': 30.3}  PokemonTower7F_w0
+ep 20128 px_err 0.0002 unk      0 {'play': 2.0, 'mattered': 8.0, 'total': 32.0}  MrFujisHouse_w0
+ep 20129 px_err 0.0005 unk      0 {'play': 2.0, 'mattered': 7.2, 'total': 31.1}  LavenderMart_w0
+ep 20130 px_err 0.0020 unk 115200 {'play': 2.0, 'mattered': 8.0, 'total': 31.6}  LavenderCuboneHouse_w0
+ep 20131 px_err 0.0341 unk      0 {'play': 2.0, 'mattered': 7.8, 'total': 31.9}  FuchsiaMart_w0
+ep 20132 px_err 0.0244 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 31.1}  FuchsiaBillsGrandpasHouse_w0
+ep 20133 px_err 0.0161 unk 737280 {'play': 2.1, 'mattered': 7.9, 'total': 31.5}  FuchsiaPokecenter_w0
+ep 20134 px_err 0.0246 unk 1382400 {'play': 2.1, 'mattered': 8.3, 'total': 31.1}  WardensHouse_w0
+ep 20135 px_err 0.0342 unk 207360 {'play': 2.0, 'mattered': 8.6, 'total': 31.4}  SafariZoneGate_w0
+ep 20136 px_err 0.0031 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 31.2}  FuchsiaGym_w0
+ep 20137 px_err 0.0396 unk 230400 {'play': 2.0, 'mattered': 7.8, 'total': 31.8}  FuchsiaMeetingRoom_w0
+ep 20138 px_err 0.0070 unk      0 {'play': 2.0, 'mattered': 7.4, 'total': 31.2}  SeafoamIslandsB1F_w0
+ep 20139 px_err 0.0076 unk 138240 {'play': 2.0, 'mattered': 8.3, 'total': 31.1}  SeafoamIslandsB2F_w0
+ep 20140 px_err 0.0036 unk  92160 {'play': 2.0, 'mattered': 7.5, 'total': 30.8}  SeafoamIslandsB3F_w0
+ep 20141 px_err 0.0449 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 30.9}  VermilionOldRodHouse_w0
+ep 20142 px_err 0.0159 unk 115200 {'play': 2.0, 'mattered': 7.8, 'total': 31.0}  FuchsiaGoodRodHouse_w0
+ep 20143 px_err 0.0033 unk 138240 {'play': 2.0, 'mattered': 8.4, 'total': 30.6}  PokemonMansion1F_w0
+ep 20144 px_err 0.0020 unk 115200 {'play': 2.0, 'mattered': 7.5, 'total': 31.2}  CinnabarGym_w0
+ep 20146 px_err 0.0004 unk      0 {'play': 2.0, 'mattered': 7.2, 'total': 29.9}  CinnabarLabTradeRoom_w0
+ep 20145 px_err 0.0019 unk 115200 {'play': 2.0, 'mattered': 7.5, 'total': 30.5}  CinnabarLab_w0
+ep 20147 px_err 0.0002 unk      0 {'play': 2.0, 'mattered': 8.0, 'total': 30.2}  CinnabarLabMetronomeRoom_w0
+ep 20148 px_err 0.0098 unk 668160 {'play': 2.0, 'mattered': 7.5, 'total': 30.2}  CinnabarLabFossilRoom_w0
+ep 20150 px_err 0.0005 unk      0 {'play': 2.0, 'mattered': 7.1, 'total': 30.1}  CinnabarMart_w0
+ep 20149 px_err 0.0035 unk 230400 {'play': 2.0, 'mattered': 7.8, 'total': 30.9}  CinnabarPokecenter_w0
+ep 20151 px_err 0.0054 unk 207360 {'play': 2.1, 'mattered': 8.6, 'total': 30.6}  IndigoPlateauLobby_w0
+ep 20152 px_err 0.0019 unk 115200 {'play': 2.0, 'mattered': 7.9, 'total': 30.7}  CopycatsHouse1F_w0
+ep 20154 px_err 0.0010 unk      0 {'play': 2.0, 'mattered': 7.5, 'total': 30.3}  FightingDojo_w0
+ep 20153 px_err 0.0018 unk 115200 {'play': 2.0, 'mattered': 8.0, 'total': 30.8}  CopycatsHouse2F_w0
+ep 20155 px_err 0.0002 unk      0 {'play': 2.1, 'mattered': 8.5, 'total': 31.2}  SaffronGym_w0
+ep 20156 px_err 0.0003 unk      0 {'play': 2.0, 'mattered': 7.9, 'total': 31.1}  SaffronPidgeyHouse_w0
+ep 20157 px_err 0.0004 unk      0 {'play': 2.0, 'mattered': 7.6, 'total': 30.7}  SaffronMart_w0
+ep 20158 px_err 0.0018 unk 115200 {'play': 2.0, 'mattered': 8.0, 'total': 31.0}  SilphCo1F_w0
+ep 20159 px_err 0.0004 unk      0 {'play': 2.1, 'mattered': 9.3, 'total': 31.3}  SaffronPokecenter_w0
+160 episodes in 1269s
+2026-11-02 13:50:05 === uv run python -m scripts.synth_collect --episodes 0 --intro 30 --intro-first 1000 --frames 6000 --intro-idle 1500 3600 --tag intro_idle --workers 4 --skip-existing
+30 episodes x 6000 frames, 235 start states
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+ep 11001 px_err 0.0414 unk 5524229 {'play': 3.9, 'mattered': 14.6, 'total': 59.2}  boot
+ep 11000 px_err 0.0540 unk 7275539 {'play': 3.9, 'mattered': 14.7, 'total': 59.5}  boot
+ep 11003 px_err 0.0624 unk 8443215 {'play': 3.9, 'mattered': 14.8, 'total': 59.5}  boot
+ep 11002 px_err 0.0566 unk 7618455 {'play': 4.0, 'mattered': 15.1, 'total': 59.7}  boot
+ep 11004 px_err 0.0565 unk 7614839 {'play': 3.9, 'mattered': 14.6, 'total': 59.9}  boot
+ep 11006 px_err 0.0600 unk 8102909 {'play': 4.0, 'mattered': 14.7, 'total': 59.7}  boot
+ep 11005 px_err 0.0325 unk 4253159 {'play': 4.0, 'mattered': 15.0, 'total': 60.3}  boot
+ep 11007 px_err 0.0329 unk 4321019 {'play': 4.0, 'mattered': 15.4, 'total': 60.5}  boot
+ep 11009 px_err 0.0481 unk 6450779 {'play': 3.9, 'mattered': 14.6, 'total': 59.3}  boot
+ep 11008 px_err 0.0431 unk 5761739 {'play': 3.9, 'mattered': 14.8, 'total': 59.8}  boot
+ep 11010 px_err 0.0520 unk 6980609 {'play': 3.9, 'mattered': 14.9, 'total': 59.8}  boot
+ep 11011 px_err 0.0532 unk 7165919 {'play': 4.0, 'mattered': 14.9, 'total': 59.8}  boot
+ep 11012 px_err 0.0528 unk 7092839 {'play': 4.0, 'mattered': 14.8, 'total': 59.3}  boot
+ep 11013 px_err 0.0322 unk 4232729 {'play': 4.0, 'mattered': 15.0, 'total': 59.2}  boot
+ep 11014 px_err 0.0321 unk 4232279 {'play': 4.0, 'mattered': 14.8, 'total': 59.0}  boot
+ep 11015 px_err 0.0524 unk 7024979 {'play': 4.1, 'mattered': 15.3, 'total': 59.4}  boot
+ep 11016 px_err 0.0329 unk 4318409 {'play': 4.0, 'mattered': 14.9, 'total': 60.0}  boot
+ep 11017 px_err 0.0474 unk 6352605 {'play': 4.0, 'mattered': 14.9, 'total': 60.0}  boot
+ep 11018 px_err 0.0344 unk 4537649 {'play': 3.9, 'mattered': 14.8, 'total': 59.7}  boot
+ep 11019 px_err 0.0450 unk 6030569 {'play': 4.0, 'mattered': 14.9, 'total': 59.9}  boot
+ep 11020 px_err 0.0343 unk 4529819 {'play': 3.9, 'mattered': 14.8, 'total': 58.6}  boot
+ep 11022 px_err 0.0583 unk 7862789 {'play': 3.9, 'mattered': 14.6, 'total': 59.1}  boot
+ep 11021 px_err 0.0431 unk 5743810 {'play': 4.0, 'mattered': 14.9, 'total': 59.3}  boot
+ep 11023 px_err 0.0392 unk 5216249 {'play': 4.0, 'mattered': 15.3, 'total': 59.3}  boot
+ep 11024 px_err 0.0325 unk 4266209 {'play': 3.9, 'mattered': 14.8, 'total': 59.1}  boot
+ep 11026 px_err 0.0323 unk 4227059 {'play': 3.9, 'mattered': 15.0, 'total': 58.6}  boot
+ep 11025 px_err 0.0329 unk 4302749 {'play': 3.9, 'mattered': 14.9, 'total': 59.2}  boot
+ep 11027 px_err 0.0337 unk 4428029 {'play': 4.0, 'mattered': 15.1, 'total': 59.4}  boot
+ep 11028 px_err 0.0590 unk 7964579 {'play': 3.7, 'mattered': 13.4, 'total': 48.8}  boot
+ep 11029 px_err 0.0473 unk 6326505 {'play': 3.7, 'mattered': 13.5, 'total': 48.4}  boot
+30 episodes in 465s
+2026-11-02 13:57:50 === uv run python -m scripts.train_idm --init checkpoints/idm_v2/last.pt --steps 6000 --lr 1.5e-4 --out checkpoints/idm_v3
+491 train / 49 val episodes; held-out maps: ['BikeShop', 'CeladonChiefHouse', 'CeladonHotel', 'CeladonMart2F', 'CinnabarLab', 'FuchsiaGym', 'IndigoPlateauLobby', 'LavenderCuboneHouse', 'RockTunnelB1F', 'RocketHideoutB2F', 'Route12SuperRodHouse', 'Route15Gate2F', 'Route18', 'Route18Gate2F', 'Route23', 'Route25', 'Route8Gate', 'SSAnneB1FRooms', 'SafariZoneSecretHouse', 'SafariZoneWest', 'SeafoamIslandsB3F', 'SilphCo9F', 'VermilionMart', 'VermilionPokecenter']
+held share [0.1342, 0.1408, 0.1346, 0.1342, 0.0493, 0.0157, 0.0055, 0.0025] pos_weight [6.5, 6.099999904632568, 6.400000095367432, 6.5, 19.299999237060547, 20.0, 20.0, 20.0]
+initialised from checkpoints/idm_v2/last.pt
+step 100 held 0.4742 mattered 0.1212 cut 0.0019 onset 0.2358 33s
+step 200 held 0.3464 mattered 0.1389 cut 0.0012 onset 0.2228 66s
+step 300 held 0.3892 mattered 0.1484 cut 0.0043 onset 0.1739 100s
+step 400 held 0.4726 mattered 0.0726 cut 0.0031 onset 0.2418 133s
+step 500 held 0.5411 mattered 0.1006 cut 0.0017 onset 0.2899 167s
+step 600 held 0.5804 mattered 0.2330 cut 0.0010 onset 0.2170 202s
+step 700 held 0.5369 mattered 0.1513 cut 0.0017 onset 0.2596 236s
+step 800 held 0.6218 mattered 0.1706 cut 0.0423 onset 0.2179 273s
+step 900 held 0.4368 mattered 0.1438 cut 0.0045 onset 0.2012 310s
+step 1000 held 0.3971 mattered 0.1101 cut 0.0034 onset 0.2483 348s
+{"step": 1000, "val": {"frames": 6144, "accuracy_all": 0.8877970377604166, "press_recall_where_mattered": 0.88, "release_kept_where_mattered": 0.8703703703703703, "balanced_where_mattered": 0.8751851851851852, "mattered_pairs": 403, "mattered_presses": 25, "mattered_head_accuracy": 0.8947811447811448, "f1_per_button": {"0": 0.634, "1": 0.722, "2": 0.682, "3": 0.625, "4": 0.212, "5": 0.069, "6": 0.171, "7": 0.0}, "onset_f1_pm1": {"0": 0.342, "1": 0.315, "2": 0.331, "3": 0.335, "4": 0.234, "5": 0.0, "6": 0.5, "7": 0.0}, "cut_recall": 0.9943181818181818, "cut_false_per_10k_frames": 11.55878467635403}, "train": {"frames": 3072, "accuracy_all": 0.9021809895833334, "press_recall_where_mattered": 0.8235294117647058, "release_kept_where_mattered": 0.8666666666666667, "balanced_where_mattered": 0.8450980392156863, "mattered_pairs": 257, "mattered_presses": 17, "mattered_head_accuracy": 0.9466666666666667, "f1_per_button": {"0": 0.691, "1": 0.668, "2": 0.702, "3": 0.709, "4": 0.226, "5": 0.188, "6": 0.151, "7": 0.0}, "onset_f1_pm1": {"0": 0.457, "1": 0.541, "2": 0.444, "3": 0.484, "4": 0.309, "5": 0.057, "6": 0.222, "7": 0.0}, "cut_recall": 0.9882352941176471, "cut_false_per_10k_frames": 9.902624195411786}}
+step 1100 held 0.4834 mattered 0.1924 cut 0.0056 onset 0.1711 389s
+step 1200 held 0.3445 mattered 0.1324 cut 0.0003 onset 0.1713 427s
+step 1300 held 0.4481 mattered 0.1681 cut 0.0005 onset 0.2214 464s
+step 1400 held 0.4043 mattered 0.1525 cut 0.0009 onset 0.2008 502s
+step 1500 held 0.3602 mattered 0.2317 cut 0.0005 onset 0.2193 540s
+step 1600 held 0.3620 mattered 0.1716 cut 0.0337 onset 0.2452 578s
+step 1700 held 0.3881 mattered 0.1261 cut 0.0014 onset 0.2128 616s
+step 1800 held 0.3824 mattered 0.1340 cut 0.0011 onset 0.1711 654s
+step 1900 held 0.3827 mattered 0.1026 cut 0.0023 onset 0.1976 692s
+step 2000 held 0.4462 mattered 0.1701 cut 0.1404 onset 0.2517 729s
+{"step": 2000, "val": {"frames": 6144, "accuracy_all": 0.895263671875, "press_recall_where_mattered": 0.88, "release_kept_where_mattered": 0.9021164021164021, "balanced_where_mattered": 0.8910582010582011, "mattered_pairs": 403, "mattered_presses": 25, "mattered_head_accuracy": 0.8914141414141414, "f1_per_button": {"0": 0.637, "1": 0.73, "2": 0.707, "3": 0.613, "4": 0.256, "5": 0.045, "6": 0.214, "7": 0.0}, "onset_f1_pm1": {"0": 0.338, "1": 0.288, "2": 0.386, "3": 0.297, "4": 0.308, "5": 0.061, "6": 0.333, "7": 0.0}, "cut_recall": 0.9886363636363636, "cut_false_per_10k_frames": 9.907529722589167}, "train": {"frames": 3072, "accuracy_all": 0.9130859375, "press_recall_where_mattered": 0.9411764705882353, "release_kept_where_mattered": 0.9041666666666667, "balanced_where_mattered": 0.9226715686274509, "mattered_pairs": 257, "mattered_presses": 17, "mattered_head_accuracy": 0.9333333333333333, "f1_per_button": {"0": 0.686, "1": 0.714, "2": 0.675, "3": 0.763, "4": 0.265, "5": 0.198, "6": 0.364, "7": 0.0}, "onset_f1_pm1": {"0": 0.385, "1": 0.547, "2": 0.468, "3": 0.457, "4": 0.32, "5": 0.059, "6": 0.5, "7": 0.0}, "cut_recall": 0.9882352941176471, "cut_false_per_10k_frames": 8.252186829509819}}
+step 2100 held 0.4637 mattered 0.1117 cut 0.0014 onset 0.2603 768s
+step 2200 held 0.4340 mattered 0.1522 cut 0.0018 onset 0.2400 805s
+step 2300 held 0.4377 mattered 0.1337 cut 0.0021 onset 0.2374 842s
+step 2400 held 0.3584 mattered 0.1305 cut 0.0009 onset 0.1754 880s
+step 2500 held 0.3653 mattered 0.0816 cut 0.0023 onset 0.2364 917s
+step 2600 held 0.3097 mattered 0.1542 cut 0.0023 onset 0.2101 954s
+step 2700 held 0.4695 mattered 0.1995 cut 0.0053 onset 0.2783 991s
+step 2800 held 0.3602 mattered 0.1606 cut 0.0008 onset 0.2167 1027s
+step 2900 held 0.2736 mattered 0.0819 cut 0.0022 onset 0.1663 1064s
+step 3000 held 0.3749 mattered 0.1167 cut 0.0003 onset 0.2274 1100s
+{"step": 3000, "val": {"frames": 6144, "accuracy_all": 0.9019368489583334, "press_recall_where_mattered": 0.92, "release_kept_where_mattered": 0.8862433862433863, "balanced_where_mattered": 0.9031216931216932, "mattered_pairs": 403, "mattered_presses": 25, "mattered_head_accuracy": 0.9023569023569024, "f1_per_button": {"0": 0.643, "1": 0.749, "2": 0.694, "3": 0.66, "4": 0.246, "5": 0.077, "6": 0.267, "7": 0.0}, "onset_f1_pm1": {"0": 0.337, "1": 0.35, "2": 0.401, "3": 0.324, "4": 0.291, "5": 0.0, "6": 0.222, "7": 0.0}, "cut_recall": 0.9943181818181818, "cut_false_per_10k_frames": 7.430647291941876}, "train": {"frames": 3072, "accuracy_all": 0.9205729166666666, "press_recall_where_mattered": 0.9411764705882353, "release_kept_where_mattered": 0.925, "balanced_where_mattered": 0.9330882352941177, "mattered_pairs": 257, "mattered_presses": 17, "mattered_head_accuracy": 0.945, "f1_per_button": {"0": 0.683, "1": 0.775, "2": 0.705, "3": 0.767, "4": 0.288, "5": 0.293, "6": 0.524, "7": 0.0}, "onset_f1_pm1": {"0": 0.4, "1": 0.508, "2": 0.44, "3": 0.487, "4": 0.369, "5": 0.125, "6": 0.667, "7": 0.0}, "cut_recall": 0.9882352941176471, "cut_false_per_10k_frames": 4.951312097705893}}
+step 3100 held 0.4093 mattered 0.0966 cut 0.0091 onset 0.2162 1140s
+step 3200 held 0.4288 mattered 0.1773 cut 0.0005 onset 0.2605 1177s
+step 3300 held 0.4565 mattered 0.1058 cut 0.0006 onset 0.2325 1213s
+step 3400 held 0.3710 mattered 0.1828 cut 0.0035 onset 0.1982 1250s
+step 3500 held 0.3508 mattered 0.1271 cut 0.0005 onset 0.1599 1287s
+step 3600 held 0.4190 mattered 0.1749 cut 0.0007 onset 0.2499 1323s
+step 3700 held 0.4340 mattered 0.1307 cut 0.0022 onset 0.2884 1360s
+step 3800 held 0.5634 mattered 0.1253 cut 0.0014 onset 0.2169 1396s
+step 3900 held 0.3459 mattered 0.1564 cut 0.0024 onset 0.1917 1433s
+step 4000 held 0.3818 mattered 0.1132 cut 0.0126 onset 0.2437 1469s
+{"step": 4000, "val": {"frames": 6144, "accuracy_all": 0.9009602864583334, "press_recall_where_mattered": 0.84, "release_kept_where_mattered": 0.8994708994708994, "balanced_where_mattered": 0.8697354497354497, "mattered_pairs": 403, "mattered_presses": 25, "mattered_head_accuracy": 0.8977272727272727, "f1_per_button": {"0": 0.642, "1": 0.72, "2": 0.716, "3": 0.659, "4": 0.25, "5": 0.053, "6": 0.154, "7": 0.0}, "onset_f1_pm1": {"0": 0.324, "1": 0.329, "2": 0.392, "3": 0.327, "4": 0.307, "5": 0.061, "6": 0.545, "7": 0.0}, "cut_recall": 0.9943181818181818, "cut_false_per_10k_frames": 5.779392338177015}, "train": {"frames": 3072, "accuracy_all": 0.9194742838541666, "press_recall_where_mattered": 0.8823529411764706, "release_kept_where_mattered": 0.9083333333333333, "balanced_where_mattered": 0.8953431372549019, "mattered_pairs": 257, "mattered_presses": 17, "mattered_head_accuracy": 0.9483333333333334, "f1_per_button": {"0": 0.715, "1": 0.709, "2": 0.701, "3": 0.773, "4": 0.293, "5": 0.263, "6": 0.524, "7": 0.0}, "onset_f1_pm1": {"0": 0.411, "1": 0.464, "2": 0.449, "3": 0.5, "4": 0.34, "5": 0.056, "6": 0.471, "7": 0.0}, "cut_recall": 0.9882352941176471, "cut_false_per_10k_frames": 6.601749463607857}}
+step 4100 held 0.3239 mattered 0.2699 cut 0.0006 onset 0.1661 1508s
+step 4200 held 0.5209 mattered 0.1765 cut 0.0019 onset 0.3072 1546s
+step 4300 held 0.3945 mattered 0.1719 cut 0.0084 onset 0.2655 1584s
+step 4400 held 0.4998 mattered 0.0953 cut 0.0012 onset 0.2239 1621s
+step 4500 held 0.3649 mattered 0.1545 cut 0.0008 onset 0.2441 1658s
+step 4600 held 0.2145 mattered 0.1037 cut 0.0008 onset 0.1052 1694s
+step 4700 held 0.3948 mattered 0.1286 cut 0.0051 onset 0.1756 1731s
+step 4800 held 0.3633 mattered 0.1218 cut 0.0011 onset 0.1811 1771s
+step 4900 held 0.3753 mattered 0.1064 cut 0.0008 onset 0.1718 1811s
+step 5000 held 0.4007 mattered 0.1663 cut 0.0033 onset 0.2350 1849s
+{"step": 5000, "val": {"frames": 6144, "accuracy_all": 0.9056193033854166, "press_recall_where_mattered": 0.88, "release_kept_where_mattered": 0.9021164021164021, "balanced_where_mattered": 0.8910582010582011, "mattered_pairs": 403, "mattered_presses": 25, "mattered_head_accuracy": 0.9002525252525253, "f1_per_button": {"0": 0.651, "1": 0.739, "2": 0.703, "3": 0.668, "4": 0.262, "5": 0.062, "6": 0.158, "7": 0.0}, "onset_f1_pm1": {"0": 0.348, "1": 0.344, "2": 0.395, "3": 0.318, "4": 0.323, "5": 0.074, "6": 0.4, "7": 0.0}, "cut_recall": 0.9943181818181818, "cut_false_per_10k_frames": 4.953764861294584}, "train": {"frames": 3072, "accuracy_all": 0.92529296875, "press_recall_where_mattered": 0.9411764705882353, "release_kept_where_mattered": 0.9125, "balanced_where_mattered": 0.9268382352941176, "mattered_pairs": 257, "mattered_presses": 17, "mattered_head_accuracy": 0.9491666666666667, "f1_per_button": {"0": 0.721, "1": 0.724, "2": 0.727, "3": 0.774, "4": 0.313, "5": 0.291, "6": 0.55, "7": 0.0}, "onset_f1_pm1": {"0": 0.418, "1": 0.5, "2": 0.473, "3": 0.506, "4": 0.396, "5": 0.061, "6": 0.632, "7": 0.0}, "cut_recall": 0.9882352941176471, "cut_false_per_10k_frames": 8.252186829509819}}
+step 5100 held 0.3740 mattered 0.1330 cut 0.0019 onset 0.2091 1889s
+step 5200 held 0.3603 mattered 0.0721 cut 0.0541 onset 0.1784 1926s
+step 5300 held 0.4344 mattered 0.1085 cut 0.0008 onset 0.1925 1962s
+step 5400 held 0.4376 mattered 0.1049 cut 0.0030 onset 0.2190 1998s
+step 5500 held 0.2964 mattered 0.1014 cut 0.0053 onset 0.1639 2035s
+step 5600 held 0.3735 mattered 0.1241 cut 0.0076 onset 0.2164 2072s
+step 5700 held 0.3836 mattered 0.1000 cut 0.0007 onset 0.1663 2109s
+step 5800 held 0.3125 mattered 0.0703 cut 0.0019 onset 0.2264 2145s
+step 5900 held 0.3558 mattered 0.0822 cut 0.0011 onset 0.2154 2182s
+step 6000 held 0.2877 mattered 0.1903 cut 0.0024 onset 0.1787 2219s
+{"step": 6000, "val": {"frames": 6144, "accuracy_all": 0.90509033203125, "press_recall_where_mattered": 0.88, "release_kept_where_mattered": 0.8994708994708994, "balanced_where_mattered": 0.8897354497354497, "mattered_pairs": 403, "mattered_presses": 25, "mattered_head_accuracy": 0.9010942760942761, "f1_per_button": {"0": 0.671, "1": 0.735, "2": 0.706, "3": 0.666, "4": 0.254, "5": 0.066, "6": 0.154, "7": 0.0}, "onset_f1_pm1": {"0": 0.357, "1": 0.344, "2": 0.399, "3": 0.311, "4": 0.3, "5": 0.077, "6": 0.4, "7": 0.0}, "cut_recall": 0.9943181818181818, "cut_false_per_10k_frames": 4.128137384412153}, "train": {"frames": 3072, "accuracy_all": 0.9240315755208334, "press_recall_where_mattered": 0.9411764705882353, "release_kept_where_mattered": 0.9166666666666666, "balanced_where_mattered": 0.928921568627451, "mattered_pairs": 257, "mattered_presses": 17, "mattered_head_accuracy": 0.9533333333333334, "f1_per_button": {"0": 0.724, "1": 0.72, "2": 0.727, "3": 0.768, "4": 0.301, "5": 0.294, "6": 0.541, "7": 0.0}, "onset_f1_pm1": {"0": 0.433, "1": 0.507, "2": 0.468, "3": 0.494, "4": 0.406, "5": 0.062, "6": 0.632, "7": 0.0}, "cut_recall": 0.9882352941176471, "cut_false_per_10k_frames": 8.252186829509819}}
+best val balanced accuracy where mattered 0.9031
+2026-11-02 14:35:05 === uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt --out results/idm_v3_closure.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+Route18_w0                   exact=True idm: px 0.00 path 0.60 end 0.70  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.80 end 1.00  idm_overlapping_dirs: px 0.00 path 0.80 end 0.90  idm_held_only: px 0.00 path 0.80 end 1.00  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w0                   exact=True idm: px 0.00 path 0.90 end 0.90  idm_overlapping_dirs: px 0.00 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.50 end 0.60  released: px 0.00 path 0.30 end 0.60  truth_late_1: px 0.10 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.20 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.10 path 0.60 end 0.60  idm_overlapping_dirs: px 0.10 path 0.60 end 0.60  idm_held_only: px 0.10 path 0.60 end 0.60  released: px 0.10 path 0.30 end 0.30  truth_late_1: px 0.10 path 0.40 end 0.40
+BikeShop_w0                  exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.60  idm_held_only: px 0.00 path 0.50 end 0.60  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.70 end 0.90
+Route8Gate_w0                exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.10 path 0.30 end 0.40  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.80 end 0.80
+VermilionPokecenter_w0       exact=True idm: px 0.10 path 0.90 end 0.90  idm_overlapping_dirs: px 0.10 path 0.90 end 0.90  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.10 path 0.90 end 1.00
+VermilionMart_w0             exact=True idm: px 0.00 path 0.20 end 0.20  idm_overlapping_dirs: px 0.00 path 0.20 end 0.30  idm_held_only: px 0.00 path 0.10 end 0.20  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.80 end 0.80
+SSAnneB1FRooms_w0            exact=True idm: px 0.00 path 0.40 end 0.40  idm_overlapping_dirs: px 0.00 path 0.40 end 0.40  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 0.70
+CeladonMart2F_w0             exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.80  idm_held_only: px 0.00 path 0.70 end 0.80  released: px 0.00 path 0.40 end 0.50  truth_late_1: px 0.10 path 0.90 end 0.90
+CeladonChiefHouse_w0         exact=True idm: px 0.20 path 0.90 end 0.90  idm_overlapping_dirs: px 0.30 path 1.00 end 1.00  idm_held_only: px 0.10 path 0.60 end 0.80  released: px 0.00 path 0.10 end 0.20  truth_late_1: px 0.10 path 0.90 end 1.00
+{"idm": {"segments_reproduced": 0.03333333333333333, "median_frames_to_divergence": 73.0, "same_path": 0.6083333333333334, "same_end_tile": 0.6583333333333333}, "idm_overlapping_dirs": {"segments_reproduced": 0.05000000000000001, "median_frames_to_divergence": 69.0, "same_path": 0.6166666666666667, "same_end_tile": 0.6666666666666666}, "idm_held_only": {"segments_reproduced": 0.025000000000000005, "median_frames_to_divergence": 58.0, "same_path": 0.5583333333333333, "same_end_tile": 0.6416666666666666}, "released": {"segments_reproduced": 0.016666666666666666, "median_frames_to_divergence": 12.0, "same_path": 0.15833333333333335, "same_end_tile": 0.20833333333333334}, "truth_late_1": {"segments_reproduced": 0.08333333333333333, "median_frames_to_divergence": 71.5, "same_path": 0.8416666666666668, "same_end_tile": 0.875}, "truth_replay_exact": true}
+2026-11-02 14:35:56 === uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt --min-episode 20000 --out results/idm_v3_closure_bump.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+Route18_w0                   exact=True idm: px 0.00 path 0.00 end 0.00  idm_overlapping_dirs: px 0.00 path 0.00 end 0.00  idm_held_only: px 0.00 path 0.00 end 0.00  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.90  idm_held_only: px 0.00 path 0.70 end 0.80  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.10 path 0.90 end 0.90
+Route23_w0                   exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.10 end 0.10  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.10 path 0.80 end 0.80  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.10 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.20 path 0.80 end 0.80  idm_overlapping_dirs: px 0.20 path 0.80 end 0.80  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.10 path 0.90 end 0.90  truth_late_1: px 0.10 path 1.00 end 1.00
+BikeShop_w0                  exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.70  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.30 end 0.40  truth_late_1: px 0.10 path 1.00 end 1.00
+Route8Gate_w0                exact=True idm: px 0.00 path 0.90 end 0.90  idm_overlapping_dirs: px 0.00 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.90 end 0.90  released: px 0.00 path 0.80 end 0.90  truth_late_1: px 0.00 path 1.00 end 1.00
+VermilionPokecenter_w0       exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.40 end 0.50  idm_held_only: px 0.00 path 0.50 end 0.60  released: px 0.00 path 0.10 end 0.10  truth_late_1: px 0.00 path 0.60 end 0.70
+VermilionMart_w0             exact=True idm: px 0.00 path 0.50 end 0.60  idm_overlapping_dirs: px 0.00 path 0.50 end 0.60  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 0.90
+SSAnneB1FRooms_w0            exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.80 end 0.90  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.10 path 0.90 end 0.90
+CeladonMart2F_w0             exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.70  idm_held_only: px 0.00 path 0.30 end 0.50  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.00 path 0.80 end 0.80
+CeladonChiefHouse_w0         exact=True idm: px 0.20 path 0.50 end 0.50  idm_overlapping_dirs: px 0.20 path 0.50 end 0.50  idm_held_only: px 0.20 path 0.50 end 0.60  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 1.00
+{"idm": {"segments_reproduced": 0.03333333333333333, "median_frames_to_divergence": 43.5, "same_path": 0.6083333333333334, "same_end_tile": 0.65}, "idm_overlapping_dirs": {"segments_reproduced": 0.03333333333333333, "median_frames_to_divergence": 43.5, "same_path": 0.6, "same_end_tile": 0.6583333333333333}, "idm_held_only": {"segments_reproduced": 0.03333333333333333, "median_frames_to_divergence": 40.0, "same_path": 0.6166666666666667, "same_end_tile": 0.6750000000000002}, "released": {"segments_reproduced": 0.016666666666666666, "median_frames_to_divergence": 12.0, "same_path": 0.26666666666666666, "same_end_tile": 0.3}, "truth_late_1": {"segments_reproduced": 0.049999999999999996, "median_frames_to_divergence": 53.5, "same_path": 0.8833333333333333, "same_end_tile": 0.9333333333333335}, "truth_replay_exact": true}
+2026-11-02 14:36:48 === uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v2/last.pt --min-episode 20000 --out results/idm_v2_closure_bump.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+Route18_w0                   exact=True idm: px 0.00 path 0.00 end 0.10  idm_overlapping_dirs: px 0.00 path 0.00 end 0.00  idm_held_only: px 0.00 path 0.00 end 0.00  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.70 end 0.80  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.10 path 0.90 end 0.90
+Route23_w0                   exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.80  idm_held_only: px 0.10 path 0.70 end 0.70  released: px 0.00 path 0.10 end 0.10  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.10 path 0.80 end 0.80  idm_overlapping_dirs: px 0.10 path 0.80 end 0.80  idm_held_only: px 0.10 path 0.80 end 0.80  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.10 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.20 path 0.90 end 1.00  idm_overlapping_dirs: px 0.20 path 0.90 end 1.00  idm_held_only: px 0.10 path 0.90 end 1.00  released: px 0.10 path 0.90 end 0.90  truth_late_1: px 0.10 path 1.00 end 1.00
+BikeShop_w0                  exact=True idm: px 0.10 path 0.80 end 0.80  idm_overlapping_dirs: px 0.10 path 0.80 end 0.80  idm_held_only: px 0.10 path 0.80 end 0.80  released: px 0.00 path 0.30 end 0.40  truth_late_1: px 0.10 path 1.00 end 1.00
+Route8Gate_w0                exact=True idm: px 0.00 path 0.90 end 0.90  idm_overlapping_dirs: px 0.00 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.90 end 0.90  released: px 0.00 path 0.80 end 0.90  truth_late_1: px 0.00 path 1.00 end 1.00
+VermilionPokecenter_w0       exact=True idm: px 0.00 path 0.60 end 0.60  idm_overlapping_dirs: px 0.00 path 0.60 end 0.60  idm_held_only: px 0.00 path 0.70 end 0.70  released: px 0.00 path 0.10 end 0.10  truth_late_1: px 0.00 path 0.60 end 0.70
+VermilionMart_w0             exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.40 end 0.50  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 0.90
+SSAnneB1FRooms_w0            exact=True idm: px 0.00 path 0.60 end 0.70  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.10 path 0.90 end 0.90
+CeladonMart2F_w0             exact=True idm: px 0.00 path 0.10 end 0.20  idm_overlapping_dirs: px 0.00 path 0.10 end 0.20  idm_held_only: px 0.00 path 0.20 end 0.20  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.00 path 0.80 end 0.80
+CeladonChiefHouse_w0         exact=True idm: px 0.10 path 0.50 end 0.50  idm_overlapping_dirs: px 0.10 path 0.50 end 0.50  idm_held_only: px 0.10 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 1.00
+{"idm": {"segments_reproduced": 0.041666666666666664, "median_frames_to_divergence": 44.0, "same_path": 0.5916666666666667, "same_end_tile": 0.6416666666666667}, "idm_overlapping_dirs": {"segments_reproduced": 0.041666666666666664, "median_frames_to_divergence": 44.0, "same_path": 0.5750000000000001, "same_end_tile": 0.625}, "idm_held_only": {"segments_reproduced": 0.041666666666666664, "median_frames_to_divergence": 44.0, "same_path": 0.6, "same_end_tile": 0.6333333333333334}, "released": {"segments_reproduced": 0.016666666666666666, "median_frames_to_divergence": 12.0, "same_path": 0.26666666666666666, "same_end_tile": 0.3}, "truth_late_1": {"segments_reproduced": 0.049999999999999996, "median_frames_to_divergence": 53.5, "same_path": 0.8833333333333333, "same_end_tile": 0.9333333333333335}, "truth_replay_exact": true}
+2026-11-02 14:37:37 === uv run python -m scripts.label_video --checkpoint checkpoints/idm_v3/last.pt --out data/longplay/labels_v3.h5
+labelled 1485634 frames in 269s; held share [0.006, 0.007, 0.003, 0.003, 0.004, 0.0, 0.0, 0.0]; decided share 0.074; unknown frames 1373; cuts 330 (head fired on 4294 runs)
+2026-11-02 14:42:07 === uv run python -m scripts.sync_opening --frames 12000 --labels data/longplay/labels_v3.h5 --out results/sync_opening_v3.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+replay: 0.281 of 11931 frames in sync; lost for good (60 frames off) after 1816 frames, at video frame 1749; offset moved 8 times, ended -67
+wrote results/sync_opening_v3.json
+2026-11-02 14:42:18 === uv run python -m scripts.sync_opening --frames 12000 --labels data/longplay/labels_v3.h5 --anchor-state states/cgb/bedroom.state --out results/sync_opening_v3_bedroom.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+anchor: states/cgb/bedroom.state matches video frame 6784 (1.0000)
+replay: 0.005 of 12000 frames in sync; lost for good (60 frames off) after 5 frames, at video frame 6790; offset moved 0 times, ended 6785
+wrote results/sync_opening_v3_bedroom.json
+2026-11-02 14:42:29 === uv run python -m scripts.export_video --labels data/longplay/labels_v3.h5 --out data/longplay_v3
+264 segments covering 1480484 of 1485634 frames
+pokedreamer: {'steps': 61563, 'chunks': 7, 'select_only_steps_as_pass': 114}
+schema3: {'steps': 24544}
+2026-11-02 14:44:13 === PIPELINE DONE
+2026-11-02 14:44:14 watchdog v3: pipeline gone, exiting

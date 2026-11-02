@@ -1,0 +1,119 @@
+{
+ "name": "poweron",
+ "start": 0,
+ "verified_until": 7670,
+ "limit": 14000,
+ "edits": [
+  {
+   "edit": "drop a 1785-1790",
+   "at": 1785,
+   "lost_before": 1818,
+   "prior": 0.493
+  },
+  {
+   "edit": "add a 3030",
+   "at": 3030,
+   "lost_before": 3082,
+   "prior": 0.086
+  },
+  {
+   "edit": "add a 3252",
+   "at": 3252,
+   "lost_before": 3270,
+   "prior": 0.254
+  },
+  {
+   "edit": "add start 3569",
+   "at": 3569,
+   "lost_before": 3574,
+   "prior": 0.07
+  },
+  {
+   "edit": "add a 3648",
+   "at": 3648,
+   "lost_before": 3693,
+   "prior": 0.276
+  },
+  {
+   "edit": "add a 3936x60",
+   "at": 3936,
+   "lost_before": 4039,
+   "prior": 0.774
+  },
+  {
+   "edit": "add a 4233x20",
+   "at": 4233,
+   "lost_before": 4318,
+   "prior": 0.308
+  },
+  {
+   "edit": "add a 4393x60",
+   "at": 4393,
+   "lost_before": 4452,
+   "prior": 0.268
+  },
+  {
+   "edit": "add a 4644x20",
+   "at": 4644,
+   "lost_before": 4693,
+   "prior": 0.345
+  },
+  {
+   "edit": "add a 4779x20",
+   "at": 4779,
+   "lost_before": 4841,
+   "prior": 0.365
+  },
+  {
+   "edit": "shift a 5398->5404",
+   "at": 5398,
+   "lost_before": 5399,
+   "prior": 0.39
+  },
+  {
+   "edit": "add a 5536x60",
+   "at": 5536,
+   "lost_before": 5624,
+   "prior": 0.311
+  },
+  {
+   "edit": "add a 5751x20",
+   "at": 5751,
+   "lost_before": 5816,
+   "prior": 0.307
+  },
+  {
+   "edit": "add a 5964x60",
+   "at": 5964,
+   "lost_before": 6039,
+   "prior": 0.437
+  },
+  {
+   "edit": "add a 6287x60",
+   "at": 6287,
+   "lost_before": 6329,
+   "prior": 0.278
+  },
+  {
+   "edit": "add a 6384x60",
+   "at": 6384,
+   "lost_before": 6479,
+   "prior": 0.78
+  },
+  {
+   "edit": "add a 6516x20",
+   "at": 6516,
+   "lost_before": 6580,
+   "prior": 0.784
+  },
+  {
+   "edit": "add b 7539",
+   "at": 7539,
+   "lost_before": 7630,
+   "prior": 0.158
+  }
+ ],
+ "frames_changed": 470,
+ "anchor_state": null,
+ "seconds": 397
+}

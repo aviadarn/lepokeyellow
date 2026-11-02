@@ -1,0 +1,15 @@
+{
+ "offset": -67,
+ "intro_frames": 1913,
+ "intro_in_sync": 1757,
+ "intro_median_share": 0.9983072916666667,
+ "anchor_state": "states/cgb/bedroom.state",
+ "anchor_video_frame": 6784,
+ "anchor_share": 1.0,
+ "replayed": 11997,
+ "in_sync_share": 0.04609485704759523,
+ "frames_before_lost": 460,
+ "lost_at_video_frame": 7247,
+ "offset_moves": 3,
+ "final_offset": 6789
+}

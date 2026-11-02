@@ -1,0 +1,69 @@
+80 train / 10 val episodes; held-out maps: [np.str_('CeladonCity'), np.str_('CeruleanGym'), np.str_('MtMoonB1F'), np.str_('MtMoonPokecenter'), np.str_('RedsHouse1F'), np.str_('Route18'), np.str_('Route5')]
+held share [0.1869, 0.2023, 0.1916, 0.1866, 0.0252, 0.015, 0.0003, 0.0042] pos_weight [4.300000190734863, 3.9000000953674316, 4.199999809265137, 4.400000095367432, 20.0, 20.0, 20.0, 20.0]
+step 100 held 0.5870 mattered 0.3896 43s
+step 200 held 0.6468 mattered 0.2694 85s
+step 300 held 0.6170 mattered 0.2838 122s
+step 400 held 0.2843 mattered 0.2579 160s
+step 500 held 0.3573 mattered 0.2343 197s
+step 600 held 0.3469 mattered 0.2124 235s
+step 700 held 0.5655 mattered 0.1484 275s
+step 800 held 0.5718 mattered 0.1823 312s
+step 900 held 0.3041 mattered 0.2408 349s
+step 1000 held 0.3927 mattered 0.2642 387s
+{"step": 1000, "val": {"frames": 6144, "accuracy_all": 0.9234415690104166, "press_recall_where_mattered": 0.6666666666666666, "release_kept_where_mattered": 0.8703703703703703, "balanced_where_mattered": 0.7685185185185185, "mattered_pairs": 234, "mattered_presses": 18, "mattered_head_accuracy": 0.9202586206896551, "f1_per_button": {"0": 0.692, "1": 0.786, "2": 0.824, "3": 0.774, "4": 0.184, "5": 0.0, "6": 0.167, "7": 0.012}}, "train": {"frames": 3072, "accuracy_all": 0.9416097005208334, "press_recall_where_mattered": 0.7692307692307693, "release_kept_where_mattered": 0.8802816901408451, "balanced_where_mattered": 0.8247562296858072, "mattered_pairs": 155, "mattered_presses": 13, "mattered_head_accuracy": 0.9387931034482758, "f1_per_button": {"0": 0.826, "1": 0.839, "2": 0.86, "3": 0.823, "4": 0.069, "5": 0.202, "6": 0.0, "7": 0.0}}}
+step 1100 held 0.3379 mattered 0.1184 429s
+step 1200 held 0.2612 mattered 0.0950 467s
+step 1300 held 0.3040 mattered 0.1458 505s
+step 1400 held 0.3515 mattered 0.1281 542s
+step 1500 held 0.2769 mattered 0.1958 581s
+step 1600 held 0.3862 mattered 0.1880 619s
+step 1700 held 0.3037 mattered 0.1088 657s
+step 1800 held 0.2607 mattered 0.0837 694s
+step 1900 held 0.1829 mattered 0.1023 732s
+step 2000 held 0.2598 mattered 0.1066 770s
+{"step": 2000, "val": {"frames": 6144, "accuracy_all": 0.9277750651041666, "press_recall_where_mattered": 0.9444444444444444, "release_kept_where_mattered": 0.875, "balanced_where_mattered": 0.9097222222222222, "mattered_pairs": 234, "mattered_presses": 18, "mattered_head_accuracy": 0.9181034482758621, "f1_per_button": {"0": 0.736, "1": 0.796, "2": 0.806, "3": 0.807, "4": 0.194, "5": 0.055, "6": 0.533, "7": 0.012}}, "train": {"frames": 3072, "accuracy_all": 0.9491373697916666, "press_recall_where_mattered": 0.9230769230769231, "release_kept_where_mattered": 0.9225352112676056, "balanced_where_mattered": 0.9228060671722644, "mattered_pairs": 155, "mattered_presses": 13, "mattered_head_accuracy": 0.9344827586206896, "f1_per_button": {"0": 0.882, "1": 0.837, "2": 0.864, "3": 0.855, "4": 0.177, "5": 0.364, "6": 0.0, "7": 0.37}}}
+step 2100 held 0.2334 mattered 0.1391 810s
+step 2200 held 0.2398 mattered 0.0834 848s
+step 2300 held 0.1748 mattered 0.1547 886s
+step 2400 held 0.2155 mattered 0.1563 923s
+step 2500 held 0.2215 mattered 0.1283 961s
+step 2600 held 0.3164 mattered 0.0881 998s
+step 2700 held 0.1788 mattered 0.0576 1037s
+step 2800 held 0.2798 mattered 0.0835 1075s
+step 2900 held 0.1811 mattered 0.0620 1113s
+step 3000 held 0.2431 mattered 0.1222 1151s
+{"step": 3000, "val": {"frames": 6144, "accuracy_all": 0.9342244466145834, "press_recall_where_mattered": 1.0, "release_kept_where_mattered": 0.8796296296296297, "balanced_where_mattered": 0.9398148148148149, "mattered_pairs": 234, "mattered_presses": 18, "mattered_head_accuracy": 0.9073275862068966, "f1_per_button": {"0": 0.734, "1": 0.804, "2": 0.798, "3": 0.827, "4": 0.227, "5": 0.071, "6": 0.167, "7": 0.034}}, "train": {"frames": 3072, "accuracy_all": 0.9581705729166666, "press_recall_where_mattered": 0.7692307692307693, "release_kept_where_mattered": 0.9295774647887324, "balanced_where_mattered": 0.8494041170097508, "mattered_pairs": 155, "mattered_presses": 13, "mattered_head_accuracy": 0.9612068965517241, "f1_per_button": {"0": 0.9, "1": 0.916, "2": 0.894, "3": 0.829, "4": 0.193, "5": 0.519, "6": 0.0, "7": 0.414}}}
+step 3100 held 0.2949 mattered 0.1006 1192s
+step 3200 held 0.1874 mattered 0.1649 1230s
+step 3300 held 0.1806 mattered 0.0748 1267s
+step 3400 held 0.1789 mattered 0.0791 1304s
+step 3500 held 0.1631 mattered 0.1065 1343s
+step 3600 held 0.1901 mattered 0.1077 1380s
+step 3700 held 0.1916 mattered 0.0638 1423s
+step 3800 held 0.1324 mattered 0.0510 1458s
+step 3900 held 0.1592 mattered 0.0693 1493s
+step 4000 held 0.1527 mattered 0.0667 1529s
+{"step": 4000, "val": {"frames": 6144, "accuracy_all": 0.9410603841145834, "press_recall_where_mattered": 0.8888888888888888, "release_kept_where_mattered": 0.9305555555555556, "balanced_where_mattered": 0.9097222222222222, "mattered_pairs": 234, "mattered_presses": 18, "mattered_head_accuracy": 0.9163793103448276, "f1_per_button": {"0": 0.762, "1": 0.8, "2": 0.822, "3": 0.813, "4": 0.243, "5": 0.0, "6": 0.167, "7": 0.026}}, "train": {"frames": 3072, "accuracy_all": 0.9630126953125, "press_recall_where_mattered": 0.7692307692307693, "release_kept_where_mattered": 0.9436619718309859, "balanced_where_mattered": 0.8564463705308776, "mattered_pairs": 155, "mattered_presses": 13, "mattered_head_accuracy": 0.9689655172413794, "f1_per_button": {"0": 0.9, "1": 0.903, "2": 0.89, "3": 0.871, "4": 0.243, "5": 0.583, "6": 0.0, "7": 0.4}}}
+step 4100 held 0.1546 mattered 0.0945 1568s
+step 4200 held 0.0845 mattered 0.0721 1606s
+step 4300 held 0.1576 mattered 0.0565 1649s
+step 4400 held 0.1513 mattered 0.1899 1688s
+step 4500 held 0.1403 mattered 0.0574 1728s
+step 4600 held 0.2280 mattered 0.0553 1767s
+step 4700 held 0.1380 mattered 0.0517 1808s
+step 4800 held 0.1302 mattered 0.0574 1847s
+step 4900 held 0.1716 mattered 0.0681 1887s
+step 5000 held 0.1261 mattered 0.0628 1926s
+{"step": 5000, "val": {"frames": 6144, "accuracy_all": 0.945556640625, "press_recall_where_mattered": 0.8888888888888888, "release_kept_where_mattered": 0.9305555555555556, "balanced_where_mattered": 0.9097222222222222, "mattered_pairs": 234, "mattered_presses": 18, "mattered_head_accuracy": 0.9086206896551724, "f1_per_button": {"0": 0.779, "1": 0.814, "2": 0.832, "3": 0.802, "4": 0.196, "5": 0.0, "6": 0.0, "7": 0.0}}, "train": {"frames": 3072, "accuracy_all": 0.97119140625, "press_recall_where_mattered": 0.6923076923076923, "release_kept_where_mattered": 0.9507042253521126, "balanced_where_mattered": 0.8215059588299025, "mattered_pairs": 155, "mattered_presses": 13, "mattered_head_accuracy": 0.9758620689655172, "f1_per_button": {"0": 0.917, "1": 0.933, "2": 0.889, "3": 0.879, "4": 0.336, "5": 0.748, "6": 0.0, "7": 0.462}}}
+step 5100 held 0.0871 mattered 0.0537 1972s
+step 5200 held 0.1146 mattered 0.0575 2013s
+step 5300 held 0.1258 mattered 0.0929 2053s
+step 5400 held 0.1777 mattered 0.0968 2094s
+step 5500 held 0.1454 mattered 0.0348 2133s
+step 5600 held 0.1091 mattered 0.0436 2172s
+step 5700 held 0.1732 mattered 0.0552 2212s
+step 5800 held 0.1828 mattered 0.0451 2253s
+step 5900 held 0.1424 mattered 0.0908 2293s
+step 6000 held 0.1141 mattered 0.0417 2334s
+{"step": 6000, "val": {"frames": 6144, "accuracy_all": 0.9452107747395834, "press_recall_where_mattered": 0.8888888888888888, "release_kept_where_mattered": 0.9259259259259259, "balanced_where_mattered": 0.9074074074074074, "mattered_pairs": 234, "mattered_presses": 18, "mattered_head_accuracy": 0.905603448275862, "f1_per_button": {"0": 0.775, "1": 0.812, "2": 0.829, "3": 0.81, "4": 0.191, "5": 0.0, "6": 0.0, "7": 0.033}}, "train": {"frames": 3072, "accuracy_all": 0.9716389973958334, "press_recall_where_mattered": 0.7692307692307693, "release_kept_where_mattered": 0.9577464788732394, "balanced_where_mattered": 0.8634886240520043, "mattered_pairs": 155, "mattered_presses": 13, "mattered_head_accuracy": 0.9758620689655172, "f1_per_button": {"0": 0.919, "1": 0.929, "2": 0.89, "3": 0.882, "4": 0.322, "5": 0.731, "6": 0.0, "7": 0.444}}}
+best val balanced accuracy where mattered 0.9398

@@ -1,0 +1,106 @@
+320 episodes x 3000 frames, 235 start states
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+ep    1 px_err 0.0000 unk      0 {'play': 2.5, 'mattered': 8.8, 'total': 176.1}  pikachu
+ep    2 px_err 0.0034 unk      0 {'play': 2.6, 'mattered': 9.8, 'total': 208.1}  rival
+ep    0 px_err 0.0003 unk      0 {'play': 2.5, 'mattered': 8.9, 'total': 220.3}  bedroom
+ep    6 px_err 0.0064 unk      0 {'play': 2.6, 'mattered': 10.0, 'total': 224.5}  forest
+ep    5 px_err 0.0040 unk      0 {'play': 2.6, 'mattered': 9.5, 'total': 225.6}  pokedex
+ep    3 px_err 0.0034 unk      0 {'play': 2.5, 'mattered': 9.1, 'total': 257.8}  route1
+ep    8 px_err 0.0037 unk      0 {'play': 2.8, 'mattered': 8.2, 'total': 87.7}  PalletTown_w1
+ep    7 px_err 0.0034 unk      0 {'play': 2.6, 'mattered': 9.4, 'total': 264.2}  PalletTown_w0
+ep    4 px_err 0.0031 unk      0 {'play': 2.6, 'mattered': 10.2, 'total': 267.0}  parcel
+ep    9 px_err 0.0021 unk      0 {'play': 3.9, 'mattered': 14.2, 'total': 133.0}  ViridianCity_w0
+ep   12 px_err 0.0006 unk      0 {'play': 4.3, 'mattered': 12.5, 'total': 128.6}  PewterCity_w3
+ep   11 px_err 0.0007 unk      0 {'play': 4.2, 'mattered': 12.7, 'total': 130.1}  PewterCity_w0
+ep   10 px_err 0.0054 unk      0 {'play': 4.2, 'mattered': 13.3, 'total': 138.7}  ViridianCity_w2
+ep   17 px_err 0.0460 unk      0 {'play': 4.3, 'mattered': 19.6, 'total': 183.0}  VermilionCity_w0
+ep   14 px_err 0.0012 unk      0 {'play': 4.6, 'mattered': 12.7, 'total': 271.6}  CeruleanCity_w5
+ep   13 px_err 0.0001 unk      0 {'play': 5.7, 'mattered': 14.5, 'total': 287.0}  CeruleanCity_w0
+ep   19 px_err 0.0015 unk      0 {'play': 4.8, 'mattered': 13.9, 'total': 197.6}  CeladonCity_w0
+ep   18 px_err 0.0439 unk      0 {'play': 5.3, 'mattered': 14.4, 'total': 268.7}  VermilionCity_w4
+ep   21 px_err 0.0061 unk      0 {'play': 2.0, 'mattered': 9.2, 'total': 99.9}  FuchsiaCity_w0
+ep   15 px_err 0.0012 unk      0 {'play': 4.7, 'mattered': 12.4, 'total': 361.5}  LavenderTown_w0
+ep   16 px_err 0.0033 unk      0 {'play': 4.2, 'mattered': 12.1, 'total': 362.4}  LavenderTown_w3
+ep   20 px_err 0.0027 unk      0 {'play': 5.0, 'mattered': 11.4, 'total': 270.3}  CeladonCity_w6
+ep   25 px_err 0.0121 unk      0 {'play': 5.2, 'mattered': 13.4, 'total': 135.6}  IndigoPlateau_w0
+ep   29 px_err 0.0098 unk      0 {'play': 4.4, 'mattered': 10.9, 'total': 133.8}  Route2_w3
+ep   28 px_err 0.0071 unk      0 {'play': 5.0, 'mattered': 10.8, 'total': 133.9}  Route2_w0
+ep   27 px_err 0.0005 unk      0 {'play': 5.2, 'mattered': 12.4, 'total': 151.5}  SaffronCity_w4
+ep   24 px_err 0.0006 unk      0 {'play': 3.9, 'mattered': 12.4, 'total': 227.6}  CinnabarIsland_w2
+ep   22 px_err 0.0376 unk      0 {'play': 3.0, 'mattered': 12.2, 'total': 248.5}  FuchsiaCity_w4
+ep   23 px_err 0.0010 unk      0 {'play': 4.0, 'mattered': 12.7, 'total': 242.5}  CinnabarIsland_w0
+ep   26 px_err 0.0002 unk      0 {'play': 5.3, 'mattered': 13.0, 'total': 165.2}  SaffronCity_w0
+ep   37 px_err 0.0056 unk 115200 {'play': 3.3, 'mattered': 11.8, 'total': 112.0}  Route7_w2
+ep   36 px_err 0.0081 unk 184320 {'play': 3.7, 'mattered': 11.5, 'total': 116.1}  Route7_w0
+ep   30 px_err 0.0085 unk      0 {'play': 3.0, 'mattered': 12.7, 'total': 150.8}  Route4_w0
+ep   32 px_err 0.0025 unk      0 {'play': 3.5, 'mattered': 12.7, 'total': 149.0}  Route5_w0
+ep   31 px_err 0.0053 unk 207360 {'play': 3.5, 'mattered': 13.3, 'total': 149.5}  Route4_w1
+ep   35 px_err 0.0029 unk      0 {'play': 4.1, 'mattered': 12.2, 'total': 171.1}  Route6_w2
+ep   34 px_err 0.0052 unk      0 {'play': 4.2, 'mattered': 13.0, 'total': 184.5}  Route6_w0
+ep   33 px_err 0.0064 unk      0 {'play': 4.0, 'mattered': 13.3, 'total': 200.5}  Route5_w2
+ep   42 px_err 0.0053 unk      0 {'play': 4.0, 'mattered': 13.9, 'total': 149.5}  Route11_w0
+ep   41 px_err 0.0016 unk      0 {'play': 4.0, 'mattered': 13.7, 'total': 199.0}  Route10_w2
+ep   43 px_err 0.0052 unk      0 {'play': 7.0, 'mattered': 22.4, 'total': 182.5}  Route11_w2
+ep   38 px_err 0.0027 unk      0 {'play': 3.7, 'mattered': 14.7, 'total': 270.9}  Route8_w0
+ep   46 px_err 0.0102 unk      0 {'play': 3.6, 'mattered': 13.3, 'total': 139.8}  Route15_w0
+ep   47 px_err 0.0039 unk      0 {'play': 4.2, 'mattered': 11.3, 'total': 129.7}  Route15_w2
+ep   39 px_err 0.0056 unk      0 {'play': 4.5, 'mattered': 14.0, 'total': 346.7}  Route8_w2
+ep   48 px_err 0.0025 unk      0 {'play': 3.2, 'mattered': 11.7, 'total': 119.7}  Route16_w0
+ep   45 px_err 0.0032 unk      0 {'play': 4.8, 'mattered': 20.1, 'total': 329.2}  Route12_w2
+ep   50 px_err 0.0052 unk      0 {'play': 3.4, 'mattered': 14.7, 'total': 123.7}  Route18_w0
+ep   44 px_err 0.0041 unk      0 {'play': 5.8, 'mattered': 22.0, 'total': 362.9}  Route12_w0
+ep   49 px_err 0.0082 unk      0 {'play': 4.0, 'mattered': 13.1, 'total': 158.7}  Route16_w4
+ep   40 px_err 0.0069 unk      0 {'play': 4.2, 'mattered': 14.1, 'total': 438.4}  Route10_w0
+ep   51 px_err 0.0044 unk      0 {'play': 4.3, 'mattered': 15.9, 'total': 166.4}  Route18_w2
+ep   52 px_err 0.0045 unk      0 {'play': 4.4, 'mattered': 14.5, 'total': 253.2}  Route19_w0
+ep   59 px_err 0.0026 unk      0 {'play': 6.2, 'mattered': 18.9, 'total': 108.7}  RedsHouse2F_w0
+ep   53 px_err 0.0037 unk      0 {'play': 5.1, 'mattered': 12.8, 'total': 261.8}  Route20_w0
+ep   60 px_err 0.0009 unk      0 {'play': 2.8, 'mattered': 9.7, 'total': 117.3}  BluesHouse_w0
+ep   61 px_err 0.0046 unk      0 {'play': 3.4, 'mattered': 11.4, 'total': 120.3}  OaksLab_w0
+ep   55 px_err 0.0034 unk      0 {'play': 5.1, 'mattered': 17.5, 'total': 317.4}  Route23_w0
+ep   62 px_err 0.0047 unk      0 {'play': 3.5, 'mattered': 11.7, 'total': 134.9}  ViridianPokecenter_w0
+ep   56 px_err 0.0069 unk      0 {'play': 5.0, 'mattered': 17.2, 'total': 333.1}  Route23_w2
+ep   58 px_err 0.0032 unk      0 {'play': 5.5, 'mattered': 12.9, 'total': 317.9}  RedsHouse1F_w0
+ep   57 px_err 0.0043 unk      0 {'play': 4.7, 'mattered': 16.6, 'total': 335.1}  Route25_w0
+ep   54 px_err 0.0064 unk      0 {'play': 5.1, 'mattered': 17.6, 'total': 363.3}  Route22_w0
+ep   63 px_err 0.0036 unk      0 {'play': 3.0, 'mattered': 11.6, 'total': 172.4}  ViridianMart_w0
+ep   64 px_err 0.0026 unk 115200 {'play': 5.2, 'mattered': 14.8, 'total': 196.9}  ViridianSchoolHouse_w0
+ep   68 px_err 0.0010 unk      0 {'play': 4.7, 'mattered': 14.6, 'total': 171.2}  ViridianForestNorthGate_w0
+ep   66 px_err 0.0021 unk      0 {'play': 4.9, 'mattered': 16.5, 'total': 198.1}  ViridianGym_w0
+ep   71 px_err 0.0082 unk      0 {'play': 3.4, 'mattered': 10.3, 'total': 110.0}  ViridianForestSouthGate_w0
+ep   65 px_err 0.0024 unk      0 {'play': 3.6, 'mattered': 16.1, 'total': 299.6}  ViridianNicknameHouse_w0
+ep   69 px_err 0.0060 unk      0 {'play': 4.9, 'mattered': 14.6, 'total': 298.0}  Route2TradeHouse_w0
+ep   74 px_err 0.0003 unk      0 {'play': 4.7, 'mattered': 12.6, 'total': 120.6}  Museum2F_w0
+ep   72 px_err 0.0071 unk      0 {'play': 3.8, 'mattered': 14.2, 'total': 138.1}  ViridianForest_w0
+ep   73 px_err 0.0006 unk      0 {'play': 3.7, 'mattered': 14.7, 'total': 148.0}  Museum1F_w0
+ep   67 px_err 0.0095 unk      0 {'play': 5.0, 'mattered': 14.9, 'total': 333.0}  DiglettsCaveRoute2_w0
+ep   70 px_err 0.0066 unk      0 {'play': 4.4, 'mattered': 14.5, 'total': 361.3}  Route2Gate_w0
+ep   75 px_err 0.0004 unk      0 {'play': 5.6, 'mattered': 14.2, 'total': 131.5}  PewterGym_w0
+ep   76 px_err 0.0006 unk      0 {'play': 4.3, 'mattered': 14.6, 'total': 127.9}  PewterNidoranHouse_w0
+ep   80 px_err 0.0070 unk      0 {'play': 4.7, 'mattered': 14.1, 'total': 142.4}  MtMoon1F_w0
+ep   81 px_err 0.0038 unk 161280 {'play': 4.6, 'mattered': 14.2, 'total': 135.6}  MtMoonB1F_w0
+ep   78 px_err 0.0008 unk      0 {'play': 4.4, 'mattered': 16.4, 'total': 196.3}  PewterSpeechHouse_w0
+ep   79 px_err 0.0010 unk      0 {'play': 4.5, 'mattered': 15.8, 'total': 197.0}  PewterPokecenter_w0
+ep   83 px_err 0.0003 unk      0 {'play': 4.7, 'mattered': 20.4, 'total': 137.8}  CeruleanTrashedHouse_w0
+ep   77 px_err 0.0007 unk      0 {'play': 4.8, 'mattered': 16.1, 'total': 210.7}  PewterMart_w0
+ep   84 px_err 0.0004 unk      0 {'play': 3.2, 'mattered': 11.6, 'total': 111.0}  CeruleanMelaniesHouse_w0
+ep   82 px_err 0.0038 unk 161280 {'play': 6.6, 'mattered': 20.2, 'total': 170.7}  MtMoonB2F_w0
+ep   86 px_err 0.0014 unk      0 {'play': 3.4, 'mattered': 13.9, 'total': 125.2}  CeruleanGym_w0
+ep   85 px_err 0.0017 unk      0 {'play': 3.4, 'mattered': 13.8, 'total': 127.7}  CeruleanPokecenter_w0
+ep   91 px_err 0.0047 unk      0 {'play': 3.3, 'mattered': 13.7, 'total': 116.5}  UndergroundPathRoute5_w0
+ep   87 px_err 0.0009 unk      0 {'play': 5.0, 'mattered': 14.4, 'total': 151.4}  BikeShop_w0
+ep   92 px_err 0.0051 unk      0 {'play': 4.5, 'mattered': 20.2, 'total': 120.9}  Daycare_w0
+ep   88 px_err 0.0011 unk      0 {'play': 5.1, 'mattered': 14.2, 'total': 183.4}  CeruleanMart_w0
+ep   94 px_err 0.0074 unk 276480 {'play': 3.8, 'mattered': 14.4, 'total': 102.8}  UndergroundPathRoute6_w0
+ep   93 px_err 0.0045 unk      0 {'play': 4.8, 'mattered': 14.1, 'total': 105.4}  Route6Gate_w0
+ep   89 px_err 0.0023 unk      0 {'play': 4.8, 'mattered': 14.6, 'total': 186.2}  MtMoonPokecenter_w0
+ep   90 px_err 0.0046 unk      0 {'play': 4.8, 'mattered': 13.8, 'total': 189.4}  Route5Gate_w0
+/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:479: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown: {'/mp-qj0wrd5e', '/mp-z02o3pwh', '/mp-15ukue83', '/mp-0q703w7c', '/mp-1bhgf1ga', '/mp-l550551v'}
+  warnings.warn(

@@ -1,0 +1,55 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+labels as decoded: in sync until video frame 1818
+drop a 1785-1790                 sync 1818 -> 3082  (2s, 3868 frames played)
+add a 3030                       sync 3082 -> 3270  (7s, 26738 frames played)
+add a 3252                       sync 3270 -> 3574  (6s, 46450 frames played)
+add start 3569                   sync 3574 -> 3693  (8s, 74911 frames played)
+add a 3648                       sync 3693 -> 4039  (11s, 115514 frames played)
+add a 3936x60                    sync 4039 -> 4318  (14s, 166823 frames played)
+add a 4233x20                    sync 4318 -> 4452  (9s, 198398 frames played)
+add a 4393x60                    sync 4452 -> 4693  (9s, 231299 frames played)
+add a 4644x20                    sync 4693 -> 4841  (10s, 266482 frames played)
+add a 4779x20                    sync 4841 -> 5399  (19s, 342216 frames played)
+shift a 5398->5404               sync 5399 -> 5624  (13s, 390129 frames played)
+add a 5536x60                    sync 5624 -> 5816  (11s, 428972 frames played)
+add a 5751x20                    sync 5816 -> 6039  (12s, 473827 frames played)
+add a 5964x60                    sync 6039 -> 6329  (14s, 524159 frames played)
+add a 6287x60                    sync 6329 -> 6479  (10s, 559593 frames played)
+add a 6384x60                    sync 6479 -> 6580  (9s, 591153 frames played)
+add a 6516x20                    sync 6580 -> 7630  (1s, 593094 frames played)
+add b 7539                       sync 7630 -> 7670  (7s, 617424 frames played)
+  backtrack: undo add b 7539 -> no alternative
+  backtrack: undo add a 6516x20 -> add b 6540x20
+add b 6540x20                    sync 6580 -> 6791  (36s, 754253 frames played)
+drop a 6783-6788                 sync 6791 -> 7630  (1s, 755731 frames played)
+add b 7539                       sync 7630 -> 7670  (7s, 780058 frames played)
+  backtrack: undo add b 7539 -> no alternative
+  backtrack: undo drop a 6783-6788 -> no alternative
+  backtrack: undo add b 6540x20 -> add a 6516x60
+add a 6516x60                    sync 6580 -> 7630  (34s, 909490 frames played)
+add b 7539                       sync 7630 -> 7670  (7s, 933817 frames played)
+  backtrack: undo add b 7539 -> no alternative
+  backtrack: undo add a 6516x60 -> add b 6540x60
+add b 6540x60                    sync 6580 -> 6791  (35s, 1069570 frames played)
+drop a 6783-6788                 sync 6791 -> 7630  (1s, 1071048 frames played)
+add b 7539                       sync 7630 -> 7670  (7s, 1095375 frames played)
+  backtrack: undo add b 7539 -> no alternative
+  backtrack: undo drop a 6783-6788 -> no alternative
+  backtrack: undo add b 6540x60 -> add b 6516x20
+add b 6516x20                    sync 6580 -> 7630  (34s, 1224919 frames played)
+add b 7539                       sync 7630 -> 7670  (7s, 1249249 frames played)
+  backtrack: undo add b 7539 -> no alternative
+  backtrack: undo add b 6516x20 -> add a 6479x60
+add a 6479x60                    sync 6580 -> 6790  (35s, 1384198 frames played)
+drop a 6783-6788                 sync 6790 -> 7630  (1s, 1385675 frames played)
+add b 7539                       sync 7630 -> 7670  (7s, 1410005 frames played)
+stuck at video frame 7670: no edit plays 30 frames longer
+verified video frames 0-7670 with 18 edits (470 frames changed) in 397s
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+replay: 0.610 of 11931 frames in sync; lost for good (60 frames off) after 7677 frames, at video frame 7670; offset moved 18 times, ended -76
+wrote results/sync_opening_repaired.json
+264 segments covering 1480484 of 1485634 frames
+pokedreamer: {'steps': 61563, 'chunks': 7, 'select_only_steps_as_pass': 11, 'verified_steps': 271}
+schema3: {'steps': 24544, 'verified_steps': 107}
+REPAIR_ALL_DONE

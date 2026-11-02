@@ -33,7 +33,9 @@ jobs:
                    eval_plan sweep_seeds show_state play play2 oracle \
                    calibrate_control bench_workers prune_route annotate_route \
                    record_gif nav_bench collect_part2 train_rl eval_part2 \
-                   fetch_symbols make_start_states collect_dreamer check_dreamer; do
+                   fetch_symbols make_start_states collect_dreamer check_dreamer \
+                   video_ingest synth_collect train_idm label_video eval_idm \
+                   sync_opening export_video repair_labels; do
             echo "--- $s"
             uv run python -m "scripts.$s" --help > /dev/null
           done

@@ -1,0 +1,500 @@
+{
+ "checkpoint": "checkpoints/idm_v0/last.pt",
+ "step": 3000,
+ "held_out_maps": "episodes >= 30",
+ "summary": {
+  "idm": {
+   "segments_reproduced": 0.025,
+   "median_frames_to_divergence": 50.5,
+   "same_path": 0.6625,
+   "same_end_tile": 0.675
+  },
+  "released": {
+   "segments_reproduced": 0.0125,
+   "median_frames_to_divergence": 12.5,
+   "same_path": 0.36250000000000004,
+   "same_end_tile": 0.36250000000000004
+  },
+  "truth_late_1": {
+   "segments_reproduced": 0.07500000000000001,
+   "median_frames_to_divergence": 86.5,
+   "same_path": 0.9125,
+   "same_end_tile": 0.9249999999999999
+  },
+  "truth_replay_exact": true
+ },
+ "episodes": [
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 65.0,
+    "frames": [
+     19,
+     124,
+     82,
+     252,
+     300,
+     164,
+     22,
+     48,
+     6,
+     8
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 11.0,
+    "frames": [
+     2,
+     16,
+     15,
+     12,
+     13,
+     9,
+     5,
+     14,
+     6,
+     10
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 93.0,
+    "frames": [
+     2,
+     190,
+     72,
+     114,
+     300,
+     121,
+     30,
+     57,
+     6,
+     300
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "state": "states/cgb/teleport/Route4_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 11.0,
+    "frames": [
+     26,
+     271,
+     45,
+     14,
+     8,
+     2,
+     2,
+     2,
+     2,
+     25
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 21.5,
+    "frames": [
+     26,
+     18,
+     28,
+     38,
+     31,
+     3,
+     17,
+     5,
+     18,
+     25
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 32.0,
+    "frames": [
+     26,
+     297,
+     148,
+     38,
+     49,
+     17,
+     158,
+     5,
+     18,
+     25
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route4_w1.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 39.0,
+    "frames": [
+     10,
+     81,
+     20,
+     62,
+     24,
+     27,
+     49,
+     39,
+     203,
+     39
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 7.5,
+    "frames": [
+     10,
+     5,
+     3,
+     8,
+     6,
+     27,
+     49,
+     5,
+     26,
+     7
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 62.0,
+    "frames": [
+     83,
+     79,
+     22,
+     66,
+     26,
+     162,
+     58,
+     39,
+     157,
+     39
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route5_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 98.0,
+    "frames": [
+     137,
+     90,
+     134,
+     62,
+     129,
+     57,
+     200,
+     106,
+     74,
+     77
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 9.5,
+    "frames": [
+     4,
+     10,
+     11,
+     5,
+     8,
+     15,
+     9,
+     14,
+     6,
+     25
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 111.5,
+    "frames": [
+     4,
+     90,
+     134,
+     31,
+     129,
+     240,
+     200,
+     234,
+     94,
+     79
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/Route5_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 104.0,
+    "frames": [
+     108,
+     255,
+     128,
+     19,
+     12,
+     9,
+     205,
+     11,
+     300,
+     100
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "released": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 15.0,
+    "frames": [
+     9,
+     12,
+     18,
+     5,
+     18,
+     9,
+     27,
+     11,
+     300,
+     100
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.3
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 110.0,
+    "frames": [
+     9,
+     276,
+     18,
+     21,
+     192,
+     9,
+     271,
+     256,
+     300,
+     28
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route6_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 57.0,
+    "frames": [
+     21,
+     52,
+     67,
+     270,
+     60,
+     128,
+     105,
+     13,
+     30,
+     54
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 57.0,
+    "frames": [
+     4,
+     8,
+     150,
+     270,
+     60,
+     128,
+     105,
+     13,
+     30,
+     54
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 74.5,
+    "frames": [
+     4,
+     168,
+     150,
+     270,
+     68,
+     81,
+     105,
+     13,
+     30,
+     54
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route6_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 31.5,
+    "frames": [
+     95,
+     28,
+     12,
+     61,
+     186,
+     34,
+     93,
+     5,
+     29,
+     19
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 11.0,
+    "frames": [
+     3,
+     28,
+     12,
+     5,
+     5,
+     10,
+     93,
+     5,
+     29,
+     19
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 77.0,
+    "frames": [
+     97,
+     49,
+     300,
+     61,
+     190,
+     300,
+     93,
+     13,
+     29,
+     19
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route7_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 25.5,
+    "frames": [
+     63,
+     76,
+     210,
+     15,
+     8,
+     71,
+     2,
+     8,
+     2,
+     36
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 13.0,
+    "frames": [
+     3,
+     16,
+     74,
+     5,
+     8,
+     71,
+     29,
+     8,
+     10,
+     36
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 143.0,
+    "frames": [
+     111,
+     215,
+     214,
+     105,
+     8,
+     98,
+     242,
+     163,
+     123,
+     300
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/Route7_w2.state"
+  }
+ ]
+}
