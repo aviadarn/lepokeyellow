@@ -1,0 +1,3212 @@
+{
+ "base": "states/cgb/oracle/pokedex.state",
+ "attempted": 229,
+ "kept": 228,
+ "rows": [
+  {
+   "label": "PalletTown_w0",
+   "map": 0,
+   "warp": 0,
+   "level": 6,
+   "ok": true,
+   "arrived": [
+    0,
+    6,
+    5
+   ],
+   "seconds": 2.1,
+   "state": "states/cgb/teleport/PalletTown_w0.state"
+  },
+  {
+   "label": "PalletTown_w1",
+   "map": 0,
+   "warp": 1,
+   "level": 6,
+   "ok": true,
+   "arrived": [
+    0,
+    6,
+    13
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/PalletTown_w1.state"
+  },
+  {
+   "label": "ViridianCity_w0",
+   "map": 1,
+   "warp": 0,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    1,
+    26,
+    23
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/ViridianCity_w0.state"
+  },
+  {
+   "label": "ViridianCity_w2",
+   "map": 1,
+   "warp": 2,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    1,
+    16,
+    21
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/ViridianCity_w2.state"
+  },
+  {
+   "label": "PewterCity_w0",
+   "map": 2,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    2,
+    8,
+    14
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PewterCity_w0.state"
+  },
+  {
+   "label": "PewterCity_w3",
+   "map": 2,
+   "warp": 3,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    2,
+    14,
+    29
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/PewterCity_w3.state"
+  },
+  {
+   "label": "CeruleanCity_w0",
+   "map": 3,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    3,
+    11,
+    27
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/CeruleanCity_w0.state"
+  },
+  {
+   "label": "CeruleanCity_w5",
+   "map": 3,
+   "warp": 5,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    3,
+    26,
+    25
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/CeruleanCity_w5.state"
+  },
+  {
+   "label": "LavenderTown_w0",
+   "map": 4,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    4,
+    6,
+    3
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/LavenderTown_w0.state"
+  },
+  {
+   "label": "LavenderTown_w3",
+   "map": 4,
+   "warp": 3,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    4,
+    14,
+    15
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/LavenderTown_w3.state"
+  },
+  {
+   "label": "VermilionCity_w0",
+   "map": 5,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    5,
+    4,
+    11
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/VermilionCity_w0.state"
+  },
+  {
+   "label": "VermilionCity_w4",
+   "map": 5,
+   "warp": 4,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    5,
+    20,
+    23
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/VermilionCity_w4.state"
+  },
+  {
+   "label": "CeladonCity_w0",
+   "map": 6,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    6,
+    14,
+    8
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/CeladonCity_w0.state"
+  },
+  {
+   "label": "CeladonCity_w6",
+   "map": 6,
+   "warp": 6,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    6,
+    28,
+    12
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/CeladonCity_w6.state"
+  },
+  {
+   "label": "FuchsiaCity_w0",
+   "map": 7,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    7,
+    14,
+    5
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/FuchsiaCity_w0.state"
+  },
+  {
+   "label": "FuchsiaCity_w4",
+   "map": 7,
+   "warp": 4,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    7,
+    4,
+    18
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/FuchsiaCity_w4.state"
+  },
+  {
+   "label": "CinnabarIsland_w0",
+   "map": 8,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    8,
+    4,
+    6
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CinnabarIsland_w0.state"
+  },
+  {
+   "label": "CinnabarIsland_w2",
+   "map": 8,
+   "warp": 2,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    8,
+    10,
+    6
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CinnabarIsland_w2.state"
+  },
+  {
+   "label": "IndigoPlateau_w0",
+   "map": 9,
+   "warp": 0,
+   "level": 58,
+   "ok": true,
+   "arrived": [
+    9,
+    6,
+    9
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/IndigoPlateau_w0.state"
+  },
+  {
+   "label": "SaffronCity_w0",
+   "map": 10,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    10,
+    5,
+    7
+   ],
+   "seconds": 2.6,
+   "state": "states/cgb/teleport/SaffronCity_w0.state"
+  },
+  {
+   "label": "SaffronCity_w4",
+   "map": 10,
+   "warp": 4,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    10,
+    12,
+    25
+   ],
+   "seconds": 2.5,
+   "state": "states/cgb/teleport/SaffronCity_w4.state"
+  },
+  {
+   "label": "Route2_w0",
+   "map": 13,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    13,
+    10,
+    12
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route2_w0.state"
+  },
+  {
+   "label": "Route2_w3",
+   "map": 13,
+   "warp": 3,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    13,
+    35,
+    16
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route2_w3.state"
+  },
+  {
+   "label": "Route4_w0",
+   "map": 15,
+   "warp": 0,
+   "level": 16,
+   "ok": true,
+   "arrived": [
+    15,
+    6,
+    11
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route4_w0.state"
+  },
+  {
+   "label": "Route4_w1",
+   "map": 15,
+   "warp": 1,
+   "level": 16,
+   "ok": true,
+   "arrived": [
+    15,
+    6,
+    18
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route4_w1.state"
+  },
+  {
+   "label": "Route5_w0",
+   "map": 16,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    16,
+    29,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route5_w0.state"
+  },
+  {
+   "label": "Route5_w2",
+   "map": 16,
+   "warp": 2,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    16,
+    34,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route5_w2.state"
+  },
+  {
+   "label": "Route6_w0",
+   "map": 17,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    17,
+    1,
+    9
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route6_w0.state"
+  },
+  {
+   "label": "Route6_w2",
+   "map": 17,
+   "warp": 2,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    17,
+    8,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route6_w2.state"
+  },
+  {
+   "label": "Route7_w0",
+   "map": 18,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    18,
+    9,
+    18
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route7_w0.state"
+  },
+  {
+   "label": "Route7_w2",
+   "map": 18,
+   "warp": 2,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    18,
+    9,
+    11
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route7_w2.state"
+  },
+  {
+   "label": "Route8_w0",
+   "map": 19,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    19,
+    9,
+    1
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route8_w0.state"
+  },
+  {
+   "label": "Route8_w2",
+   "map": 19,
+   "warp": 2,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    19,
+    9,
+    8
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route8_w2.state"
+  },
+  {
+   "label": "Route10_w0",
+   "map": 21,
+   "warp": 0,
+   "level": 28,
+   "ok": true,
+   "arrived": [
+    21,
+    20,
+    11
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route10_w0.state"
+  },
+  {
+   "label": "Route10_w2",
+   "map": 21,
+   "warp": 2,
+   "level": 28,
+   "ok": true,
+   "arrived": [
+    21,
+    54,
+    8
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route10_w2.state"
+  },
+  {
+   "label": "Route11_w0",
+   "map": 22,
+   "warp": 0,
+   "level": 25,
+   "ok": true,
+   "arrived": [
+    22,
+    8,
+    49
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route11_w0.state"
+  },
+  {
+   "label": "Route11_w2",
+   "map": 22,
+   "warp": 2,
+   "level": 25,
+   "ok": true,
+   "arrived": [
+    22,
+    8,
+    58
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route11_w2.state"
+  },
+  {
+   "label": "Route12_w0",
+   "map": 23,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    23,
+    15,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route12_w0.state"
+  },
+  {
+   "label": "Route12_w2",
+   "map": 23,
+   "warp": 2,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    23,
+    22,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route12_w2.state"
+  },
+  {
+   "label": "Route15_w0",
+   "map": 26,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    26,
+    8,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route15_w0.state"
+  },
+  {
+   "label": "Route15_w2",
+   "map": 26,
+   "warp": 2,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    26,
+    8,
+    14
+   ],
+   "seconds": 2.7,
+   "state": "states/cgb/teleport/Route15_w2.state"
+  },
+  {
+   "label": "Route16_w0",
+   "map": 27,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    27,
+    10,
+    17
+   ],
+   "seconds": 2.8,
+   "state": "states/cgb/teleport/Route16_w0.state"
+  },
+  {
+   "label": "Route16_w4",
+   "map": 27,
+   "warp": 4,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    27,
+    4,
+    17
+   ],
+   "seconds": 2.9,
+   "state": "states/cgb/teleport/Route16_w4.state"
+  },
+  {
+   "label": "Route18_w0",
+   "map": 29,
+   "warp": 0,
+   "level": 38,
+   "ok": true,
+   "arrived": [
+    29,
+    8,
+    33
+   ],
+   "seconds": 2.8,
+   "state": "states/cgb/teleport/Route18_w0.state"
+  },
+  {
+   "label": "Route18_w2",
+   "map": 29,
+   "warp": 2,
+   "level": 38,
+   "ok": true,
+   "arrived": [
+    29,
+    8,
+    40
+   ],
+   "seconds": 2.7,
+   "state": "states/cgb/teleport/Route18_w2.state"
+  },
+  {
+   "label": "Route19_w0",
+   "map": 30,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    30,
+    10,
+    5
+   ],
+   "seconds": 2.8,
+   "state": "states/cgb/teleport/Route19_w0.state"
+  },
+  {
+   "label": "Route20_w0",
+   "map": 31,
+   "warp": 0,
+   "level": 46,
+   "ok": true,
+   "arrived": [
+    31,
+    6,
+    48
+   ],
+   "seconds": 2.6,
+   "state": "states/cgb/teleport/Route20_w0.state"
+  },
+  {
+   "label": "Route22_w0",
+   "map": 33,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    33,
+    6,
+    8
+   ],
+   "seconds": 2.6,
+   "state": "states/cgb/teleport/Route22_w0.state"
+  },
+  {
+   "label": "Route23_w0",
+   "map": 34,
+   "warp": 0,
+   "level": 55,
+   "ok": true,
+   "arrived": [
+    34,
+    139,
+    7
+   ],
+   "seconds": 2.5,
+   "state": "states/cgb/teleport/Route23_w0.state"
+  },
+  {
+   "label": "Route23_w2",
+   "map": 34,
+   "warp": 2,
+   "level": 55,
+   "ok": true,
+   "arrived": [
+    34,
+    32,
+    4
+   ],
+   "seconds": 2.6,
+   "state": "states/cgb/teleport/Route23_w2.state"
+  },
+  {
+   "label": "Route25_w0",
+   "map": 36,
+   "warp": 0,
+   "level": 21,
+   "ok": true,
+   "arrived": [
+    36,
+    4,
+    45
+   ],
+   "seconds": 2.6,
+   "state": "states/cgb/teleport/Route25_w0.state"
+  },
+  {
+   "label": "RedsHouse1F_w0",
+   "map": 37,
+   "warp": 0,
+   "level": 6,
+   "ok": true,
+   "arrived": [
+    37,
+    7,
+    2
+   ],
+   "seconds": 2.5,
+   "state": "states/cgb/teleport/RedsHouse1F_w0.state"
+  },
+  {
+   "label": "RedsHouse2F_w0",
+   "map": 38,
+   "warp": 0,
+   "level": 6,
+   "ok": true,
+   "arrived": [
+    38,
+    1,
+    7
+   ],
+   "seconds": 2.5,
+   "state": "states/cgb/teleport/RedsHouse2F_w0.state"
+  },
+  {
+   "label": "BluesHouse_w0",
+   "map": 39,
+   "warp": 0,
+   "level": 6,
+   "ok": true,
+   "arrived": [
+    39,
+    7,
+    2
+   ],
+   "seconds": 2.5,
+   "state": "states/cgb/teleport/BluesHouse_w0.state"
+  },
+  {
+   "label": "OaksLab_w0",
+   "map": 40,
+   "warp": 0,
+   "level": 6,
+   "ok": true,
+   "arrived": [
+    40,
+    4,
+    5
+   ],
+   "seconds": 0.2,
+   "state": "states/cgb/teleport/OaksLab_w0.state"
+  },
+  {
+   "label": "ViridianPokecenter_w0",
+   "map": 41,
+   "warp": 0,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    41,
+    7,
+    3
+   ],
+   "seconds": 2.6,
+   "state": "states/cgb/teleport/ViridianPokecenter_w0.state"
+  },
+  {
+   "label": "ViridianMart_w0",
+   "map": 42,
+   "warp": 0,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    42,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/ViridianMart_w0.state"
+  },
+  {
+   "label": "ViridianSchoolHouse_w0",
+   "map": 43,
+   "warp": 0,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    43,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/ViridianSchoolHouse_w0.state"
+  },
+  {
+   "label": "ViridianNicknameHouse_w0",
+   "map": 44,
+   "warp": 0,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    44,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/ViridianNicknameHouse_w0.state"
+  },
+  {
+   "label": "ViridianGym_w0",
+   "map": 45,
+   "warp": 0,
+   "level": 8,
+   "ok": true,
+   "arrived": [
+    45,
+    17,
+    16
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/ViridianGym_w0.state"
+  },
+  {
+   "label": "DiglettsCaveRoute2_w0",
+   "map": 46,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    46,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/DiglettsCaveRoute2_w0.state"
+  },
+  {
+   "label": "ViridianForestNorthGate_w0",
+   "map": 47,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    47,
+    0,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/ViridianForestNorthGate_w0.state"
+  },
+  {
+   "label": "Route2TradeHouse_w0",
+   "map": 48,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    48,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route2TradeHouse_w0.state"
+  },
+  {
+   "label": "Route2Gate_w0",
+   "map": 49,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    49,
+    0,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route2Gate_w0.state"
+  },
+  {
+   "label": "ViridianForestSouthGate_w0",
+   "map": 50,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    50,
+    0,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/ViridianForestSouthGate_w0.state"
+  },
+  {
+   "label": "ViridianForest_w0",
+   "map": 51,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    51,
+    0,
+    1
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/ViridianForest_w0.state"
+  },
+  {
+   "label": "Museum1F_w0",
+   "map": 52,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    52,
+    7,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Museum1F_w0.state"
+  },
+  {
+   "label": "Museum2F_w0",
+   "map": 53,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    53,
+    7,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Museum2F_w0.state"
+  },
+  {
+   "label": "PewterGym_w0",
+   "map": 54,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    54,
+    13,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PewterGym_w0.state"
+  },
+  {
+   "label": "PewterNidoranHouse_w0",
+   "map": 55,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    55,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PewterNidoranHouse_w0.state"
+  },
+  {
+   "label": "PewterMart_w0",
+   "map": 56,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    56,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PewterMart_w0.state"
+  },
+  {
+   "label": "PewterSpeechHouse_w0",
+   "map": 57,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    57,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PewterSpeechHouse_w0.state"
+  },
+  {
+   "label": "PewterPokecenter_w0",
+   "map": 58,
+   "warp": 0,
+   "level": 12,
+   "ok": true,
+   "arrived": [
+    58,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PewterPokecenter_w0.state"
+  },
+  {
+   "label": "MtMoon1F_w0",
+   "map": 59,
+   "warp": 0,
+   "level": 16,
+   "ok": true,
+   "arrived": [
+    59,
+    35,
+    14
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/MtMoon1F_w0.state"
+  },
+  {
+   "label": "MtMoonB1F_w0",
+   "map": 60,
+   "warp": 0,
+   "level": 16,
+   "ok": true,
+   "arrived": [
+    60,
+    5,
+    5
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/MtMoonB1F_w0.state"
+  },
+  {
+   "label": "MtMoonB2F_w0",
+   "map": 61,
+   "warp": 0,
+   "level": 16,
+   "ok": true,
+   "arrived": [
+    61,
+    9,
+    25
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/MtMoonB2F_w0.state"
+  },
+  {
+   "label": "CeruleanTrashedHouse_w0",
+   "map": 62,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    62,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeruleanTrashedHouse_w0.state"
+  },
+  {
+   "label": "CeruleanMelaniesHouse_w0",
+   "map": 63,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    63,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeruleanMelaniesHouse_w0.state"
+  },
+  {
+   "label": "CeruleanPokecenter_w0",
+   "map": 64,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    64,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeruleanPokecenter_w0.state"
+  },
+  {
+   "label": "CeruleanGym_w0",
+   "map": 65,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    65,
+    13,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeruleanGym_w0.state"
+  },
+  {
+   "label": "BikeShop_w0",
+   "map": 66,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    66,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/BikeShop_w0.state"
+  },
+  {
+   "label": "CeruleanMart_w0",
+   "map": 67,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    67,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeruleanMart_w0.state"
+  },
+  {
+   "label": "MtMoonPokecenter_w0",
+   "map": 68,
+   "warp": 0,
+   "level": 16,
+   "ok": true,
+   "arrived": [
+    68,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/MtMoonPokecenter_w0.state"
+  },
+  {
+   "label": "Route5Gate_w0",
+   "map": 70,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    70,
+    5,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route5Gate_w0.state"
+  },
+  {
+   "label": "UndergroundPathRoute5_w0",
+   "map": 71,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    71,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/UndergroundPathRoute5_w0.state"
+  },
+  {
+   "label": "Daycare_w0",
+   "map": 72,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    72,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Daycare_w0.state"
+  },
+  {
+   "label": "Route6Gate_w0",
+   "map": 73,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    73,
+    5,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route6Gate_w0.state"
+  },
+  {
+   "label": "UndergroundPathRoute6_w0",
+   "map": 74,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    74,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/UndergroundPathRoute6_w0.state"
+  },
+  {
+   "label": "Route7Gate_w0",
+   "map": 76,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    76,
+    3,
+    0
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route7Gate_w0.state"
+  },
+  {
+   "label": "UndergroundPathRoute7_w0",
+   "map": 77,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    77,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/UndergroundPathRoute7_w0.state"
+  },
+  {
+   "label": "Route8Gate_w0",
+   "map": 79,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    79,
+    3,
+    0
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route8Gate_w0.state"
+  },
+  {
+   "label": "UndergroundPathRoute8_w0",
+   "map": 80,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    80,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/UndergroundPathRoute8_w0.state"
+  },
+  {
+   "label": "RockTunnelPokecenter_w0",
+   "map": 81,
+   "warp": 0,
+   "level": 28,
+   "ok": true,
+   "arrived": [
+    81,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/RockTunnelPokecenter_w0.state"
+  },
+  {
+   "label": "RockTunnel1F_w0",
+   "map": 82,
+   "warp": 0,
+   "level": 28,
+   "ok": true,
+   "arrived": [
+    82,
+    3,
+    15
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/RockTunnel1F_w0.state"
+  },
+  {
+   "label": "PowerPlant_w0",
+   "map": 83,
+   "warp": 0,
+   "level": 28,
+   "ok": true,
+   "arrived": [
+    83,
+    35,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PowerPlant_w0.state"
+  },
+  {
+   "label": "Route11Gate1F_w0",
+   "map": 84,
+   "warp": 0,
+   "level": 25,
+   "ok": true,
+   "arrived": [
+    84,
+    4,
+    0
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route11Gate1F_w0.state"
+  },
+  {
+   "label": "DiglettsCaveRoute11_w0",
+   "map": 85,
+   "warp": 0,
+   "level": 25,
+   "ok": true,
+   "arrived": [
+    85,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/DiglettsCaveRoute11_w0.state"
+  },
+  {
+   "label": "Route11Gate2F_w0",
+   "map": 86,
+   "warp": 0,
+   "level": 25,
+   "ok": true,
+   "arrived": [
+    86,
+    7,
+    7
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route11Gate2F_w0.state"
+  },
+  {
+   "label": "Route12Gate1F_w0",
+   "map": 87,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    87,
+    0,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route12Gate1F_w0.state"
+  },
+  {
+   "label": "BillsHouse_w0",
+   "map": 88,
+   "warp": 0,
+   "level": 21,
+   "ok": true,
+   "arrived": [
+    88,
+    7,
+    2
+   ],
+   "seconds": 2.7,
+   "state": "states/cgb/teleport/BillsHouse_w0.state"
+  },
+  {
+   "label": "VermilionPokecenter_w0",
+   "map": 89,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    89,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/VermilionPokecenter_w0.state"
+  },
+  {
+   "label": "PokemonFanClub_w0",
+   "map": 90,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    90,
+    7,
+    2
+   ],
+   "seconds": 2.7,
+   "state": "states/cgb/teleport/PokemonFanClub_w0.state"
+  },
+  {
+   "label": "VermilionMart_w0",
+   "map": 91,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    91,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/VermilionMart_w0.state"
+  },
+  {
+   "label": "VermilionGym_w0",
+   "map": 92,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    92,
+    17,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/VermilionGym_w0.state"
+  },
+  {
+   "label": "VermilionPidgeyHouse_w0",
+   "map": 93,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    93,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/VermilionPidgeyHouse_w0.state"
+  },
+  {
+   "label": "VermilionDock_w0",
+   "map": 94,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    94,
+    0,
+    14
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/VermilionDock_w0.state"
+  },
+  {
+   "label": "SSAnne1F_w0",
+   "map": 95,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    95,
+    0,
+    26
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SSAnne1F_w0.state"
+  },
+  {
+   "label": "SSAnne2F_w0",
+   "map": 96,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    96,
+    12,
+    9
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SSAnne2F_w0.state"
+  },
+  {
+   "label": "SSAnne3F_w0",
+   "map": 97,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    97,
+    3,
+    0
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SSAnne3F_w0.state"
+  },
+  {
+   "label": "SSAnneB1F_w0",
+   "map": 98,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    98,
+    4,
+    23
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SSAnneB1F_w0.state"
+  },
+  {
+   "label": "SSAnneBow_w0",
+   "map": 99,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    99,
+    6,
+    13
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SSAnneBow_w0.state"
+  },
+  {
+   "label": "SSAnneKitchen_w0",
+   "map": 100,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    100,
+    1,
+    6
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SSAnneKitchen_w0.state"
+  },
+  {
+   "label": "SSAnneCaptainsRoom_w0",
+   "map": 101,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    101,
+    7,
+    0
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SSAnneCaptainsRoom_w0.state"
+  },
+  {
+   "label": "SSAnne1FRooms_w0",
+   "map": 102,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    102,
+    1,
+    0
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SSAnne1FRooms_w0.state"
+  },
+  {
+   "label": "SSAnne2FRooms_w0",
+   "map": 103,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    103,
+    5,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SSAnne2FRooms_w0.state"
+  },
+  {
+   "label": "SSAnneB1FRooms_w0",
+   "map": 104,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    104,
+    5,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SSAnneB1FRooms_w0.state"
+  },
+  {
+   "label": "VictoryRoad1F_w0",
+   "map": 108,
+   "warp": 0,
+   "level": 55,
+   "ok": true,
+   "arrived": [
+    108,
+    17,
+    8
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/VictoryRoad1F_w0.state"
+  },
+  {
+   "label": "UndergroundPathNorthSouth_w0",
+   "map": 119,
+   "warp": 0,
+   "level": 22,
+   "ok": true,
+   "arrived": [
+    119,
+    4,
+    5
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/UndergroundPathNorthSouth_w0.state"
+  },
+  {
+   "label": "UndergroundPathWestEast_w0",
+   "map": 121,
+   "warp": 0,
+   "level": 32,
+   "ok": true,
+   "arrived": [
+    121,
+    5,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/UndergroundPathWestEast_w0.state"
+  },
+  {
+   "label": "CeladonMart1F_w0",
+   "map": 122,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    122,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonMart1F_w0.state"
+  },
+  {
+   "label": "CeladonMart2F_w0",
+   "map": 123,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    123,
+    2,
+    12
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonMart2F_w0.state"
+  },
+  {
+   "label": "CeladonMart3F_w0",
+   "map": 124,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    124,
+    2,
+    12
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonMart3F_w0.state"
+  },
+  {
+   "label": "CeladonMart4F_w0",
+   "map": 125,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    125,
+    2,
+    12
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonMart4F_w0.state"
+  },
+  {
+   "label": "CeladonMartRoof_w0",
+   "map": 126,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    126,
+    3,
+    15
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonMartRoof_w0.state"
+  },
+  {
+   "label": "CeladonMartElevator_w0",
+   "map": 127,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    127,
+    3,
+    1
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonMartElevator_w0.state"
+  },
+  {
+   "label": "CeladonMansion1F_w0",
+   "map": 128,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    128,
+    11,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonMansion1F_w0.state"
+  },
+  {
+   "label": "CeladonMansion2F_w0",
+   "map": 129,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    129,
+    2,
+    6
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonMansion2F_w0.state"
+  },
+  {
+   "label": "CeladonMansion3F_w0",
+   "map": 130,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    130,
+    2,
+    6
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonMansion3F_w0.state"
+  },
+  {
+   "label": "CeladonMansionRoof_w0",
+   "map": 131,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    131,
+    2,
+    6
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonMansionRoof_w0.state"
+  },
+  {
+   "label": "CeladonMansionRoofHouse_w0",
+   "map": 132,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    132,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonMansionRoofHouse_w0.state"
+  },
+  {
+   "label": "CeladonPokecenter_w0",
+   "map": 133,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    133,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeladonPokecenter_w0.state"
+  },
+  {
+   "label": "CeladonGym_w0",
+   "map": 134,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    134,
+    17,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonGym_w0.state"
+  },
+  {
+   "label": "GameCorner_w0",
+   "map": 135,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    135,
+    17,
+    15
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/GameCorner_w0.state"
+  },
+  {
+   "label": "CeladonMart5F_w0",
+   "map": 136,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    136,
+    2,
+    12
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonMart5F_w0.state"
+  },
+  {
+   "label": "GameCornerPrizeRoom_w0",
+   "map": 137,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    137,
+    7,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/GameCornerPrizeRoom_w0.state"
+  },
+  {
+   "label": "CeladonDiner_w0",
+   "map": 138,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    138,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonDiner_w0.state"
+  },
+  {
+   "label": "CeladonChiefHouse_w0",
+   "map": 139,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    139,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonChiefHouse_w0.state"
+  },
+  {
+   "label": "CeladonHotel_w0",
+   "map": 140,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    140,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeladonHotel_w0.state"
+  },
+  {
+   "label": "LavenderPokecenter_w0",
+   "map": 141,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    141,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/LavenderPokecenter_w0.state"
+  },
+  {
+   "label": "PokemonTower1F_w0",
+   "map": 142,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    142,
+    17,
+    10
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PokemonTower1F_w0.state"
+  },
+  {
+   "label": "PokemonTower2F_w0",
+   "map": 143,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    143,
+    9,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PokemonTower2F_w0.state"
+  },
+  {
+   "label": "PokemonTower3F_w0",
+   "map": 144,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    144,
+    9,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PokemonTower3F_w0.state"
+  },
+  {
+   "label": "PokemonTower4F_w0",
+   "map": 145,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    145,
+    9,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PokemonTower4F_w0.state"
+  },
+  {
+   "label": "PokemonTower5F_w0",
+   "map": 146,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    146,
+    9,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PokemonTower5F_w0.state"
+  },
+  {
+   "label": "PokemonTower6F_w0",
+   "map": 147,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    147,
+    9,
+    18
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/PokemonTower6F_w0.state"
+  },
+  {
+   "label": "PokemonTower7F_w0",
+   "map": 148,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    148,
+    16,
+    9
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PokemonTower7F_w0.state"
+  },
+  {
+   "label": "MrFujisHouse_w0",
+   "map": 149,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    149,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/MrFujisHouse_w0.state"
+  },
+  {
+   "label": "LavenderMart_w0",
+   "map": 150,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    150,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/LavenderMart_w0.state"
+  },
+  {
+   "label": "LavenderCuboneHouse_w0",
+   "map": 151,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    151,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/LavenderCuboneHouse_w0.state"
+  },
+  {
+   "label": "FuchsiaMart_w0",
+   "map": 152,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    152,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FuchsiaMart_w0.state"
+  },
+  {
+   "label": "FuchsiaBillsGrandpasHouse_w0",
+   "map": 153,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    153,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FuchsiaBillsGrandpasHouse_w0.state"
+  },
+  {
+   "label": "FuchsiaPokecenter_w0",
+   "map": 154,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    154,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FuchsiaPokecenter_w0.state"
+  },
+  {
+   "label": "WardensHouse_w0",
+   "map": 155,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    155,
+    7,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/WardensHouse_w0.state"
+  },
+  {
+   "label": "SafariZoneGate_w0",
+   "map": 156,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    156,
+    5,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneGate_w0.state"
+  },
+  {
+   "label": "FuchsiaGym_w0",
+   "map": 157,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    157,
+    17,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FuchsiaGym_w0.state"
+  },
+  {
+   "label": "FuchsiaMeetingRoom_w0",
+   "map": 158,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    158,
+    7,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FuchsiaMeetingRoom_w0.state"
+  },
+  {
+   "label": "SeafoamIslandsB1F_w0",
+   "map": 159,
+   "warp": 0,
+   "level": 46,
+   "ok": true,
+   "arrived": [
+    159,
+    2,
+    4
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SeafoamIslandsB1F_w0.state"
+  },
+  {
+   "label": "SeafoamIslandsB2F_w0",
+   "map": 160,
+   "warp": 0,
+   "level": 46,
+   "ok": true,
+   "arrived": [
+    160,
+    3,
+    5
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SeafoamIslandsB2F_w0.state"
+  },
+  {
+   "label": "SeafoamIslandsB3F_w0",
+   "map": 161,
+   "warp": 0,
+   "level": 46,
+   "ok": true,
+   "arrived": [
+    161,
+    12,
+    5
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SeafoamIslandsB3F_w0.state"
+  },
+  {
+   "label": "SeafoamIslandsB4F_w0",
+   "map": 162,
+   "warp": 0,
+   "level": 46,
+   "ok": false,
+   "arrived": [
+    162,
+    16,
+    20
+   ],
+   "seconds": 5.9
+  },
+  {
+   "label": "VermilionOldRodHouse_w0",
+   "map": 163,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    163,
+    7,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/VermilionOldRodHouse_w0.state"
+  },
+  {
+   "label": "FuchsiaGoodRodHouse_w0",
+   "map": 164,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    164,
+    1,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FuchsiaGoodRodHouse_w0.state"
+  },
+  {
+   "label": "PokemonMansion1F_w0",
+   "map": 165,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    165,
+    27,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PokemonMansion1F_w0.state"
+  },
+  {
+   "label": "CinnabarGym_w0",
+   "map": 166,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    166,
+    17,
+    16
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CinnabarGym_w0.state"
+  },
+  {
+   "label": "CinnabarLab_w0",
+   "map": 167,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    167,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CinnabarLab_w0.state"
+  },
+  {
+   "label": "CinnabarLabTradeRoom_w0",
+   "map": 168,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    168,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CinnabarLabTradeRoom_w0.state"
+  },
+  {
+   "label": "CinnabarLabMetronomeRoom_w0",
+   "map": 169,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    169,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CinnabarLabMetronomeRoom_w0.state"
+  },
+  {
+   "label": "CinnabarLabFossilRoom_w0",
+   "map": 170,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    170,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CinnabarLabFossilRoom_w0.state"
+  },
+  {
+   "label": "CinnabarPokecenter_w0",
+   "map": 171,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    171,
+    7,
+    3
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CinnabarPokecenter_w0.state"
+  },
+  {
+   "label": "CinnabarMart_w0",
+   "map": 172,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    172,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CinnabarMart_w0.state"
+  },
+  {
+   "label": "IndigoPlateauLobby_w0",
+   "map": 174,
+   "warp": 0,
+   "level": 58,
+   "ok": true,
+   "arrived": [
+    174,
+    11,
+    7
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/IndigoPlateauLobby_w0.state"
+  },
+  {
+   "label": "CopycatsHouse1F_w0",
+   "map": 175,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    175,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CopycatsHouse1F_w0.state"
+  },
+  {
+   "label": "CopycatsHouse2F_w0",
+   "map": 176,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    176,
+    1,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CopycatsHouse2F_w0.state"
+  },
+  {
+   "label": "FightingDojo_w0",
+   "map": 177,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    177,
+    11,
+    5
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/FightingDojo_w0.state"
+  },
+  {
+   "label": "SaffronGym_w0",
+   "map": 178,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    178,
+    17,
+    8
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SaffronGym_w0.state"
+  },
+  {
+   "label": "SaffronPidgeyHouse_w0",
+   "map": 179,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    179,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SaffronPidgeyHouse_w0.state"
+  },
+  {
+   "label": "SaffronMart_w0",
+   "map": 180,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    180,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SaffronMart_w0.state"
+  },
+  {
+   "label": "SilphCo1F_w0",
+   "map": 181,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    181,
+    17,
+    10
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo1F_w0.state"
+  },
+  {
+   "label": "SaffronPokecenter_w0",
+   "map": 182,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    182,
+    7,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SaffronPokecenter_w0.state"
+  },
+  {
+   "label": "MrPsychicsHouse_w0",
+   "map": 183,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    183,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/MrPsychicsHouse_w0.state"
+  },
+  {
+   "label": "Route15Gate1F_w0",
+   "map": 184,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    184,
+    4,
+    0
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route15Gate1F_w0.state"
+  },
+  {
+   "label": "Route15Gate2F_w0",
+   "map": 185,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    185,
+    7,
+    7
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/Route15Gate2F_w0.state"
+  },
+  {
+   "label": "Route16Gate1F_w0",
+   "map": 186,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    186,
+    8,
+    0
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route16Gate1F_w0.state"
+  },
+  {
+   "label": "Route16Gate2F_w0",
+   "map": 187,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    187,
+    7,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route16Gate2F_w0.state"
+  },
+  {
+   "label": "Route16FlyHouse_w0",
+   "map": 188,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    188,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route16FlyHouse_w0.state"
+  },
+  {
+   "label": "Route12SuperRodHouse_w0",
+   "map": 189,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    189,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route12SuperRodHouse_w0.state"
+  },
+  {
+   "label": "Route18Gate1F_w0",
+   "map": 190,
+   "warp": 0,
+   "level": 38,
+   "ok": true,
+   "arrived": [
+    190,
+    4,
+    0
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route18Gate1F_w0.state"
+  },
+  {
+   "label": "Route18Gate2F_w0",
+   "map": 191,
+   "warp": 0,
+   "level": 38,
+   "ok": true,
+   "arrived": [
+    191,
+    7,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route18Gate2F_w0.state"
+  },
+  {
+   "label": "SeafoamIslands1F_w0",
+   "map": 192,
+   "warp": 0,
+   "level": 46,
+   "ok": true,
+   "arrived": [
+    192,
+    17,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SeafoamIslands1F_w0.state"
+  },
+  {
+   "label": "Route22Gate_w0",
+   "map": 193,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    193,
+    7,
+    4
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route22Gate_w0.state"
+  },
+  {
+   "label": "VictoryRoad2F_w0",
+   "map": 194,
+   "warp": 0,
+   "level": 55,
+   "ok": true,
+   "arrived": [
+    194,
+    8,
+    0
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/VictoryRoad2F_w0.state"
+  },
+  {
+   "label": "Route12Gate2F_w0",
+   "map": 195,
+   "warp": 0,
+   "level": 36,
+   "ok": true,
+   "arrived": [
+    195,
+    7,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/Route12Gate2F_w0.state"
+  },
+  {
+   "label": "VermilionTradeHouse_w0",
+   "map": 196,
+   "warp": 0,
+   "level": 24,
+   "ok": true,
+   "arrived": [
+    196,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/VermilionTradeHouse_w0.state"
+  },
+  {
+   "label": "DiglettsCave_w0",
+   "map": 197,
+   "warp": 0,
+   "level": 9,
+   "ok": true,
+   "arrived": [
+    197,
+    5,
+    5
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/DiglettsCave_w0.state"
+  },
+  {
+   "label": "VictoryRoad3F_w0",
+   "map": 198,
+   "warp": 0,
+   "level": 55,
+   "ok": true,
+   "arrived": [
+    198,
+    7,
+    23
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/VictoryRoad3F_w0.state"
+  },
+  {
+   "label": "RocketHideoutB1F_w0",
+   "map": 199,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    199,
+    3,
+    23
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/RocketHideoutB1F_w0.state"
+  },
+  {
+   "label": "RocketHideoutB2F_w0",
+   "map": 200,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    200,
+    8,
+    27
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/RocketHideoutB2F_w0.state"
+  },
+  {
+   "label": "RocketHideoutB3F_w0",
+   "map": 201,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    201,
+    6,
+    25
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/RocketHideoutB3F_w0.state"
+  },
+  {
+   "label": "RocketHideoutB4F_w0",
+   "map": 202,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    202,
+    10,
+    19
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/RocketHideoutB4F_w0.state"
+  },
+  {
+   "label": "RocketHideoutElevator_w0",
+   "map": 203,
+   "warp": 0,
+   "level": 34,
+   "ok": true,
+   "arrived": [
+    203,
+    2,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/RocketHideoutElevator_w0.state"
+  },
+  {
+   "label": "SilphCo2F_w0",
+   "map": 207,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    207,
+    1,
+    24
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo2F_w0.state"
+  },
+  {
+   "label": "SilphCo3F_w0",
+   "map": 208,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    208,
+    1,
+    26
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo3F_w0.state"
+  },
+  {
+   "label": "SilphCo4F_w0",
+   "map": 209,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    209,
+    1,
+    24
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo4F_w0.state"
+  },
+  {
+   "label": "SilphCo5F_w0",
+   "map": 210,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    210,
+    1,
+    24
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo5F_w0.state"
+  },
+  {
+   "label": "SilphCo6F_w0",
+   "map": 211,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    211,
+    1,
+    16
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo6F_w0.state"
+  },
+  {
+   "label": "SilphCo7F_w0",
+   "map": 212,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    212,
+    1,
+    16
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo7F_w0.state"
+  },
+  {
+   "label": "SilphCo8F_w0",
+   "map": 213,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    213,
+    1,
+    16
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SilphCo8F_w0.state"
+  },
+  {
+   "label": "PokemonMansion2F_w0",
+   "map": 214,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    214,
+    11,
+    5
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PokemonMansion2F_w0.state"
+  },
+  {
+   "label": "PokemonMansion3F_w0",
+   "map": 215,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    215,
+    11,
+    7
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PokemonMansion3F_w0.state"
+  },
+  {
+   "label": "PokemonMansionB1F_w0",
+   "map": 216,
+   "warp": 0,
+   "level": 48,
+   "ok": true,
+   "arrived": [
+    216,
+    22,
+    23
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/PokemonMansionB1F_w0.state"
+  },
+  {
+   "label": "SafariZoneEast_w0",
+   "map": 217,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    217,
+    4,
+    0
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SafariZoneEast_w0.state"
+  },
+  {
+   "label": "SafariZoneNorth_w0",
+   "map": 218,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    218,
+    35,
+    2
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SafariZoneNorth_w0.state"
+  },
+  {
+   "label": "SafariZoneWest_w0",
+   "map": 219,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    219,
+    0,
+    20
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneWest_w0.state"
+  },
+  {
+   "label": "SafariZoneCenter_w0",
+   "map": 220,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    220,
+    25,
+    14
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/SafariZoneCenter_w0.state"
+  },
+  {
+   "label": "SafariZoneCenterRestHouse_w0",
+   "map": 221,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    221,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneCenterRestHouse_w0.state"
+  },
+  {
+   "label": "SafariZoneSecretHouse_w0",
+   "map": 222,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    222,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneSecretHouse_w0.state"
+  },
+  {
+   "label": "SafariZoneWestRestHouse_w0",
+   "map": 223,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    223,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneWestRestHouse_w0.state"
+  },
+  {
+   "label": "SafariZoneEastRestHouse_w0",
+   "map": 224,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    224,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneEastRestHouse_w0.state"
+  },
+  {
+   "label": "SafariZoneNorthRestHouse_w0",
+   "map": 225,
+   "warp": 0,
+   "level": 40,
+   "ok": true,
+   "arrived": [
+    225,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/SafariZoneNorthRestHouse_w0.state"
+  },
+  {
+   "label": "CeruleanCave2F_w0",
+   "map": 226,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    226,
+    1,
+    29
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeruleanCave2F_w0.state"
+  },
+  {
+   "label": "CeruleanCaveB1F_w0",
+   "map": 227,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    227,
+    6,
+    3
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/CeruleanCaveB1F_w0.state"
+  },
+  {
+   "label": "CeruleanCave1F_w0",
+   "map": 228,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    228,
+    17,
+    24
+   ],
+   "seconds": 2.4,
+   "state": "states/cgb/teleport/CeruleanCave1F_w0.state"
+  },
+  {
+   "label": "NameRatersHouse_w0",
+   "map": 229,
+   "warp": 0,
+   "level": 30,
+   "ok": true,
+   "arrived": [
+    229,
+    7,
+    2
+   ],
+   "seconds": 2.3,
+   "state": "states/cgb/teleport/NameRatersHouse_w0.state"
+  },
+  {
+   "label": "CeruleanBadgeHouse_w0",
+   "map": 230,
+   "warp": 0,
+   "level": 20,
+   "ok": true,
+   "arrived": [
+    230,
+    1,
+    2
+   ],
+   "seconds": 2.2,
+   "state": "states/cgb/teleport/CeruleanBadgeHouse_w0.state"
+  },
+  {
+   "label": "RockTunnelB1F_w0",
+   "map": 232,
+   "warp": 0,
+   "level": 28,
+   "ok": true,
+   "arrived": [
+    232,
+    25,
+    33
+   ],
+   "seconds": 2.1,
+   "state": "states/cgb/teleport/RockTunnelB1F_w0.state"
+  },
+  {
+   "label": "SilphCo9F_w0",
+   "map": 233,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    233,
+    1,
+    14
+   ],
+   "seconds": 2.0,
+   "state": "states/cgb/teleport/SilphCo9F_w0.state"
+  },
+  {
+   "label": "SilphCo10F_w0",
+   "map": 234,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    234,
+    1,
+    8
+   ],
+   "seconds": 2.0,
+   "state": "states/cgb/teleport/SilphCo10F_w0.state"
+  },
+  {
+   "label": "SilphCo11F_w0",
+   "map": 235,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    235,
+    1,
+    9
+   ],
+   "seconds": 2.0,
+   "state": "states/cgb/teleport/SilphCo11F_w0.state"
+  },
+  {
+   "label": "SilphCoElevator_w0",
+   "map": 236,
+   "warp": 0,
+   "level": 44,
+   "ok": true,
+   "arrived": [
+    236,
+    3,
+    1
+   ],
+   "seconds": 1.9,
+   "state": "states/cgb/teleport/SilphCoElevator_w0.state"
+  }
+ ]
+}

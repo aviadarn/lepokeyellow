@@ -36,6 +36,14 @@ class RamMap:
     event_flags: int
     num_bag_items: int
     facing: int
+    badges: int
+    #: First party slot's current HP (big-endian u16); slot k is + k * PARTY_MON_BYTES.
+    party_hp: int
+    party_max_hp: int
+    party_level: int
+    #: wGameProgressFlags: every map's current script index (wOaksLabCurScript,
+    #: wPalletTownCurScript, ...), NUM_PROGRESS_BYTES long.
+    map_scripts: int
     confidence: dict[str, str] = field(default_factory=dict)
 
     def verified(self, name: str) -> bool:
@@ -67,6 +75,11 @@ RED = Game(
         event_flags=0xD747,
         num_bag_items=0xD31D,
         facing=0xC109,
+        badges=0xD356,
+        party_hp=0xD16C,
+        party_max_hp=0xD18D,
+        party_level=0xD18C,
+        map_scripts=0xD5F0,
         confidence={
             "party_count": "documented",
             "party_species": "documented",
@@ -77,6 +90,11 @@ RED = Game(
             "event_flags": "documented",
             "num_bag_items": "documented",
             "facing": "documented",
+            "badges": "documented",
+            "party_hp": "documented",
+            "party_max_hp": "documented",
+            "party_level": "documented",
+            "map_scripts": "documented",
         },
     ),
 )
@@ -95,6 +113,11 @@ YELLOW = Game(
         event_flags=0xD746,
         num_bag_items=0xD31C,
         facing=0xC109,
+        badges=0xD355,
+        party_hp=0xD16B,
+        party_max_hp=0xD18C,
+        party_level=0xD18B,
+        map_scripts=0xD5EF,
         confidence={
             # Watched go 0 -> 1 on this cartridge when Pikachu arrives.
             "party_count": "confirmed-on-rom",
@@ -114,8 +137,24 @@ YELLOW = Game(
             # while the parcel moved through the bag (flag spike, 2026-10-21).
             "event_flags": "confirmed-on-rom",
             "num_bag_items": "confirmed-on-rom",
-            # Below $CF1A, so the -1 shift does not apply.
-            "facing": "documented",
+            # Below $CF1A, so the -1 shift does not apply. Confirmed in
+            # colour from Pewter: down/left/right/up read 0/8/12/4 and the
+            # sprite turned to match.
+            "facing": "confirmed-on-rom",
+            # The rest come from pret/pokeyellow's own symbol table (symbols
+            # branch), which agrees with every address above that was
+            # confirmed on the cartridge -- see tests/test_symbols.py -- and
+            # were then watched on it:
+            # badges: poking 0b11 made the save screen print "BADGES 2";
+            "badges": "confirmed-on-rom",
+            # HP / max HP / level: the recorded values matched the battle
+            # screen ("65/ 83", ":L44") through a Silph Co. trainer fight.
+            "party_hp": "confirmed-on-rom",
+            "party_max_hp": "confirmed-on-rom",
+            "party_level": "confirmed-on-rom",
+            # Indirect only: adding this block to the oracle's state key is
+            # what let Part 1 be searched at all.
+            "map_scripts": "pret-sym",
         },
     ),
 )
@@ -130,6 +169,12 @@ GAMES: dict[str, Game] = {game.key: game for game in (RED, YELLOW)}
 
 # Sentinel the game stores in an empty species slot.
 EMPTY_SPECIES = 0xFF
+
+# One party_struct: wPartyMon2 - wPartyMon1, the same in Red and Yellow.
+PARTY_MON_BYTES = 44
+
+# wGameProgressFlagsEnd - wGameProgressFlags.
+NUM_PROGRESS_BYTES = 200
 
 
 def rom_header_title(rom_path: str | Path) -> str:

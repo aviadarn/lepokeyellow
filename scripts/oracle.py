@@ -4,6 +4,11 @@ TRAINING ONLY: this uses emulator snapshots, which the play-time contract bans.
 
 Writes one save state per phase into --states-dir and a JSON report with the
 path, the node counts and the wall-clock cost of each phase.
+
+With --color it runs in GBC mode from states/cgb/, starting at the bedroom and
+running Part 1 (pikachu, rival, route1) first. The DMG Route 1 state came from
+replaying a play log, which is frame-phase sensitive and does not transfer to
+CGB timing, so in colour the search walks Part 1 too.
 """
 
 from __future__ import annotations
@@ -14,16 +19,28 @@ from pathlib import Path
 
 from poke.actions import ACTIONS
 from poke.env import PokeEnv
-from poke.flags import GOT_POKEDEX, carrying_parcel, event_bit
+from poke.flags import BATTLED_RIVAL_IN_OAKS_LAB, GOT_POKEDEX, carrying_parcel, event_bit
 from poke.objectives import VIRIDIAN_FOREST
 from poke.oracle import MAX_SEARCH_BYTES, nodes_for, search
+from poke.ram import has_pokemon, in_battle
 
 FOREST_GATE = 50
+ROUTE_1 = 12
+PART1 = ("pikachu", "rival", "route1")
 
 
 def phases(env):
     """(name, goal, allowed maps, buttons) in the order the story needs."""
     return [
+        # Bedroom -> Oak stops the player north of Pallet -> lab -> Pikachu.
+        ("pikachu", lambda: has_pokemon(env), {38, 37, 0, 40},
+         ("up", "down", "left", "right", "a")),
+        # The rival challenges the player on the way out of the lab.
+        ("rival", lambda: (event_bit(env, BATTLED_RIVAL_IN_OAKS_LAB) == 1
+                           and not in_battle(env)), {40},
+         ("up", "down", "left", "right", "a")),
+        ("route1", lambda: env.read_ram(env.game.ram.cur_map) == ROUTE_1,
+         {40, 0, ROUTE_1}, ("up", "down", "left", "right")),
         ("parcel", lambda: carrying_parcel(env), {12, 1, 42},
          ("up", "down", "left", "right", "a")),
         ("pokedex", lambda: event_bit(env, GOT_POKEDEX) == 1, {42, 1, 12, 0, 40},
@@ -37,10 +54,14 @@ def phases(env):
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rom", default="pokeyellow.gbc")
-    parser.add_argument("--state", default="states/route1.state",
-                        help="where to start; the Route 1 state for stage A")
-    parser.add_argument("--states-dir", default="states/oracle")
-    parser.add_argument("--out", default="results/oracle.json")
+    parser.add_argument("--state", default=None,
+                        help="where to start; default states/route1.state, or "
+                             "states/cgb/bedroom.state with --color")
+    parser.add_argument("--states-dir", default=None,
+                        help="default states/oracle, or states/cgb/oracle")
+    parser.add_argument("--out", default=None)
+    parser.add_argument("--color", action="store_true",
+                        help="GBC colour, Part 1 included")
     parser.add_argument("--max-nodes", type=int, default=None,
                         help="default: whatever fits in "
                              f"{MAX_SEARCH_BYTES // 1024 ** 3} GiB of save "
@@ -52,8 +73,18 @@ def main() -> None:
                              "first; this is how the Route 1 start is reached "
                              "from a new game without shipping a save state")
     args = parser.parse_args()
+    if args.state is None:
+        args.state = ("states/cgb/bedroom.state" if args.color
+                      else "states/route1.state")
+    if args.states_dir is None:
+        args.states_dir = "states/cgb/oracle" if args.color else "states/oracle"
+    if args.out is None:
+        args.out = "results/oracle_cgb.json" if args.color else "results/oracle.json"
+    if args.only is None and not args.color:
+        # DMG starts on Route 1, where Part 1 is already done.
+        args.only = [name for name, *_ in phases(None) if name not in PART1]
 
-    env = PokeEnv(args.rom, args.state)
+    env = PokeEnv(args.rom, args.state, color=args.color)
     env.reset()
     if not args.replay:
         # Never before a replay. settle() ticks frames without an action, and

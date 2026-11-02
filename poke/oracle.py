@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 
 from poke.actions import ACTIONS
 from poke.flags import NUM_EVENT_BYTES, bag_items
+from poke.games import NUM_PROGRESS_BYTES
 
 # Maps the game warps a blacked-out player to. Arriving at one after a battle
 # is not a route, it is a loss, and a search that accepts it will "find" a
@@ -76,10 +77,18 @@ def story_key(env, with_facing: bool) -> tuple:
     Position alone is not a state: standing on the Mart counter before and
     after the parcel is in the bag are different worlds, and a search keyed on
     position would prune the second one away.
+
+    Event flags alone are not enough either. Each map also keeps a script
+    index (wOaksLabCurScript, ...) that advances through a scene without
+    setting any flag, so the lab after Oak's speech keyed the same as the lab
+    before it and got pruned: Part 1 searched 1,414 nodes in colour and never
+    reached Pikachu.
     """
     ram = env.game.ram
     flags = bytes(env.read_ram(ram.event_flags + i) or 0
                   for i in range(NUM_EVENT_BYTES))
+    flags += bytes(env.read_ram(ram.map_scripts + i) or 0
+                   for i in range(NUM_PROGRESS_BYTES))
     bag = bytes(value for pair in bag_items(env) for value in pair)
     digest = hashlib.blake2b(flags + bag, digest_size=8).digest()
     facing = (env.read_ram(ram.facing) or 0) if with_facing else 0
@@ -157,9 +166,10 @@ def search(env, goal, allowed, buttons=("up", "down", "left", "right", "a"),
            with_facing: bool = True, max_nodes: int | None = None,
            on_progress=None) -> SearchResult:
     started = time.time()
-    if max_nodes is None:
-        max_nodes = nodes_for()
     root_blob = env.snapshot()
+    if max_nodes is None:
+        # Sized from the real state: a CGB state is 211 KB, not STATE_BYTES.
+        max_nodes = max(1, MAX_SEARCH_BYTES // len(root_blob))
     root = story_key(env, with_facing)
     parents: dict[tuple, tuple] = {root: (None, None, root_blob, [])}
     queue = collections.deque([root])

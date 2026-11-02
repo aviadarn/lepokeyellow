@@ -9,6 +9,8 @@ states/
 
 # Large or regenerable artifacts.
 episodes/
+# Downloaded video, pret symbol file, collected PokeDreamer-schema chunks.
+data/
 checkpoints/
 # CEM plan JSON, not docs/superpowers/plans -- a bare `plans/` matched at any
 # depth and swallowed the implementation plans, so the plan a branch was built

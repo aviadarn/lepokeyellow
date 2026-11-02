@@ -933,6 +933,35 @@ Carried into the vendored code, each with a header saying what changed:
 - Dropped `eval_plan.py --runs N`: the emulator is deterministic from a save
   state and the plan is fixed, so N runs are N identical episodes.
 
+## A dataset for world models: PokeDreamer, for Yellow
+
+[PokeDreamer](https://huggingface.co/datasets/xxxTEMPESTxxx/PokeDreamer) is
+200 k Pokémon Red transitions for Dreamer-style world models: grey frames, 5
+start states between Pallet and Pewter. `scripts/collect_dreamer.py` writes
+the same arrays, names, dtypes and action indices for Yellow, in colour, from
+235 start states on 211 maps. The full card is
+[docs/pokedreamer_yellow.md](docs/pokedreamer_yellow.md).
+
+Getting past Viridian Forest without playing there took one new tool.
+`poke/warp.py` reads every map's warp table out of the ROM through pret's
+symbol file and hooks the game's `WarpFound2`, so stepping on any warp lands
+on any map. The game loads the map itself — NPCs, tileset, palettes, Pikachu
+following — which writing coordinates into WRAM never would. 228 of 229
+teleports arrived with control.
+
+Measured, per 10 k steps against two of PokeDreamer's chunks: 12.7 distinct
+maps vs 7.0, 764 distinct tiles vs 515, 36.6 map changes vs 28.5. Replaying
+12 episodes' actions from their start states reproduced every frame and probe
+exactly. PokeDreamer's own `dialog_opens` reads True on 95.8 % of its frames,
+including frames with no box on screen; here it comes from the tile buffer.
+
+Two fixes it forced on the existing code. The oracle's state key now hashes
+`wGameProgressFlags`: each map's script index advances through a scene
+without setting an event flag, so the lab after Oak's speech keyed the same as
+the lab before it, and Part 1 searched 1,414 nodes without finding Pikachu.
+And `PokeEnv.close()` no longer writes `pokeyellow.gbc.ram` back to disk,
+which every run did, feeding the next boot's SRAM.
+
 ## Roadmap
 
 1. ~~Baseline table before any model exists.~~ Done.
@@ -944,6 +973,8 @@ Carried into the vendored code, each with a header saying what changed:
 5b. **Past Route 1.** The run leaves Pallet onto ground no episode has ever
    walked, where neither the cost field nor the position read-out means
    anything — so the next thing is data out there, not a better planner.
+   The data now exists (colour, 211 maps; see the PokeDreamer section); the
+   models above still train on DMG grey.
 6. Rollout error as a curve, `MSE(k)` for `k = 1..H`, before and after
    fine-tuning. `finetune_rollout` already prints per-horizon validation MSE.
 7. Close the lossiness gap: raw pixels out-predict the encoder on position

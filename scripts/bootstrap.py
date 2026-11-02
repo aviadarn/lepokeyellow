@@ -33,6 +33,7 @@ import numpy as np
 from pyboy import PyBoy
 
 from poke.actions import ACTIONS
+from poke.env import SRAM_BYTES
 from poke.games import resolve
 from poke.maps import NAMES, OAKS_LAB, PALLET_TOWN, REDS_HOUSE_1F, REDS_HOUSE_2F, name
 from poke.routes import SCHEMA, Route, state_digest
@@ -78,10 +79,16 @@ WALK_BUTTONS = ("up", "down", "left", "right", "a", "b")
 class Driver:
     """Thin PyBoy wrapper matching PokeEnv's action timing exactly."""
 
-    def __init__(self, rom: str, game_key: str | None = None, act_frames: int = 60):
+    def __init__(self, rom: str, game_key: str | None = None, act_frames: int = 60,
+                 color: bool = False):
         self.game = resolve(rom, game_key)
-        # DMG, for the same reason PokeEnv forces it: channel 0 must be luminance.
-        self.pyboy = PyBoy(rom, window="null", cgb=False)
+        # DMG by default, for the same reason PokeEnv forces it: channel 0 must
+        # be luminance. Colour boots with blank in-memory SRAM, as PokeEnv does.
+        self.pyboy = PyBoy(
+            rom, window="null",
+            **({"ram_file": io.BytesIO(bytes(SRAM_BYTES))} if color
+               else {"cgb": False}),
+        )
         self.hold = act_frames // 3
         self.settle = act_frames - self.hold
 
@@ -100,7 +107,8 @@ class Driver:
         return self.pyboy.memory[addr]
 
     def screen_digest(self) -> bytes:
-        return np.asarray(self.pyboy.screen.ndarray)[:, :, 0].tobytes()
+        # All three channels: in colour, two screens can share a red channel.
+        return np.asarray(self.pyboy.screen.ndarray)[:, :, :3].tobytes()
 
     @property
     def position(self) -> tuple[int, int, int]:
@@ -122,7 +130,8 @@ class Driver:
             self.pyboy.save_state(handle)
 
     def close(self) -> None:
-        self.pyboy.stop()
+        # Never write `<rom>.ram` back: the next boot would read it.
+        self.pyboy.stop(save=False)
 
 
 def responds_to_direction(driver: Driver) -> bool:
@@ -235,14 +244,21 @@ def main() -> None:
     parser.add_argument("--max-steps", type=int, default=1500)
     parser.add_argument("--act-frames", type=int, default=60)
     parser.add_argument("--game")
+    parser.add_argument("--color", action="store_true",
+                        help="boot in GBC colour; states and routes go under "
+                             "cgb/ so the DMG ones are never overwritten")
     args = parser.parse_args()
 
+    # A CGB-mode state cannot be loaded into a DMG PyBoy or the reverse
+    # (pyboy core/mb.py refuses), so the two sets live apart.
+    states_dir = Path("states/cgb" if args.color else "states")
+    routes_dir = Path("routes/cgb" if args.color else "routes")
     reached = TARGETS[args.to]
-    out = Path(args.out or f"states/{args.to}.state")
+    out = Path(args.out or states_dir / f"{args.to}.state")
     route_task = args.task or TARGET_TASK[args.to] or f"bootstrap_{args.to}"
-    route_path = Path(args.route or f"routes/{route_task}.json")
+    route_path = Path(args.route or routes_dir / f"{route_task}.json")
 
-    driver = Driver(args.rom, args.game, args.act_frames)
+    driver = Driver(args.rom, args.game, args.act_frames, color=args.color)
     started = time.perf_counter()
     try:
         driver.boot()
@@ -253,7 +269,7 @@ def main() -> None:
         # Always write the post-intro state, whatever the target. The search
         # route replays FROM it, so it has to exist on disk for the route's
         # digest to mean anything.
-        bedroom_path = Path("states/bedroom.state")
+        bedroom_path = states_dir / "bedroom.state"
         driver.save(bedroom_path)
 
         if reached(driver):

@@ -1,0 +1,168 @@
+{
+ "chunks": 50,
+ "loader": {
+  "ok": true,
+  "steps": 500000,
+  "pokedreamer_keys_present": [
+   "obs",
+   "actions",
+   "rewards",
+   "episode_starts",
+   "map_ids",
+   "xs",
+   "ys",
+   "facings",
+   "in_battles",
+   "dialog_opens",
+   "badges",
+   "party_hps",
+   "party_max_hps"
+  ]
+ },
+ "replay": {
+  "exact": 12,
+  "of": 12,
+  "rows": [
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00000.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00022.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00045.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00067.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00090.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00113.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00135.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00158.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00181.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00203.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00226.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   },
+   {
+    "file": "data/pokedreamer_yellow/episodes/ep_00249.npz",
+    "steps": 2000,
+    "exact": true,
+    "mismatches": {},
+    "first_mismatch": null
+   }
+  ]
+ },
+ "coverage_per_10k": {
+  "yellow": {
+   "maps": 12.7,
+   "tiles": 763.82,
+   "map_changes": 36.58,
+   "battle_share": 0.208,
+   "dialog_share": 0.265,
+   "whole_set_maps": 211,
+   "whole_set_tiles": 15758
+  },
+  "red_pokedreamer": {
+   "maps": 7.0,
+   "tiles": 514.5,
+   "map_changes": 28.5,
+   "battle_share": 0.117,
+   "dialog_share": 0.958
+  }
+ },
+ "red_chunks": [
+  {
+   "steps": 10000,
+   "maps": 7,
+   "tiles": 374,
+   "map_changes": 19,
+   "battle_share": 0.063,
+   "dialog_share": 0.956,
+   "action_share": [
+    0.213,
+    0.209,
+    0.342,
+    0.098,
+    0.118,
+    0.013,
+    0.003,
+    0.004
+   ]
+  },
+  {
+   "steps": 10000,
+   "maps": 7,
+   "tiles": 655,
+   "map_changes": 38,
+   "battle_share": 0.172,
+   "dialog_share": 0.959,
+   "action_share": [
+    0.143,
+    0.154,
+    0.327,
+    0.187,
+    0.171,
+    0.009,
+    0.004,
+    0.004
+   ]
+  }
+ ]
+}

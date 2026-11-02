@@ -32,7 +32,8 @@ jobs:
                    eval_baselines train probe finetune_rollout plan_cem \
                    eval_plan sweep_seeds show_state play play2 oracle \
                    calibrate_control bench_workers prune_route annotate_route \
-                   record_gif nav_bench collect_part2 train_rl eval_part2; do
+                   record_gif nav_bench collect_part2 train_rl eval_part2 \
+                   fetch_symbols make_start_states collect_dreamer check_dreamer; do
             echo "--- $s"
             uv run python -m "scripts.$s" --help > /dev/null
           done

@@ -1,0 +1,61 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+expanded 250 nodes 283 queue 33 maps {38: 149, 37: 128, 0: 5}
+expanded 500 nodes 596 queue 96 maps {38: 149, 37: 144, 0: 302}
+expanded 750 nodes 836 queue 86 maps {38: 149, 37: 144, 0: 530, 40: 12}
+expanded 1000 nodes 1125 queue 125 maps {38: 149, 37: 144, 0: 662, 40: 169}
+{"found": true, "action_len": 141, "path_len": 27, "expanded": 1138, "nodes": 1240, "emulated_actions": 6777, "maps_seen": {"38": 149, "37": 144, "0": 678, "40": 268}, "seconds": 106.9, "end": [40, 3, 5]}
+{"found": true, "action_len": 118, "path_len": 4, "expanded": 7, "nodes": 18, "emulated_actions": 151, "maps_seen": {"40": 17}, "seconds": 2.1, "end": [40, 6, 5]}
+expanded 250 nodes 298 queue 48 maps {40: 144, 0: 153}
+{"found": true, "action_len": 14, "path_len": 14, "expanded": 303, "nodes": 332, "emulated_actions": 1213, "maps_seen": {"40": 149, "0": 181, "12": 1}, "seconds": 14.4, "end": [12, 35, 10]}
+expanded 250 nodes 297 queue 47 maps {12: 296}
+expanded 500 nodes 605 queue 105 maps {12: 604}
+expanded 750 nodes 859 queue 109 maps {12: 858}
+expanded 1000 nodes 1077 queue 77 maps {12: 1076}
+expanded 1250 nodes 1337 queue 87 maps {12: 1336}
+expanded 1500 nodes 1581 queue 81 maps {12: 1580}
+expanded 1750 nodes 1844 queue 94 maps {12: 1843}
+expanded 2000 nodes 2088 queue 88 maps {12: 2087}
+expanded 2250 nodes 2340 queue 90 maps {12: 2334, 1: 5}
+expanded 2500 nodes 2550 queue 50 maps {12: 2499, 1: 50}
+expanded 2750 nodes 2850 queue 100 maps {12: 2593, 1: 256}
+expanded 3000 nodes 3150 queue 150 maps {12: 2596, 1: 553}
+expanded 3250 nodes 3428 queue 178 maps {12: 2596, 1: 831}
+expanded 3500 nodes 3712 queue 212 maps {12: 2596, 1: 1115}
+expanded 3750 nodes 3998 queue 248 maps {12: 2596, 1: 1400, 42: 1}
+{"found": true, "action_len": 110, "path_len": 46, "expanded": 3992, "nodes": 4252, "emulated_actions": 31991, "maps_seen": {"12": 2596, "1": 1653, "42": 2}, "seconds": 328.1, "end": [42, 5, 2]}
+expanded 250 nodes 387 queue 137 maps {42: 92, 1: 294}
+expanded 500 nodes 656 queue 156 maps {42: 92, 1: 563}
+expanded 750 nodes 871 queue 121 maps {42: 92, 1: 778}
+expanded 1000 nodes 1118 queue 118 maps {42: 92, 1: 1025}
+expanded 1250 nodes 1367 queue 117 maps {42: 92, 1: 1273, 12: 1}
+expanded 1500 nodes 1594 queue 94 maps {42: 92, 1: 1467, 12: 34}
+expanded 1750 nodes 1870 queue 120 maps {42: 92, 1: 1650, 12: 127}
+expanded 2000 nodes 2108 queue 108 maps {42: 92, 1: 1706, 12: 309}
+expanded 2250 nodes 2317 queue 67 maps {42: 92, 1: 1718, 12: 506}
+expanded 2500 nodes 2601 queue 101 maps {42: 92, 1: 1741, 12: 767}
+expanded 2750 nodes 2799 queue 49 maps {42: 92, 1: 1757, 12: 949}
+expanded 3000 nodes 3077 queue 77 maps {42: 92, 1: 1786, 12: 1198}
+expanded 3250 nodes 3339 queue 89 maps {42: 92, 1: 1813, 12: 1420, 0: 13}
+expanded 3500 nodes 3670 queue 170 maps {42: 92, 1: 1919, 12: 1597, 0: 61}
+expanded 3750 nodes 3931 queue 181 maps {42: 92, 1: 1988, 12: 1694, 0: 156}
+expanded 4000 nodes 4177 queue 177 maps {42: 92, 1: 2061, 12: 1797, 0: 226}
+expanded 4250 nodes 4428 queue 178 maps {42: 92, 1: 2126, 12: 1830, 0: 379}
+expanded 4500 nodes 4724 queue 224 maps {42: 92, 1: 2171, 12: 1931, 0: 529}
+expanded 4750 nodes 5016 queue 266 maps {42: 92, 1: 2261, 12: 2007, 0: 655}
+expanded 5000 nodes 5277 queue 277 maps {42: 92, 1: 2334, 12: 2060, 0: 789, 40: 1}
+expanded 5250 nodes 5537 queue 287 maps {42: 92, 1: 2444, 12: 2076, 0: 920, 40: 4}
+expanded 5500 nodes 5781 queue 281 maps {42: 92, 1: 2571, 12: 2091, 0: 1011, 40: 15}
+expanded 5750 nodes 6025 queue 275 maps {42: 92, 1: 2700, 12: 2118, 0: 1073, 40: 41}
+expanded 6000 nodes 6266 queue 266 maps {42: 92, 1: 2812, 12: 2149, 0: 1129, 40: 83}
+{"found": true, "action_len": 143, "path_len": 55, "expanded": 6205, "nodes": 6485, "emulated_actions": 41524, "maps_seen": {"42": 93, "1": 2925, "12": 2190, "0": 1189, "40": 87}, "seconds": 488.1, "end": [40, 3, 5]}
+expanded 250 nodes 267 queue 17 maps {40: 74, 0: 190, 12: 2}
+expanded 500 nodes 507 queue 7 maps {40: 74, 0: 203, 12: 229}
+expanded 750 nodes 784 queue 34 maps {40: 74, 0: 203, 12: 368, 1: 138}
+expanded 1000 nodes 1039 queue 39 maps {40: 74, 0: 203, 12: 368, 1: 393}
+expanded 1250 nodes 1300 queue 50 maps {40: 74, 0: 203, 12: 368, 1: 644, 13: 10}
+expanded 1500 nodes 1555 queue 55 maps {40: 74, 0: 203, 12: 368, 1: 835, 13: 74}
+expanded 1750 nodes 1809 queue 59 maps {40: 74, 0: 203, 12: 369, 1: 1034, 13: 128}
+expanded 2000 nodes 2032 queue 32 maps {40: 74, 0: 203, 12: 451, 1: 1095, 13: 208}
+expanded 2250 nodes 2270 queue 20 maps {40: 74, 0: 203, 12: 635, 1: 1099, 13: 245, 50: 13}
+{"found": true, "action_len": 142, "path_len": 98, "expanded": 2299, "nodes": 2323, "emulated_actions": 11807, "maps_seen": {"40": 74, "0": 203, "12": 662, "1": 1099, "13": 245, "50": 38, "51": 1}, "seconds": 152.0, "end": [51, 47, 16]}
+wrote results/oracle_cgb.json

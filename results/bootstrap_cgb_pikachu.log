@@ -1,0 +1,49 @@
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+intro cleared in 80 A presses; now at (38, 6, 3) -- player's bedroom
+  seed 0: not reached in 3000 steps
+  seed 1: not reached in 3000 steps
+  seed 2: not reached in 3000 steps
+  seed 3: not reached in 3000 steps
+  seed 4: pikachu in 2572 steps
+  seed 5: pikachu in 1926 steps
+  seed 6: pikachu in 1047 steps
+  seed 7: not reached in 3000 steps
+  seed 8: pikachu in 2814 steps
+  seed 9: pikachu in 2655 steps
+  seed 10: pikachu in 829 steps
+  seed 11: pikachu in 1585 steps
+  seed 12: pikachu in 2847 steps
+  seed 13: not reached in 3000 steps
+  seed 14: not reached in 3000 steps
+  seed 15: pikachu in 1513 steps
+  seed 16: not reached in 3000 steps
+  seed 17: pikachu in 1483 steps
+  seed 18: not reached in 3000 steps
+  seed 19: not reached in 3000 steps
+  seed 20: pikachu in 1359 steps
+  seed 21: pikachu in 1852 steps
+  seed 22: not reached in 3000 steps
+  seed 23: not reached in 3000 steps
+  seed 24: not reached in 3000 steps
+  seed 25: not reached in 3000 steps
+  seed 26: pikachu in 2102 steps
+  seed 27: pikachu in 1280 steps
+  seed 28: not reached in 3000 steps
+  seed 29: pikachu in 1134 steps
+  seed 30: not reached in 3000 steps
+  seed 31: not reached in 3000 steps
+  seed 32: pikachu in 2515 steps
+  seed 33: pikachu in 2864 steps
+  seed 34: not reached in 3000 steps
+  seed 35: not reached in 3000 steps
+  seed 36: pikachu in 2245 steps
+  seed 37: pikachu in 1462 steps
+  seed 38: pikachu in 1260 steps
+  seed 39: pikachu in 2087 steps
+shortest: seed 10, 829 actions
+replay verified: (40, 3, 5) -- Oak's lab, party=1
+
+wrote states/cgb/bedroom.state  (d08e15061a1a)  80 intro actions from boot
+wrote states/cgb/pikachu.state  (0cf6f2ecaabe)
+wrote routes/cgb/yellow_pikachu.json  829 actions, replayed from bedroom.state
+221.1s. Same seed and ROM reproduce this exactly.

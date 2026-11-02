@@ -6,6 +6,9 @@ from pyboy import PyBoy
 from poke.actions import to_button
 from poke.games import Game, resolve
 
+#: Yellow is MBC5 with 32 KiB of battery-backed cartridge RAM.
+SRAM_BYTES = 32 * 1024
+
 
 class PokeEnv:
     """PyBoy wrapper. One `step` holds a button, then lets the game settle.
@@ -32,10 +35,18 @@ class PokeEnv:
         # channel instead of luminance. Forcing DMG gives the 4-shade grey
         # screen the blog post trained on, where channel 0 is exact.
         # Upstream never hit this: a .gb Red ROM has no CGB mode to pick.
+        #
+        # In colour, cartridge RAM starts blank and in memory. PyBoy otherwise
+        # loads `<rom>.ram` from disk, and that file is rewritten by every
+        # run that stops with save=True -- so whatever the last run left in
+        # SRAM fed the next boot, and a run that ever saved the game would
+        # make the title screen offer CONTINUE to every A-mashing bootstrap.
+        # DMG keeps loading the file so existing state digests do not move.
         self.pyboy = PyBoy(
             rom,
             window="null" if headless else "SDL2",
-            **({} if color else {"cgb": False}),
+            **({"ram_file": io.BytesIO(bytes(SRAM_BYTES))} if color
+               else {"cgb": False}),
         )
 
         self.init_state = init_state
@@ -114,4 +125,5 @@ class PokeEnv:
             self.restore(blob)
 
     def close(self) -> None:
-        self.pyboy.stop()
+        # save=False: never write `<rom>.ram` back to disk (see __init__).
+        self.pyboy.stop(save=False)
