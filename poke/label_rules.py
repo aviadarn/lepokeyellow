@@ -5,11 +5,15 @@ the opening of the longplay (past it, edit cuts and the random number
 generator part the two games). Two things the picture itself shows hold
 everywhere, and each says a button was pressed:
 
-  * walking. The overworld scrolls 2 px a frame while the player walks, 8
-    frames a step, in the walking direction; a step that starts from
-    standing has its direction held just before it (true labels: 98.7 % of
-    155 steps, within frames t-3 .. t-1 of the first scrolling frame t);
-  * text. A `▼` prompt waits for A; B does not answer it.
+  * walking. The overworld scrolls 2 px on every other frame while the
+    player walks, 16 frames a step, in the walking direction; a step's
+    direction is held just before it starts (true labels: 99.0 % of 301
+    steps, within frames t-3 .. t-1 of the first scrolling frame t). But v3
+    already gets 98 % of steps right and misses mostly forced movement, so
+    this is a check, not a fixer (results/label_rules_synth.json);
+  * text. A `▼` prompt waits for a new A or B press (true labels: 11 of 12
+    waits answered without A were answered with B -- B does not advance
+    Oak's intro speech, but it does answer ordinary text).
 
 Shifts are `(dy, dx)` with new[y, x] == old[y + dy, x + dx]; directions are
 button bits in poke.synth.BUTTONS order (up, down, left, right, ...).
@@ -111,4 +115,118 @@ def enforce_walking(masks: np.ndarray, starts: np.ndarray, held_p: np.ndarray,
             new = (out[f] & ~DIRECTIONS) | (1 << bit)
             changed[f] |= new != out[f]
             out[f] = new
+    return out, changed
+
+
+
+#: The `▼` the game draws at tile row 16, column 18 (tile 0xEE in wTileMap)
+#: while text waits for A, copied off the cartridge; it blinks by swapping
+#: with a blank tile.
+PROMPT_BOX = (slice(128, 136), slice(144, 152))
+PROMPT_GLYPH = np.array([
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 1, 1, 1, 1, 1, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0]], bool)
+#: The text box's rows; a redraw changes far more of them than a blink.
+TEXT_ROWS = slice(104, 144)
+ANSWER_CHANGE = 0.02
+#: Frames a decoded tap lasts (scripts.label_video.TAP_FRAMES).
+TAP = 5
+A_BIT = 4
+B_BIT = 5
+#: The game waits a frame or two before the arrow is drawn, so a press that
+#: early still answers it.
+ANSWER_LEAD = 2
+
+
+def prompt_visible(frames: np.ndarray, colours: np.ndarray) -> np.ndarray:
+    """(n,) bool: the `▼` is on screen. `frames` are colour indices into
+    `colours`; a pixel is dark when its RGB sums under 384, as on the
+    cartridge, and the 8x8 box must match the glyph on 60 of 64 pixels."""
+    # Index 255 marks a colour outside the table (clean synthetic frames);
+    # it is never dark.
+    dark = np.zeros(256, bool)
+    dark[:len(colours)] = colours.astype(np.int32).sum(1) < 384
+    box = dark[frames[:, PROMPT_BOX[0], PROMPT_BOX[1]]]
+    return (box == PROMPT_GLYPH).sum(axis=(1, 2)) >= 60
+
+
+def text_change(frames: np.ndarray) -> np.ndarray:
+    """(n,) float32: share of the text box that differs from the frame
+    before, the prompt's own tile left out; 0 for frame 0."""
+    out = np.zeros(len(frames), np.float32)
+    if len(frames) < 2:
+        return out
+    diff = frames[1:, TEXT_ROWS] != frames[:-1, TEXT_ROWS]
+    rows = slice(PROMPT_BOX[0].start - TEXT_ROWS.start, PROMPT_BOX[0].stop - TEXT_ROWS.start)
+    diff[:, rows, PROMPT_BOX[1]] = False
+    area = diff.shape[1] * diff.shape[2] - 64
+    out[1:] = diff.sum(axis=(1, 2)) / area
+    return out
+
+
+def answers(visible: np.ndarray, change: np.ndarray) -> np.ndarray:
+    """(m, 2) rows [first frame the prompt shows, frame the text moves on].
+
+    A wait starts at a visible prompt and ends at the first later frame
+    where the box changes by more than ANSWER_CHANGE; the blinking glyph
+    alone never does. A wait the video never answers is dropped.
+    """
+    rows, start = [], None
+    for t in range(len(visible)):
+        if start is None:
+            if visible[t]:
+                start = t
+        elif change[t] > ANSWER_CHANGE:
+            rows.append((start, t))
+            start = None
+    return np.array(rows, np.int64).reshape(-1, 2)
+
+
+def _answered(masks: np.ndarray, lo: int, hi: int) -> bool:
+    """A new A or B press in frames lo - ANSWER_LEAD .. hi."""
+    for bit in (A_BIT, B_BIT):
+        held = (masks >> bit) & 1
+        if any(held[t] and (t == 0 or not held[t - 1])
+               for t in range(max(lo - ANSWER_LEAD, 0), hi + 1)):
+            return True
+    return False
+
+
+def text_agreement(masks: np.ndarray, spans: np.ndarray) -> float:
+    """Share of answered prompts with a new A or B press while they waited."""
+    if not len(spans):
+        return 1.0
+    return float(np.mean([_answered(masks, int(s), int(e)) for s, e in spans]))
+
+
+def enforce_text(masks: np.ndarray, spans: np.ndarray,
+                 onset_a: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """(masks, changed): every answered prompt has a new press in its wait.
+
+    A wait without a new A or B gets a TAP-frame A press where the A onset head
+    peaks inside it. If A is already held on the frame before (held to
+    speed up the text), that one frame is released: Gen 1 answers the
+    prompt on a new press only, so a hold through the wait cannot be right.
+    """
+    out = masks.copy()
+    changed = np.zeros(len(masks), bool)
+    bit = 1 << A_BIT
+    for s, e in spans:
+        s, e = int(s), int(e)
+        if _answered(out, s, e):
+            continue
+        t = s + int(np.argmax(onset_a[s:e + 1]))
+        if t > 0 and out[t - 1] & bit:
+            out[t - 1] &= ~bit
+            changed[t - 1] = True
+        for f in range(t, min(t + TAP, len(out))):
+            if not out[f] & bit:
+                out[f] |= bit
+                changed[f] = True
     return out, changed

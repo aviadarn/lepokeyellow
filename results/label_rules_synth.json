@@ -39,5 +39,18 @@
    "inserted": 14,
    "precision": 0.0
   }
- }
+ },
+ "text_true_clean": 0.9877,
+ "text_true_degraded": 0.9877,
+ "text_true_spans": 81,
+ "text_inserted_taps": 0,
+ "text_inserted_precision": null,
+ "text_agreement_v3_before": 1.0,
+ "text_agreement_v3_after": 1.0,
+ "text_val_spans": 48,
+ "text_val_episodes": 18,
+ "text_v2_inserted_taps": 1,
+ "text_v2_inserted_precision": 1.0,
+ "text_agreement_v2_before": 0.9792,
+ "text_agreement_v2_after": 1.0
 }
