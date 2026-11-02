@@ -140,3 +140,12 @@ uv run python -m scripts.check_dreamer
 
 On an M5 this takes about 18 min for the oracle, 70 s for the teleports, 145 s
 to collect and 45 s to check. The ROM is not included.
+
+## Changes it needed in the rest of the repo
+
+The oracle's state key now hashes
+`wGameProgressFlags`: each map's script index advances through a scene
+without setting an event flag, so the lab after Oak's speech keyed the same as
+the lab before it, and Part 1 searched 1,414 nodes without finding Pikachu.
+And `PokeEnv.close()` no longer writes `pokeyellow.gbc.ram` back to disk,
+which every run did, feeding the next boot's SRAM.

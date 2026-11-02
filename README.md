@@ -1,1045 +1,136 @@
 # lepokeyellow
 
-A JEPA world model that learns Pokémon Yellow from pixels, and a planner that
-tries to play it. Ported and extended from
-[stmonty/lePokeRed](https://github.com/stmonty/lePokeRed)
+Pokémon Yellow as a testbed for world models and learned agents, on a laptop.
+No cloud GPU, and no ROM included.
+
+It started as a port of [stmonty/lePokeRed](https://github.com/stmonty/lePokeRed)
 ([blog post](https://nostalgia.dev/posts/teaching-a-world-model-to-play-pokemon/)),
 which builds on [LeWorldModel](https://arxiv.org/abs/2603.19312) and
-[LeJEPA](https://arxiv.org/abs/2511.08544).
+[LeJEPA](https://arxiv.org/abs/2511.08544), and grew into three projects:
 
-Everything here runs on a laptop. No cloud GPU, no ROM included.
+1. **A world model and a planner** that play the opening of a new game.
+2. **A learned policy** that may only see pixels at play time.
+3. **Datasets for world models**: emulator play in the PokeDreamer format, and
+   the button presses of a 7-hour human playthrough read off its video.
 
-**Where it stands:** from the first frame of a new game, the run reaches
-Pikachu, wins the rival's forced battle, leaves Oak's lab and leaves Pallet
-Town — **4 of 4 milestones on two of three seeds, 3 of 4 on the third**, in
-442-873 actions. The same planner on the previous checkpoint managed 0/3 at
-crossing one map. Two separate things had to change. The first was the training
-objective: predicting embeddings well turned out not to be the same thing as
-predicting the game, and until the objective asked for the player's position it
-did not keep it. The second was not about the model at all — a story beat fires
-on an exact tile, facing an exact direction, and A is not a safe button to
-press, as the run that spent 207 presses trapped in a naming screen
-demonstrated. See [four milestones](#four-milestones-from-a-new-game). [What stopped it](#what-stopped-it) is the chain of
-measurements that found that, including two fixes that were correct, measurable
-and useless. Several confident conclusions along the way were wrong; those are
-kept in [Wrong answers](#wrong-answers-and-what-caught-them) because the
-controls that caught them are the useful part.
+![the planner walking from the bedroom to Oak's lab](media/play_route.gif)
 
-## What it looks like
+*The planner playing the route from the bedroom to Oak's lab, 111 actions. The
+panel on the right is its cost map; the caption is the emulator's ground truth.*
 
-The caption under each frame is the emulator's own truth — which map, which
-tile, how many hops from the target — and for the model runs, the tile it
-predicted it would land on. The panel beside it is the cost field of the map
-the player is on: dark is closer to the goal, white is ground never walked on
-in the dataset, the ring is the target, the square is the player and the dots
-are where they have already been.
+## Results at a glance
 
-The whole route, as the planner actually played it — bedroom to Oak's lab in
-111 actions, through the cutscene at the north edge of Pallet Town. The
-caption names the controller that chose each action.
-
-![the planner walking the route](media/play_route.gif)
-
-And what one change to the training objective was worth, on the isolated
-navigation task, recorded with identical settings:
-
-| before: MSE + SIGReg | after: + the coordinate loss | the recorded human route |
+| Project | Result | Details |
 |---|---|---|
-| ![before](media/planner_before.gif) | ![after](media/planner_after.gif) | ![route](media/route.gif) |
-| walks back **into the house** | crosses Pallet Town and **triggers the Pikachu encounter** | the human doing the same thing |
+| 1. World model + planner | From the first frame of a new game: gets Pikachu, wins the rival battle, leaves the lab and leaves Pallet Town — **4/4 milestones on 2 of 3 seeds** (3/4 on the third), in 442–873 actions | [docs/part1_world_model_planner.md](docs/part1_world_model_planner.md) |
+| 2. Learned policy, pixels only | PPO, 9 h: **0/11** runs reach any objective (same as random). Behaviour clone: **0/33**. Five rounds of DAgger: **10/33** reach `get_parcel` (p = 0.0009 against the clone) | [docs/part2_learned_policy.md](docs/part2_learned_policy.md) |
+| 3a. PokeDreamer for Yellow | **500k steps** in colour from 235 start states on **211 maps**; 12.7 maps per 10k steps against 7.0 for the Red original; replays bit-exact | [docs/pokedreamer_yellow.md](docs/pokedreamer_yellow.md) |
+| 3b. Longplay button labels | All 8 buttons labelled on **1,485,634 frames** of a 6 h 53 min video; the first 7,670 frames **verified frame by frame** in the emulator | [docs/longplay_labels.md](docs/longplay_labels.md) |
 
-The panel is not decoration. Without it these runs are hard to read at all: the
-camera is centred on the player, so walking shows up only as the background
-scrolling, and a stuck run looks exactly like a still image. It has already
-earned itself twice. It showed that a run described here as "oscillating
-between two tiles" was actually **stuck in a conversation** — `play.py` mashes
-A to clear dialogue, `nav_bench.py` has no such rule, so a run that walks into
-an NPC is over. And it showed the fixed planner reaching the Pikachu encounter,
-which the benchmark was scoring as a failure because it tested for a tile
-rather than for the event.
+Each doc has the measurements behind its row; the Part 1 and Part 2 docs also
+keep the conclusions that turned out wrong and what caught them. Run outputs
+are in [`results/`](results/).
 
-Reproduce any of them with `scripts/record_gif.py`, which also has `--policy
-greedy`, `--policy random` and a `--skip` for jumping an opening stretch of
-dialogue.
+## Quick start
 
----
-
-## The model
-
-Unchanged from upstream: a 12.5M-parameter ViT encoder mapping a 144×160
-greyscale screen to a 192-dim embedding, a button-conditioned causal predictor,
-and MSE on the next embedding plus `0.1 · SIGReg` to stop the representation
-collapsing. No rewards, no labels.
-
-What changed is everything around it.
-
-## Why Yellow is not a re-skin of Red
-
-Oak's lab in Yellow holds a single Poké Ball, the rival takes it, and Oak then
-hands you Pikachu through dialogue. Nothing you do changes which Pokémon you
-get. Upstream encodes its task by naming episodes `charmander` / `squirtle` /
-`bulbasaur` and scanning the party count — in the collector, the planner *and*
-the evaluator. None of that ports.
-
-Yellow also moved `wGBC` into HRAM, so every WRAM symbol above `$CF1A` sits one
-byte lower than Red/Blue. A wrong address does not raise; it returns the
-neighbouring byte. Read with Red's map, Yellow's *species index* looks like a
-party count.
-
-| Yellow | Red | symbol | how it was confirmed on the cartridge |
-|---|---|---|---|
-| `0xD162` | `0xD163` | `party_count` | 0 → 1 when Pikachu arrives |
-| `0xD163` | `0xD164` | `party_species` | reads 84 — Pikachu's Gen-1 index |
-| `0xD35D` | `0xD35E` | `cur_map` | 38 on a new game; 38 → 37 → 0 → 40 along the route |
-| `0xD360` | `0xD361` | `wYCoord` | 6 ↔ 7 on down/up |
-| `0xD361` | `0xD362` | `wXCoord` | 1 ↔ 4 on left/right |
-| `0xD056` | `0xD057` | `wIsInBattle` | reads 2 in the rival fight while Red's `0xD057` stays 0 |
-
-Addresses carry a provenance field and the ROM sha1 they were checked against,
-so a later disagreement points at a different dump rather than at the table.
-
-**Yellow is a dual-mode cart** (CGB flag `0x80`), so PyBoy boots it in colour
-and R, G and B differ. Every writer takes channel 0 and the encoder is
-`Conv2d(1, …)`, so colour would quietly feed the model an arbitrary channel
-instead of luminance. The env forces DMG. Upstream never hit this — a `.gb` Red
-ROM has no colour mode to pick.
-
-## No hand-made save state
-
-Upstream asks you to play the game and close the window, which makes every
-result rest on an artifact nobody else can reproduce. It is unnecessary.
-Yellow's whole intro — Oak's speech, both name entries, the walk-on — is cleared
-by pressing A, and from the bedroom a seeded random walk finds the way out.
-
-`scripts/bootstrap.py` presses A until the game hands over control, searches for
-a target, truncates at first arrival, and **replays the route from the start to
-check it lands in the same place** before saving.
-
-| target | from a bare ROM | result |
-|---|---|---|
-| `bedroom` | 76 A presses, 2.7 s | controllable, map 38, party 0 |
-| `oaks_lab` | + 765 search steps, 17 s | map 40 |
-| `pikachu` | + 928 search steps, 30 s | map 40, **party 1** |
-
-A random walk is an existence proof, not a demonstration, so
-`scripts/prune_route.py` cuts the loops out and replays to verify every cut:
-**1,485 → 336** actions on one route, **928 → 454** on another. Most candidate
-cuts are rejected, because the `(map, y, x, party, battle)` signature omits
-story flags.
-
-## Requirements
-
-- Python ≥ 3.12 and [uv](https://docs.astral.sh/uv/)
-- **Your own legally acquired Pokémon Yellow ROM.** No ROM, game asset or save
-  state is included or distributed here, and `.gitignore` blocks all three.
-  Either a `.gb` or the GBC-enhanced `.gbc` dump works.
-- No graphical desktop and no GPU required.
-
-## Run
+You need Python ≥ 3.12, [uv](https://docs.astral.sh/uv/), and **your own
+legally acquired Pokémon Yellow ROM** (`.gb` or `.gbc`). No ROM, game asset or
+save state is distributed here, and `.gitignore` blocks all three. No GPU or
+desktop is required.
 
 ```bash
 uv sync
-uv run pytest                      # 196 tests, no ROM and no GPU needed
+uv run pytest     # 509 tests; the ones that need a ROM or save states skip without them
 
-# Bare ROM -> verified, reproducible save states. No playing required.
+# From a bare ROM to verified save states, with no playing by hand:
 uv run python -m scripts.bootstrap --rom pokeyellow.gbc --to pikachu
-
-# Shorten the route it found, verifying every cut.
-uv run python -m scripts.prune_route --task yellow_pikachu
-
-# Mark which steps are walked and which are a cutscene.
-uv run python -m scripts.annotate_route --task yellow_pikachu
-
-# The baseline table. Do this before believing any planner number.
-uv run python -m scripts.eval_baselines
-
-# Collect with locations, then train.
-uv run python -m scripts.collect --out episodes/yellow_v3.h5 \
-    --demos 4 --noisy 12 --random 400 --random-steps 60 --post-goal 12
-uv run python -m scripts.train --data-path episodes/yellow_v3.h5 \
-    --coord-weight 0.05 --select-on tiles
-
-# Is the model wrong, or is the objective? Per-action, against the emulator.
-uv run python -m scripts.action_check checkpoints/yellow_v2/best.pt
-
-# What does the frozen encoder actually know about position?
-uv run python -m scripts.probe_location checkpoints/yellow_v2/best.pt
-
-# Does a non-linear head read it better than ridge does?
-uv run python -m scripts.probe_nonlinear checkpoints/yellow_v2/best.pt
-
-# The measurement that matters: predicted position, in tiles, against the
-# emulator's own record, with "assume nothing moved" as the baseline.
-uv run python -m scripts.rollout_tiles checkpoints/yellow_v2/best.pt
-
-# Navigation, at three levels of zoom: one state, many decisions, a whole run.
-uv run python -m scripts.nav_resolution checkpoints/yellow_v2/best.pt
-uv run python -m scripts.nav_decisions checkpoints/yellow_v2/best.pt
-uv run python -m scripts.nav_bench checkpoints/yellow_v2/best.pt
-
-# Watch it, instead of reading a number: route | cem | greedy | random.
-uv run python -m scripts.record_gif checkpoints/yellow_v2/best.pt \
-    --policy cem --out media/planner.gif
-
-# Or replay a run that already happened, exactly as it happened.
-uv run python -m scripts.record_gif --policy replay \
-    --log results/play_coords_v3.json --state states/bedroom.state \
-    --target 40,3,5 --out media/play_route.gif
-
-# Play.
-uv run python -m scripts.play checkpoints/yellow_v2/best.pt \
-    --objective coords --controller pursuit \
-    --annotations routes/yellow_pikachu.annotations.json
 ```
 
-## Measure the trivial baseline first
+Then, depending on what you want:
 
-The blog post reports 52/100 planner successes against uniform random (0/100)
-and an untrained predictor (1/100) — then notes in passing that pressing A
-repeatedly already works from its start state. That row is not in its table. It
-is row one of its own training data: upstream ships `TAKE = ["a"] * 12` as a
-scripted route and asserts it reaches a starter.
-
-So `scripts/eval_baselines.py` runs all seven constant-button policies plus
-uniform random, and warns if any constant button solves the task.
-
-It also caught a broken task. Starting the Pikachu task inside Oak's lab scores
-**0/1 for all seven constant buttons and 0/50 for random** — which reads as
-brutally hard and is really impossible: the lab is enterable long before the
-story hands anything over. **A table of zeros is a broken task, not a good
-result.** Redefined from a new game with a horizon matched to what random needs:
-
-| policy | hits | rate |
+| To | Run | More |
 |---|---|---|
-| every constant button | 0/1 each | 0.0 % |
-| uniform random | 1/50 | 2.0 % |
+| Train the world model | `scripts.collect`, then `scripts.train --coord-weight 0.05 --select-on tiles` | [Part 1 commands](docs/part1_world_model_planner.md#commands) |
+| Watch the planner play | `scripts.play <checkpoint> --objective coords --controller pursuit` | [Part 1 commands](docs/part1_world_model_planner.md#commands) |
+| Run a policy under the contract | `scripts.play2 --policy random --budget 1461` | [Part 2](docs/part2_learned_policy.md#the-harness) |
+| Collect PokeDreamer-format data | `scripts.collect_dreamer` | [Reproduce](docs/pokedreamer_yellow.md#reproduce) |
+| Label a longplay video | `scripts.video_ingest` → `synth_collect` → `train_idm` → `label_video` → `repair_labels` → `export_video` | [Reproduce](docs/longplay_labels.md#reproduce) |
 
-## What the model learned
+Every script takes `--help`. Each runs with `uv run python -m scripts.<name>`.
 
-31,759 frames, 2 minutes to collect, trained in ~70 minutes on an M5 via MPS.
-Best checkpoint epoch 10, validation prediction loss 0.0102.
+## The three projects
 
-`scripts/action_check.py` scores every action from a state against the real
-emulator:
+### 1. A world model and a planner
 
-| action | prediction error | no-change baseline | moves the player |
-|---|---|---|---|
-| down | 0.0111 | 1.5112 | yes |
-| left | 0.0021 | 1.3275 | yes |
-| right | 0.0300 | 1.3235 | yes |
-| a | 0.0018 | 0.1411 | no |
-| noop / up / b | ~0.002 | 0.0000 | no |
+A 12.5M-parameter ViT encoder and a button-conditioned predictor (a JEPA)
+learn the game from 31,759 frames, with no rewards or labels. A CEM planner scores plans by where the
+model predicts the player will stand. The planner could not cross Pallet
+Town until the training objective was made to predict the player's position.
+Once that was fixed, the remaining failures were all about pressing the right
+button on the right tile. → [docs/part1_world_model_planner.md](docs/part1_world_model_planner.md)
 
-On the four actions that change the screen the predictor beats "predict no
-change" by **44× to 631×**. It picks `down`, `down` really is closest, `down`
-moves the player, and it correctly believes `a` makes things worse. The three
-that leave the screen byte-identical cannot be scored — the baseline is exactly
-0.0 and already right.
+### 2. A learned policy under a play-time contract
 
-**The dynamics model is not the problem.**
+`poke/contract.py` enforces the rule: at play time the policy gets pixels and
+its current objective, and any attempt to read position from RAM raises.
+Training may use anything (RAM rewards, save states, an oracle). Nine hours of
+PPO scored the same as random. A clone of the oracle's route knew the way but
+drifted off it after five decisions. DAgger, which re-asks the oracle from the
+states the clone gets stuck in, is the first thing that reached an objective. →
+[docs/part2_learned_policy.md](docs/part2_learned_policy.md)
 
-## What the encoder knows about position
+### 3. Datasets for world models
 
-`(map, y, x)` is recorded for every frame; the emulator knows it for free.
-Linear probes on the frozen encoder, split by episode, with raw-pixel and
-shuffled-label controls and a swept ridge strength:
+- **PokeDreamer for Yellow.** The same format as
+  [PokeDreamer](https://huggingface.co/datasets/xxxTEMPESTxxx/PokeDreamer)
+  (Pokémon Red, grey frames), for Yellow in colour. Teleporting through the
+  game's own warp routine lands with control on 228 of 229 maps tried. →
+  [docs/pokedreamer_yellow.md](docs/pokedreamer_yellow.md)
+- **Button labels from a longplay.** A model trained on emulator play that
+  looks like the video reads the presses off every frame. The emulator then
+  replays the labels and repairs them wherever the screen stops matching.
+  This verification only reaches as far as an emulator state matches the
+  video, which in practice means the opening. →
+  [docs/longplay_labels.md](docs/longplay_labels.md)
 
-| map | axis | encoder R² | MAE (tiles) | raw pixels R² | shuffled R² |
-|---|---|---|---|---|---|
-| bedroom | y / x | 0.972 / 0.876 | 0.22 / 0.47 | 1.000 / 1.000 | −0.002 |
-| Oak's lab | y / x | 0.856 / 0.875 | 0.36 / 0.59 | 0.998 / 0.996 | −0.002 |
-| house, ground floor | y / x | 0.767 / 0.765 | 0.69 / 0.78 | 0.982 / 0.992 | −0.001 |
-| Pallet Town | y / x | 0.760 / 0.655 | 1.88 / 1.44 | 0.912 / 0.803 | −0.002 |
+Collected data lives in `data/` and is gitignored. Nothing derived from the
+video is published: it is someone else's upload.
 
-Position is recoverable on all eight pairs, to within half a tile in three of
-four rooms. The encoder is **lossy** — raw downsampled pixels beat it
-everywhere — but the information survives.
+## Repository layout
 
-## Planning on tiles, not on a latent norm
-
-Two ridge heads on the frozen encoder — one-vs-rest for the map, then a per-map
-regressor for `y` and `x` — read the player's tile out of an embedding at
-**99.5 % map accuracy, ±1.51 tiles**. A plan is then scored on *where the model
-thinks the player will end up*, in tiles, rather than on a distance in a space
-where position is only one of several things varying.
-
-Waypoints come from the demonstration's own recorded positions, which splits the
-two jobs cleanly: **whether we have arrived is read from RAM, and only the
-button choice is the model's imagination.** A failure can then only be the
-planner's.
-
-The controller is pure pursuit, borrowed from path following: project the real
-tile onto the route, aim a couple of nodes further on, repeat. No timer to tune,
-nothing abandoned.
-
-| objective | controller | progress | actions |
-|---|---|---|---|
-| latent goal distance | ladder | 9/46 rungs | 702 |
-| latent progress probe | — | oscillated through a door 15× | — |
-| coordinates | advance/abandon | 15/38 waypoints | 198 |
-| **coordinates** | **pure pursuit** | **22/38 nodes** | **81** |
-
-Progress counts only nodes the player has genuinely **stood on**, within a tile.
-
-Three controllers share the pad and every action records which one chose it:
-the planner in the overworld, a scripted A-masher while `wIsInBattle` is set
-(43 presses cleared the forced rival fight with Pikachu intact), and the same
-masher for dialogue.
-
-Two structural fixes pure pursuit needed, both found by running it:
-
-- **A target in another room gives no gradient.** The wrong-map penalty swamps
-  tile distance, every plan that stays in the room ties, CEM has nothing to
-  follow. Aim at the route's exit from the *current* room instead.
-- **Dialogue ignores the d-pad.** At the north edge of Pallet all seven buttons
-  give the identical result, because Oak stops the player and walks them to the
-  lab.
-
-## Which steps of a route are a movie
-
-Waypoints from a demonstration cannot tell "somewhere you walked to" from
-"somewhere you were carried", and the emulator answers that exactly: at each
-step, snapshot, try all seven buttons, compare. If every button gives the same
-screen, nothing the planner chooses matters there.
-
-> **42 % of this route is scripted** — 189 of 455 steps. Oak's encounter alone
-> is a **116-step** scene starting at map 0 `(0,10)`, the north edge of Pallet.
-> The Pikachu handover is another 39.
-
-One trap: control is lost **on** the trigger tile, so the counterfactual marks
-it scripted. Dropping it removes the only waypoint that starts the encounter.
-The first step of each scripted run is kept.
-
-## What stopped it
-
-**The planner could not cross Pallet Town. The cause was that nothing in the
-training objective ever asked a predicted embedding to say where the player is.**
-
-`scripts/nav_bench.py` asks that one question in isolation — start outside the
-player's house, reach the tile that triggers Oak's encounter — with no
-dialogue, battles or waypoint bookkeeping to confound it. Under one protocol,
-three seeds, 120 actions, replanning after every action:
-
-| model | reaches the Pikachu encounter | closest it got (from 12 hops) |
-|---|---|---|
-| `L_pred + 0.1 · L_reg` | **0/3** | 11 hops — it barely leaves the doorstep |
-| the same plus the coordinate loss | **3/3**, in 25–28 actions | 1 hop |
-
-Getting there took ruling out four plausible causes by measurement, and two of
-the rejected fixes were more informative than the accepted one.
-
-**Not the horizon, the action repeats, or the walls.** 14 against 30: identical,
-0/3. Action repeats of 1, 2 and 4, on the theory that CEM sampling slots
-independently draws ten consecutive presses with probability 7⁻¹⁰: identical.
-Manhattan distance ignoring walls: the objection was real — the tile due north
-of the start is the doorway back into the player's own house — and
-`poke/walkmap.py` fixes it properly with BFS over the 31,759 recorded
-positions. Identical.
-
-**Not the read-out's resolution,** which is what the previous version of this
-section concluded. A linear probe placed the player to 1.44–1.88 tiles in
-Pallet Town while adjacent levels of the cost field differ by one hop, so the
-signal was genuinely under the instrument's noise floor. `poke/probe_mlp.py`
-fixed exactly that — two hidden layers on the same frozen embeddings, Pallet
-error to **0.53 and 0.48 tiles**, shuffled-label control at −0.02 — and
-navigation did not improve at all.
-
-**Because the planner never reads a real screen.** It decodes the predictor's
-output. Held out, in tiles (`scripts/rollout_tiles.py`):
-
-| what is decoded | before | after |
-|---|---|---|
-| the real frame | 0.22 | 0.03 |
-| assume the player never moved | 0.69 | 0.52 |
-| **one-step rollout** | **2.42** | **0.27** |
-
-The predictor was three and a half times worse than assuming nothing moved,
-while its embedding MSE beat a no-change baseline by 44× to 631×. Those are not
-the same quantity and only one of them is what a planner uses. Seeding the
-rollout with three real frames the way training does changes nothing (2.32
-against 2.34), so it is not a train/test context mismatch.
-
-**And fitting the read-out on predicted embeddings makes it worse.** The
-obvious response is to fit the head where it is actually used. That works —
-one-step error 2.42 → 0.78 tiles — and the decisions get worse: the share where
-the lowest predicted cost belongs to an action that genuinely helps goes from
-47.5 % to **0 %**. Calibrating on blurred predictions teaches the conditional
-mean of position, which is the part that discards the differences *between*
-actions, and ranking is the only thing a planner uses.
-
-So the fix is in the objective. `poke/coord_head.py` reads (y, x) from an
-embedding and is trained against the recorded tile on the predictor's output as
-well as the encoder's, making the player's position something the prediction
-has to carry. `--coord-weight 0.05 --select-on tiles`. Validation tile error on
-predicted embeddings reached 0.24 at epoch 6, and the prediction loss improved
-too, so it costs nothing it was previously buying.
-
-### Three real defects in the cost field, found on the way
-
-- A flat `unknown` plateau turned a half-tile read-out error into a 60-hop cost
-  error whenever rounding landed one cell outside the observed region. Three of
-  seven actions scored identically catastrophically. Unvisited cells now cost
-  the nearest observed cell plus a penalty per tile of extrapolation, capped.
-- The field covered one map, so every tile in another was worth the same
-  nothing — the planner walked into the house and sat there for 38 straight
-  actions because every option inside looked equally terrible. `WalkMap` now
-  records doors and searches across them, which retires the wrong-map penalty.
-- BFS over recorded transitions does not count in units of anything: one step
-  holds a button for 20 frames and settles for 40, long enough to cross more
-  than one tile, so the graph contains two-tile jumps and the field was not
-  monotone — (5,5) at 6 hops, (6,6) at 5, (5,6) at 7. Four-adjacency over
-  observed tiles gives one hop per tile.
-
-And `min` over the rollout, inherited from the goal objective, scores a plan by
-the single most optimistic tile decoded anywhere along 28 actions — a search
-for the head's largest mistake. `discounted` is the default now.
-
-### End to end, with the milestone chain
-
-`scripts/play.py` on the same checkpoint now walks the **entire demonstration
-route** — 38 of 38 waypoints, in 111 actions, bedroom to the far side of Oak's
-lab, through the cutscene at the north edge of Pallet Town. Six separate bugs
-stood between the isolated navigation result and that, and every one of them
-was in the controller rather than the model:
-
-| what was wrong | what it looked like |
+| Path | What is there |
 |---|---|
-| `play.py` never got the cost field | aims into another map, every plan ties, 60 actions oscillating in the bedroom |
-| no memory of a useless action | ten `down` presses into the wall beside the front door |
-| dialogue rule could not hand back control | 116 of 162 actions pressing A at a signpost, which changes the screen every press |
-| the graph fragmented the map | strides inside the lab reach seven tiles, so 4-adjacency left it in islands and only 12 tiles in the game could reach the waypoint inside it |
-| nearest to the last node counted as reaching it | run ends the instant the player steps through the lab door, scoring node 4 |
-| looking ahead skipped a scripted node | walks into the lab without the scene that puts Oak in it, then presses A in an empty room |
-
-### Four milestones, from a new game
-
-The milestone chain is now **4/4 on two of three seeds and 3/4 on the third**:
-Pikachu, the rival's fight, out of Oak's lab, out of Pallet Town, from the
-first frame of a new game in 442-873 actions. Every seed gets the first three.
-
-| seed | milestones | actions |
-|---|---|---|
-| 0 | 3/4 — walks back into the lab and the field there is flat | 873 |
-| 1 | 4/4 | 442 |
-| 2 | 4/4 | 490 |
-
-Getting there was not navigation. It was learning what a Game Boy does with a
-button, and every fix below came from a measurement on the cartridge:
-
-| what was wrong | what it looked like |
-|---|---|
-| the hand-over fires on a tile, not in a room | the route's last waypoint is `(3, 5)`, where the scene CARRIES the player; the tile that starts it is `(4, 7)`, and the run stood on the first under its own power, reported 38/38 complete, and pressed A at a table that was not there for 489 actions |
-| and on a direction | reached facing east, 60 A presses do nothing; one `up` first and the party holds a Pikachu 34 presses later |
-| A is not a safe button | the scene ends on "give a nickname?", and A answers YES — into a naming screen where A types a letter, B deletes one, and the exit is a button this action set does not have. 207 A presses at one tile, unable to move. `down` then A declines it |
-| B is not an answer either | in Gen 1 it does not advance text at all: 24 B presses left Oak mid-sentence |
-| a memory of what does nothing goes stale | A, blocked against a closed text box, stayed blocked once the player could no longer move, and 488 planner actions went to `right` with A masked out of every plan |
-| four-adjacency invents floor | `(4, 4)` and `(4, 5)` are both recorded and a counter runs between them — `(4, 5)` is only in the data because a cutscene put the player there. The field read one hop; the planner pressed right 33 times |
-| the route restarted each milestone | after the rival's fight, 207 of 336 actions pursued a node four tiles behind, and the lab door was never aimed at |
-| a tile can appear twice | `(0, 10)` is both where Oak stops the player and where leaving Pallet happens; Oak's scene steps onto it twice, which marked the exit done before the player had a Pokemon |
-| and the exit needs the exact tile | at tolerance 1 the route called itself finished from `(1, 10)`, one short, then spent 574 fallback actions with nothing aiming at the exit |
-| whether a tile can be landed on depends on the side | `(4, 7)` can only be stepped onto from below — the table north of it stops that walk after one tile, while along row 4 a press goes straight past. Approaching on one axis only: 0/4 |
-
-So the honest summary of the previous result is that it was not a navigation
-problem at all. The planner had been walking the route for some time; what it
-could not do was *press the right button on the right square*, and nothing in
-the objective or the cost field had anything to say about that.
-
-### What still stops it
-
-**Committing more than one action at a time.** Attributed directly: with
-`--commit 1` the planner reaches the encounter 3/3 at every horizon tried; with
-`--commit 2` it is 1/3 at horizon 2 and 0/3 at 8 and 14. The second action of a
-plan is chosen from a predicted state, and one emulator step can cross more
-than one tile. `play.py` used to commit 3.
-
-**Standing on the exact trigger tile.** 0/3 across every setting, though all
-three seeds get within one hop and all three reach the encounter from the tile
-beside it. This is what `--script-approach` now steps in for: inside two tiles
-of a trigger, the controller walks onto it by the coordinate the emulator
-reports, and the log counts those actions under their own name rather than the
-planner's. On the runs above that is 4-24 actions of 442-873. Inspecting the last decision, the model picks `up` correctly and
-scores it 0 — and also scores `right` 0, which really costs 2. The remaining
-failure is a tie between the right action and a mispredicted one, not a missing
-gradient. An oracle that scores actions on the emulator's own coordinates walks
-it in 7 actions, so the path is there.
-
-**Dialogue, in the benchmarks.** `play.py` mashes A to clear a text box;
-`nav_bench.py` and `nav_decisions.py` have no such rule, so a run that walks
-into an NPC is finished. Checked rather than assumed on the runs reported here:
-1 of 60 decisions had no button that could change the cost.
-
-Two things that did **not** help, recorded because the measurement is the point:
-
-- Filtering waypoints by the cutscene annotations changed nothing end to end,
-  because the run stalls long before that region. Kept because it is correct.
-- A principled cutscene detector — comparing two buttons' screens live —
-  measured **worse**, 17/38 against 22/38. The cruder "tile has not moved" rule
-  is the better *policy* because it mashes A more, advancing text the planner
-  would otherwise sit through. `--control-probe` switches.
-
-## Wrong answers, and what caught them
-
-Each of these looked clean and was published before the check that killed it.
-
-1. **"The planner just mashes A."** It did — 291 of 501 actions. But the start
-   state was mid-dialogue, where any button merely dismisses a text box. The
-   control probe that cleared it asked whether a direction moved the player;
-   a text box swallows every button, so nothing moves and every button gives
-   the *same screen*. Comparing **two** buttons fixes it. With a clean start the
-   `a` share fell to 12 % and tiles visited went 17 → 83.
-2. **"Route position is recoverable, so swap the planner's cost."** R² 0.697
-   looked convincing. Splitting by map showed it was carried by map identity.
-3. **"The encoder is a map detector with no sense of place."** Wrong too — that
-   rested on 235 frames of one route through one room where position barely
-   varies. With 31,759 frames and recorded coordinates, within-room position is
-   recoverable everywhere. Route position was only ±55 actions because the
-   question is ill-posed: **95 % of the route's frames sit on a tile it
-   revisits**, up to 229 actions apart. One screenshot cannot say how far
-   through a route you are.
-4. **"22/38 nodes."** The first version scored the *nearest* node at any
-   distance, claiming node 22 while the player stood 8 tiles away and had never
-   entered the lab. Progress now requires arrival.
-5. **"Navigation is blocked by the read-out's resolution."** The previous commit
-   measured that correctly and drew the wrong conclusion from it. A non-linear
-   head cut Pallet Town error from 1.88 to 0.53 tiles, below the one-tile
-   granularity the cost field needs, and navigation did not improve at all —
-   because the planner never reads a real screen. See
-   [What stopped it](#what-stopped-it).
-6. **"So fit the read-out on predicted embeddings instead."** It works, and it
-   makes the planner worse: one-step error 2.42 → 0.78 tiles, while the share of
-   decisions that pick a genuinely helpful action goes 47.5 % → **0 %**. Fitting
-   on predicted features teaches the conditional mean of position given a
-   blurred prediction, which is the part that throws away the differences
-   *between* actions — and ranking is the only thing a planner uses. Accuracy
-   and usefulness pointed in opposite directions, and only the decision-level
-   metric showed it.
-
-Two methodology notes from the same stretch: contiguous blocked CV over a
-monotonic target is extrapolation, not interpolation — it reported R² −25 while
-the same features beat the mean on absolute error — and a single arbitrary ridge
-strength flipped a conclusion, α=1.0 giving −0.100 where α=100 gives 0.697.
-
-## Part 2: the harness for a learned policy
-
-Everything above steers with demonstration waypoints and arrival read from RAM.
-That is a fair description of a planner, not of a policy, and the honest
-version of the next step is a contract rather than a claim. The design is in
-[docs/superpowers/specs/2026-10-21-part2-world-model-rl-design.md](docs/superpowers/specs/2026-10-21-part2-world-model-rl-design.md);
-this section is what has been built of it.
-
-**At play time** the policy sees pixels and which objective it is on, and
-nothing else. No coordinate, map-id or wall reads, and no save states.
-`poke/contract.py` makes that a rule the code enforces: the policy is handed a
-`PlayTimeEnv` whose surface is `screen`, `read_ram`, `game` and `act_frames`,
-and whose `read_ram` refuses the position addresses and the bytes beside them.
-Anything else raises. **At training time** anything goes -- RAM rewards,
-save-state resets, oracle routes.
-
-```bash
-# Which WRAM byte or screen feature says the player has control? Measured
-# against a snapshot-and-compare probe, fitted on five states, held out on one.
-uv run python -m scripts.calibrate_control --samples 250
-
-# The BFS oracle: milestone save states and the ceiling. Training only.
-uv run python -m scripts.oracle --state states/bedroom.state \
-    --replay results/play_milestones_s1.json
-
-# Play Part 2 under the contract. One continuous run, no rollback.
-uv run python -m scripts.play2 --policy random --budget 1461
-
-# How fast does this machine emulate in parallel?
-uv run python -m scripts.bench_workers --steps 300 --workers 1 2 4 8 12
-```
-
-### The learned share is an upper bound, not a measurement
-
-Every action is logged with the controller that chose it, and `learned_share`
-is the policy's share of the actions somebody owned. Two measured facts bound
-how much that number is worth.
-
-The control probe is an approximation. No WRAM byte reproduces the
-snapshot-and-compare answer: scoring every byte in WRAM, "zero means control"
-topped out at 0.797 balanced accuracy, a best-value-set rule reached 0.878 with
-winners that scored 0.08 on a held-out state, and excluding battle frames
-lifted the best byte to 0.966 -- but every candidate sat in `0xDFEE-0xDFFB`,
-which is the stack. It was reading the return address of whatever routine
-happened to be running. The detector shipped first was the white fraction of
-the screen's bottom six rows, cut at 0.7725: 0.9503 fit, 0.9835 held out.
-
-**Those numbers were true and the detector was wrong.** Whiteness was never
-the signal. Pallet Town's entrance is 82% white -- whiter than plenty of real
-boxes -- so 36 of 967 walkable samples read as a text box, and a trained
-policy later spent 1,411 of its 1,461 actions on one of them. A Gen-1 box is
-drawn in two shades, white paper and black frame-and-glyphs; scenery uses all
-four the DMG has. The detector is now the shade count with a white floor:
-**0.9683 fit against the old rule's 0.9497 on the same samples, and 0 of 967
-walkable samples called a box, against 36.** `scripts/calibrate_box.py`,
-`results/control_calibration_v2.json`.
-
-The zero is the number that matters, not the percentage point. A walkable tile
-read as a box is *absorbing*: the handler owns every turn it claims and only
-the policy can step off a tile, so one bad tile ends the run.
-`poke.handlers.BOX_PATIENCE` bounds that at one policy turn in thirty-three,
-which is what kept the earlier failure survivable -- a Part 1 run spent 2,714
-of 4,000 actions on a single Pallet Town square -- but one turn in
-thirty-three is not control, and bounding the cost was mistaken for fixing it.
-
-There is no honest held-out number for the new rule, and the report says so.
-The ground truth is the rollback probe: press two buttons, compare screens. In
-a menu the d-pad moves a cursor, so two buttons give two screens and the probe
-reports control with a box plainly on screen. 87.5% of the holdout state's
-"walkable" samples are menus, and both rules score 0.5106 there -- that
-measures the probe, not the detector.
-
-And a walking cutscene draws no box, so the probe says the player has control,
-the turn goes to the policy, and it is counted as learned work. That is the
-direction of the error: the share is inflated, not deflated.
-
-### The ceiling is a number, not a run
-
-The BFS oracle reaches Viridian Forest from Route 1 in **487 actions**
-(196 search edges; the rest is the A-mashing each edge spends waiting for
-control), in 13 minutes of search. The policy arms get
-3x that, 1461 actions.
-
-It is not a baseline run, and `scripts/play2.py` offers no oracle policy. The
-oracle's own action log does not reproduce its own route: replaying the parcel
-phase's 87 actions from the Route 1 state ends at (12, 28, 9), still on Route
-1, where the search ended at (42, 5, 2) in the Viridian Mart. The search probes
-control by snapshotting and restoring between actions, and PyBoy save/load is
-not bit-exact for whatever that depends on -- the same break measured earlier
-in this repo, when `has_control()` inside `play.py`'s `step()` stopped the run
-reproducing its own log at action 368.
-
-### The floor
-
-1461 actions each from Route 1 -- the same budget the policy arms get -- under
-the contract: no constant button and no random policy reaches `get_parcel`,
-`deliver_parcel` or `enter_forest`. Random spends 94% of its turns on the
-policy and the rest in the handlers.
-Objectives already true when a run starts are not credited -- Route 1 begins
-with `trigger_oak` and `get_starter` already flagged, and the first version of
-this table had all eight constant buttons "clearing" two objectives apiece.
-
-### Parallel emulation is not the bottleneck
-
-668 actions/s with one worker, 2,388 at four (efficiency 0.89), 3,490 at eight
-(0.65), 4,003 at twelve (0.50). An action is 60 frames, so four workers emulate
-about 143k frames/s while the encoder does 1,758. The RL budget was going to
-assume the emulator was the expensive part. It is the forward pass.
-
-## Part 2 under the contract: the policy does not finish it
-
-One arm was trained, the design's arm 3: the frozen JEPA encoder's features as
-the observation, plus a Plan2Explore-style intrinsic bonus from the same world
-model's latent prediction error. Arms 1 and 2 were not run, by scope ruling, so
-**nothing here shows the world model helped.** The comparison that would show it
-is a separate plan.
-
-### What was trained
-
-Nine wall-clock hours on an M-series Mac: **8,211 PPO updates**, **8.41M
-environment steps**, 20,548 episodes, 259 steps/s across 8 emulator workers with
-an fp16 encoder. The run is a resume -- the weights continue an earlier 0.85 h
-leg of 730 updates and 747,520 steps, and the archive started empty because it
-was memory-only until after that pause. The report said "8,941 updates" for
-nine hours by printing an inherited counter beside a fresh one; `run_report`
-now reports both separately. The policy is a 597k-parameter actor-critic -- a linear body
-into a GRU cell, 7 actions -- reading a 4-frame window of 192-dim embeddings,
-the objective one-hot and the previous action. Episodes are 512 actions, started
-from a Go-Explore archive keyed by `(objective, map, y//4, x//4)` and seeded
-from `states/oracle/route1.state`.
-
-In training the policy did reach `get_parcel`, and the archive grew to 168 cells
-across 11 maps, the Viridian Mart among them. It never reached `enter_forest`;
-the archive only ever held cells under objectives 2 and 3.
-
-### What it scored
-
-Eleven contract runs from Route 1 -- ten sampling seeds and one greedy -- each a
-single continuous episode with the 1,461-action budget, no rollback, nothing read
-but pixels:
-
-| | `get_parcel` | `deliver_parcel` | `enter_forest` |
-|---|---|---|---|
-| oracle ceiling (487 actions, uses rollback) | reached | reached | reached |
-| trained policy, 10 seeds + greedy | **0/11** | **0/11** | **0/11** |
-| floor: random, and each of 8 constant buttons | 0 | 0 | 0 |
-
-The policy scores the floor. Median learned share is 0.969, and the control
-detector that produces it was the white-fraction rule at **0.9503 fit, 0.9835
-held out** -- which is the rule the section above shows was trapping this very
-run; the share is an
-upper bound, as above, so "the policy chose 97% of these actions" is itself
-generous.
-
-### What the GIFs show
-
-Two failure modes, and the per-run controller counts separate them cleanly.
-
-Seven seeds spend almost the whole budget under policy control (1,385-1,451 of
-1,461 actions) and walk **north** -- up Route 1, into Viridian City, around the
-Pokémon Center and the Mart until the budget ends.
-
-North is the right way. An earlier version of this section said `get_parcel`
-was south in Oak's lab and that the north walk was the tile bonus leading the
-policy astray. Both are wrong, and the objective's own description says so:
-"cross Route 1 to Viridian and pick up Oak's Parcel". The parcel is handed over
-in the Viridian Mart, map 42, which is where the oracle's first phase ends.
-`deliver_parcel` is the leg that goes back south to Oak's lab. So those seven
-seeds reached the right city and never completed the pickup -- the parcel needs
-the player inside the Mart, at the counter, pressing A -- which is a different
-and smaller failure than walking the wrong way.
-
-Three seeds and the greedy run go south into Pallet instead, which is the wrong
-direction for the first objective, and are then taken away from the policy
-entirely. Greedy
-spends 49 of 1,461 actions on the policy and 1,411 in the text and decline
-handlers; its GIF holds two distinct frames.
-
-That is not the policy pressing A at a sign. **The control detector
-false-positives on the tiles where Route 1 enters Pallet Town.** Walking south
-puts the player at (0, 4, 11); the bottom six rows there are Pallet's pale
-ground and a roof, 0.818 white against the 0.7725 cut, and no text box is on
-screen at all. The detector says a box is open, so `choose()` claims the turn,
-and `BOX_PATIENCE = 32` hands the policy one turn in thirty-three -- which is
-the measured 49/1,461. The policy's one action is `down`, into the house wall
-below it. The state is absorbing.
-
-It is a false positive, not a real box: from that state `up` moves the player to
-y=3 and `left` moves them to x=9. A real box freezes both. Over a 900-action
-handler-free random walk, 5 of 147 visited Pallet tiles read as a box -- (3,8),
-(3,10), (4,3), (4,8), (4,9), plus (4,11) above -- against 0 of 80 on Route 1 and
-the two houses. The band sits at y=3-4, exactly where you arrive from Route 1.
-
-`BOX_PATIENCE` was added for this and it is why the run ends at 1,461 actions
-instead of never, but 1-in-33 control is not control. (0, 4, 3) is in that list:
-it is the same tile this README already names as the case that cost one Part 1
-run 2,714 of 4,000 actions. The cut was recalibrated; the tile still fails.
-
-### The clone: knowing the route is not walking it
-
-208 demonstrations cloned into the same network, fitted to a training accuracy
-of 1.0, then run under the contract: **0 of 11**, same as the floor.
-
-The eleven runs are not eleven runs. Cross-entropy to a loss of 0.0005 leaves
-the logits nearly one-hot, so sampling and argmax agree and every seed replays
-the same trajectory -- identical controller counts, identical learned share,
-0.980 in all eleven. That is worth knowing before reading a clone's seed
-spread as evidence of anything.
-
-What it does: five correct decisions. From the Route 1 start it walks north,
-the right way, from (12, 35, 10) to (12, 28, 9) -- and then oscillates between
-(12, 28, 9) and (12, 28, 11) for the remaining four hundred actions.
-
-This is the compounding-error failure that pure behaviour cloning always has,
-arriving earlier than expected. The dataset is one optimal trajectory per
-objective; it contains no frame showing how to recover, because the oracle
-never made a mistake to recover from. Six decisions in, the clone is on a
-screen its training set does not contain, and nothing it learned applies.
-
-The learned share is the part worth keeping: **0.980**, against 0.034 for the
-runs the old detector trapped. The policy now owns 1,432 of 1,461 actions.
-Whatever is wrong is the policy's, not the harness taking its turns.
-
-So two different failures have now been separated. The RL policy could not
-find the route. The clone knows the route and cannot stay on it. Only the
-second is what DAgger fixes -- clone, roll out, re-solve from the states the
-clone actually reaches, and add those -- and the oracle can be re-run from any
-state, which is what that needs.
-
-### DAgger: the first objective a learned policy reaches, and how unstable that is
-
-Roll the clone out under the contract, keep a save state behind each new
-decision, restore the states it got stuck in and run the oracle from them,
-retrain on everything. `scripts/dagger.py`, eight rounds, six searches each.
-
-**It works, and the per-run number is not what it first looked like.** The
-first eval of the five-round checkpoint scored `get_parcel` on 5 of 11 runs,
-and that is what this section originally reported. Retraining the same dataset
-under two more training seeds gives 0 and 5. The spread that matters here is
-not the ten sampling seeds `scripts/eval_part2.py` already varies -- it is the
-training seed, and one eval of one checkpoint does not measure the dataset
-that produced it. Training is deterministic, so the first number reproduces
-exactly; it was simply the best of three draws, reported as the result.
-
-Three training seeds per condition, each scored over ten sampling seeds and a
-greedy run, pooled by `scripts/seed_spread.py`:
-
-| | per seed | `get_parcel` | vs. the clone |
-|---|---|---|---|
-| behaviour clone | 0, 0, 0 | 0 / 33 | -- |
-| DAgger rounds 1-5 | 5, 0, 5 | **10 / 33** | p = 0.0009 |
-| DAgger rounds 1-8 | 1, 3, 0 | 4 / 33 | p = 0.11 |
-
-Fisher's exact, two-sided, which is the smallest honest test at these counts.
-Five rounds of DAgger is the first thing in this repo that moves an objective
-off zero by more than one draw's luck: the clone reaches `get_parcel` on none
-of its thirty-three runs, and nine hours of PPO and every scripted baseline
-reach it on none of theirs. Rounds 6 to 8 did not help, and may have hurt --
-10/33 against 4/33 is p = 0.13, which three seeds cannot settle either way.
-
-Distance on a seed that works, greedy from `states/oracle/route1.state`:
-
-| | distinct tiles | best y on Route 1 | maps reached |
-|---|---|---|---|
-| behaviour clone | 6 | 28 | 12 |
-| 2 rounds | 17 | 20 | 12 |
-| 5 rounds | 69 | 0 | 12, 1, 42 |
-
-Route 1 runs y=35 at the start down to y=0 at Viridian. The clone covered
-seven of those thirty-five tiles and stopped; after five rounds it walks the
-whole route, enters Viridian, enters the Mart and takes the parcel in 99
-actions against the oracle's 87.
-
-Three things the rounds taught on the way.
-
-**The frozen encoder was not the bottleneck**, which was the obvious suspect:
-it was measured recovering which room a frame is in and not where in the room,
-and Route 1 is one room. `scripts/probe_observability.py` asks whether the
-expert's button is a function of what the policy sees -- leave-one-out 1-NN
-over the demonstrations. On the original set the encoder's window scores
-**0.847** against a 0.549 majority baseline, *better* than the true (map, y,
-x) position at 0.829, with 9 exactly-conflicting steps against position's 88.
-A four-frame window carries the direction of travel, which a coordinate does
-not, and a tile crossed by two different optimal routes genuinely wants two
-different buttons.
-
-**The search budget was going to the states that already worked.** Five of
-round 2's six relabelled states came from turns 0-14, because almost every
-distinct state of a stuck rollout happens before it gets stuck, and the first
-selection rule spread evenly over distinct states. `by_time_spent` replaced
-it: the states the rollout returned to most, which are the absorbing ones.
-Rounds 3 and 4 then relabelled turns 13-21, and by round 5 the rollout reached
-49 distinct states and the searches launched from turns 50-57 needed only
-13-16 actions to finish -- the clone had walked almost the whole leg itself.
-
-**Round 6 picked up the next objective on its own, and that did not help
-either.** The loop reads the objective from event flags, so once a rollout
-carried the parcel its searches became `deliver_parcel` searches: five of
-round 6's six, ending in Oak's Lab, 227 new steps for a return leg that until
-then had only its sixty original demonstrations. The suspicion was that the
-new data contradicted the old, since both legs walk the same corridor in
-opposite directions and 59 of the 289 demonstrated tiles do carry opposite
-majority actions under the two objectives. The probe says no: leave-one-out
-1-NN over the aggregated set goes *up* when rounds 6 to 8 are added, 0.882 to
-0.898 against a 0.500 majority baseline, with 21 exactly-conflicting steps in
-1,841. The sprite faces north on the way out and south on the way back, so the
-frames separate the legs and the labels stay a function. Whatever those rounds
-cost, it was not label noise.
-
-A detail that mattered more than it looks. A relabelled episode starts in the
-middle of a run, and replayed from a fresh GRU and a fresh frame window it is
-a different input than that same game state is at play time, where the window
-holds the last four frames and the hidden state carries hundreds of oscillating
-steps -- which is exactly the state a recovery has to be conditioned on. So
-each visit keeps the learner's own preceding sixteen turns and the episode
-replays them before the expert's, moving the GRU and the window and scored on
-nothing. Sixteen rather than the whole prefix is a memory and compute cap, and
-a GRU warmed on sixteen oscillating steps approximates one warmed on four
-hundred rather than equalling it.
-
-What the loop cannot reach from here is structural rather than mysterious.
-DAgger relabels only the objective the rollout is currently on, so the
-dataset's shape follows how far the policy gets: after eight rounds it holds
-44 episodes of `get_parcel`, 6 of `deliver_parcel`, and still exactly 1 of
-`enter_forest` -- the original demonstration. `train_clone` takes one optimizer
-step per episode, so the objective the design actually grades gets one
-gradient step in fifty-one. Reaching it needs rollouts that begin past the
-parcel, which means seeding the loop from oracle states at the later
-objectives instead of only from Route 1. That is a training-time use of save
-states, like every demonstration here; the eval stays one continuous episode
-from `states/oracle/route1.state`.
-
-### Why, as far as the logs say
-
-The archive stopped growing at hour 6 -- 168 cells, unchanged for the last three
-hours. Policy entropy is the weaker claim: over the whole leg it starts at
-0.383, runs a median of 0.736 and ends at 0.312, against ln(7) = 1.95, and it
-is not a decline but a wobble -- in the final twelve minutes alone it spans
-0.220 to 1.214. An earlier version of this section said it "fell from 0.96 to
-0.48", which is neither endpoint of anything; the committed report kept only
-the last 200 of 8,941 rows, so the window it was read from was too short to
-show a trend at all. The report keeps every row now. From an archive state near Oak's Lab it can collect the
-parcel; from Route 1 it has no reason to go there, because the only signal
-pointing south is a +1 that 8.41M steps of exploration never found from that
-start.
-
-**That is not a statement about this reward and this budget alone, and an
-earlier version of this section said it was.** Three other suspects are live,
-and none was ruled out:
-
-- *The optimiser was broken.* A review found that GAE discarded every episode's
-  terminal transition -- the step that pays `enter_forest` its +1 -- so the goal
-  produced no gradient at all, and that PPO replayed each rollout from a zero
-  GRU state while the driver carried the real one, making the importance ratio
-  something other than 1 before any weight changed. Both are fixed; neither was
-  fixed when this run happened.
-- *The representation is untested.* The encoder ran **1 of its 6 epochs**,
-  stopped to free wall-clock. Part 1's encoder reached a validation prediction
-  loss of 0.0102; this one stopped at 0.0317.
-- *The harness was trapping the route.* The control detector false-positived on
-  the Pallet Town entrance, which is on the only path from the start state to
-  `get_parcel`, so an episode heading for the objective lost 32 of every 33
-  turns on arrival.
-
-So this run does not show that the reward is the problem, and it certainly does
-not show anything about the world model. Separating any of it needs the fixes
-above and arms 1 and 2.
-
-And it is confounded by the detector. The false-positive band sits at Pallet
-Town's entrance, which is on the path to `deliver_parcel` -- the return leg to
-Oak's lab -- so any episode that got as far as carrying the parcel home lost 32
-of every 33 turns on arrival. It does not explain the first objective, which
-lies north. Training episodes seeded from archive states already inside Pallet
-or the lab are not taxed, which is part of how `get_parcel` was reached in
-training and never in a contract run from Route 1. Fixing the detector comes
-before reading anything more into these numbers.
-
-
-## Cost
-
-Measured on an Apple M5 (32 GB), torch on MPS.
-
-| step | measured |
-|---|---|
-| parameters | 12,515,136 |
-| training throughput | 403 frames/s, flat from batch 16 to 64 |
-| 10-epoch run | ~70 min |
-| encoder share of a training step | 94 % |
-| SIGReg share | 1.5 % |
-| CEM, 512 plans, horizon 14 | 173 ms per round |
-| bare ROM → verified Pikachu state | 30 s |
-| collect 31,759 frames | 2 min |
-
-CEM cost is linear in the horizon, so longer-horizon planning is affordable.
-
-## Upstream fixes
-
-Carried into the vendored code, each with a header saying what changed:
-
-- **Device selection ignored MPS**, so training on an Apple box silently ran on
-  CPU.
-- **Best-checkpoint selection was driven by the regulariser.** Total validation
-  loss is `pred + 0.1 · SIGReg`, and SIGReg dominated it — epochs with strictly
-  better prediction were rejected. `--select-on pred` is now the default, and it
-  changed which model we plan with.
-- `probe.py` labelled frames on `party_counts > 0`, constant for a navigation
-  task.
-- `PokeDataset` raised numpy's "need at least one array to concatenate" when no
-  window fit, naming neither the file nor the knob.
-- `train.py`'s config was edit-the-source-only.
-- `plan_cem.py` demanded a ROM it never emulates.
-- Dropped `eval_plan.py --runs N`: the emulator is deterministic from a save
-  state and the plan is fixed, so N runs are N identical episodes.
-
-## A dataset for world models: PokeDreamer, for Yellow
-
-[PokeDreamer](https://huggingface.co/datasets/xxxTEMPESTxxx/PokeDreamer) is
-200 k Pokémon Red transitions for Dreamer-style world models: grey frames, 5
-start states between Pallet and Pewter. `scripts/collect_dreamer.py` writes
-the same arrays, names, dtypes and action indices for Yellow, in colour, from
-235 start states on 211 maps. The full card is
-[docs/pokedreamer_yellow.md](docs/pokedreamer_yellow.md).
-
-Getting past Viridian Forest without playing there took one new tool.
-`poke/warp.py` reads every map's warp table out of the ROM through pret's
-symbol file and hooks the game's `WarpFound2`, so stepping on any warp lands
-on any map. The game loads the map itself — NPCs, tileset, palettes, Pikachu
-following — which writing coordinates into WRAM never would. 228 of 229
-teleports arrived with control.
-
-Measured, per 10 k steps against two of PokeDreamer's chunks: 12.7 distinct
-maps vs 7.0, 764 distinct tiles vs 515, 36.6 map changes vs 28.5. Replaying
-12 episodes' actions from their start states reproduced every frame and probe
-exactly. PokeDreamer's own `dialog_opens` reads True on 95.8 % of its frames,
-including frames with no box on screen; here it comes from the tile buffer.
-
-Two fixes it forced on the existing code. The oracle's state key now hashes
-`wGameProgressFlags`: each map's script index advances through a scene
-without setting an event flag, so the lab after Oak's speech keyed the same as
-the lab before it, and Part 1 searched 1,414 nodes without finding Pikachu.
-And `PokeEnv.close()` no longer writes `pokeyellow.gbc.ram` back to disk,
-which every run did, feeding the next boot's SRAM.
-
-### Reading the buttons off a 7-hour longplay
-
-The second half reads a human's presses off a YouTube longplay of Yellow
-(`aqr_YgqF2vM`, 6 h 53 min) with an inverse dynamics model, VPT-style, and
-writes them in the same schema. The video is exactly 5× the Game Boy screen at
-59.94 fps, one video frame per game frame, recorded through Gambatte's colour
-correction; `scripts/video_ingest.py` undoes it and snaps every pixel to
-Yellow's 42 colours (1,485,634 frames, 528,782 distinct).
-
-`scripts/synth_collect.py` plays the emulator a frame at a time with
-human-like timings and pushes every episode through the video's own path
-(colour correction, 5× upscale, x264 at the longplay's CRF 28, decode, snap).
-Labels per frame: the 8 held buttons, and on one frame in 20 whether flipping
-each button would change the screen in the next 32 frames. 540 episodes, 1.8 M
-frames: 320 from the start-state pool, 160 where a walk that goes nowhere is
-followed by A (people, signs, PCs: 3 such episodes opened 10 text boxes
-with A, 120 ordinary ones 19), 60 from power-on, half of them leaving the
-intro untouched as the longplay's player did. `scripts/train_idm.py` trains
-a patchified CNN + 4-layer transformer over 33 frames with four heads: held,
-press onset, could-it-show, and edit cut (trained on spliced windows).
-
-Two checks, because accuracy on held bits says little — on frames where a
-press could show, predicting "nothing" is right 93 % of the time:
-
-| | v2 | v3 |
-|---|---|---|
-| Synthetic replay, same tile path (12 held-out-map episodes × 300-frame segments; ceiling: true buttons one frame late, 0.842; floor: nothing pressed, 0.158) | 0.642 | 0.608 |
-| Real video, frames in sync replaying from power-on | 923 | 1,816 |
-| Real video, frames in sync replaying from the bedroom save state | 460 | 843 |
-| Edit cuts found in 6.9 h (the cut head alone fired 4,294 times) | — | 330 |
-
-The synthetic score cannot see A presses (they rarely change the path walked);
-the video can, and v3 got past the bedroom PC where v2 missed the A. The cut
-head fired on the game's own palette fades and on menus; `label_video` now
-keeps a cut only where under half the pixels survive and no colour-for-colour
-swap explains them.
-
-`scripts/repair_labels.py` then lets the emulator correct the labels. It
-replays them from power-on, and where the screen stops matching the video it
-tries one small edit at a time — drop a press, move it, add an A / B / START
-tap or an A / B hold (held A or B speeds up text, and the model never learned
-that) — keeping the edit that plays in sync longest, with backtracking. From
-power-on the labels are now verified frame by frame through the intro, the
-title, OPTION, Oak's speech, both naming screens and the bedroom up to the
-PC's withdraw menu (video frame 7,670, 18 edits), where it needs two
-coordinated changes and stops. Two things it cannot do: tell apart buttons
-with the same effect (A or START on the title screen), and go past the
-opening — verification needs an emulator state that matches the video, and
-edit cuts and the random number generator end that.
-
-Outputs, in `data/longplay/`: `labels.h5` (per frame: held / onset /
-could-it-show probabilities, decoded and repaired buttons, `verified`,
-confirmed cuts), `pokedreamer/` (61,563 PokeDreamer steps, each with its 24
-per-frame held masks, a confidence, and `verified`) and
-`longplay_schema3.h5` (24,544 steps for `scripts/train.py`). RAM probes are
-unknown (255 / −1): a video has no RAM. The frames come from someone else's
-upload, so nothing derived from them is published.
+| `poke/` | the library: emulator env and Yellow's RAM map, world model (`jepa.py`, `encoder.py`, `predictor.py`), planner pieces, oracle, `contract.py`, RL (`rl/`), warps, dataset writers, the video and labelling models (`video.py`, `synth.py`, `idm.py`) |
+| `scripts/` | one entry point per experiment; every one takes `--help` |
+| `tests/` | the suite, runnable without a ROM |
+| `docs/` | one write-up per project, plus design specs and plans in `docs/superpowers/` |
+| `results/` | committed outputs of the runs the docs quote |
+| `media/` | the GIFs |
+| `routes/` | recorded routes and their annotations |
+| `states/`, `data/`, `episodes/`, `checkpoints/` | generated locally; gitignored |
 
 ## Roadmap
 
-1. ~~Baseline table before any model exists.~~ Done.
-2. ~~Train on real frames.~~ Done.
-3. ~~Separate "is the model wrong" from "is the objective wrong".~~ Done.
-4. ~~Plan on coordinates rather than a latent norm.~~ Done.
-5. ~~Cross Pallet Town.~~ Done, and then the whole opening: 4/4 milestones on
-   two of three seeds.
-5b. **Past Route 1.** The run leaves Pallet onto ground no episode has ever
-   walked, where neither the cost field nor the position read-out means
-   anything — so the next thing is data out there, not a better planner.
-   The data now exists (colour, 211 maps; see the PokeDreamer section); the
-   models above still train on DMG grey.
-6. Rollout error as a curve, `MSE(k)` for `k = 1..H`, before and after
-   fine-tuning. `finetune_rollout` already prints per-horizon validation MSE.
-7. Close the lossiness gap: raw pixels out-predict the encoder on position
-   everywhere. Does an auxiliary coordinate head recover it without hurting the
-   dynamics?
-8. Cross-version transfer: train on Yellow, score the frozen encoder on Red's
-   `leave_room` with no retraining. Needs a second legal ROM.
+Done so far: a baseline table before any model, training on real frames,
+separating "the model is wrong" from "the objective is wrong", planning on
+coordinates instead of a latent norm, and the whole opening (4/4 milestones on
+two of three seeds). Next:
+
+1. **Past Route 1 with the world model.** Past Pallet the run walks onto ground
+   no episode has covered, where neither the cost field nor the position
+   read-out means anything, so the next need is data there, not a better
+   planner. Colour data from 211 maps now exists (project 3a); the Part 1
+   models still train on grey frames from the opening.
+2. **The other two arms of Part 2.** Only one of the design's three arms was
+   trained, so nothing yet shows whether the world model helps a policy.
+3. **Rollout error as a curve,** `MSE(k)` for `k = 1..H`, before and after
+   fine-tuning; `scripts.finetune_rollout` already prints per-horizon
+   validation MSE.
+4. **Close the encoder's lossiness gap.** Raw pixels predict position better
+   than the encoder everywhere. Does an auxiliary coordinate head recover it
+   without hurting the dynamics?
+5. **Cross-version transfer.** Score the frozen Yellow encoder on Red's
+   `leave_room` task with no retraining. Needs a second legal ROM.
 
 ## Licence
 
