@@ -70,3 +70,47 @@ def test_dreamer_export_is_the_same_read_in_small_batches(tmp_path, monkeypatch)
     for key in big:
         assert np.array_equal(big[key], small[key]), key
     assert big["obs"].shape[0] == 600 // 24 + 400 // 24
+
+
+def test_repaired_beats_ruled_beats_decoded():
+    from scripts.export_video import label_arrays
+
+    n = 20
+    up, down, left = 1, 2, 4
+    labels = {"held_p": np.zeros((n, 8), np.float16),
+              "buttons": np.full(n, up, np.uint8),
+              "buttons_ruled": np.full(n, down, np.uint8),
+              "buttons_repaired": np.full(n, left, np.uint8),
+              "verified": np.r_[np.ones(10, bool), np.zeros(10, bool)],
+              "rule_changed": np.zeros(n, bool), "rule_event": np.zeros(n, bool)}
+    held, held_p, verified, changed, events = label_arrays(labels)
+    assert held[:10, 2].all() and not held[:10, 1].any()      # verified: repaired (left)
+    assert held[10:, 1].all() and not held[10:, 0].any()      # elsewhere: ruled (down)
+    assert (held_p[:10, 2] == 1).all()                         # verified frames are certain
+    del labels["buttons_ruled"]
+    held, *_ = label_arrays(labels)
+    assert held[10:, 0].all()                                  # no ruled labels: decoded (up)
+
+
+def test_export_carries_rule_counts(tmp_path):
+    import h5py
+
+    import scripts.export_video as export
+
+    n = 240
+    with h5py.File(tmp_path / "v.h5", "w") as h5:
+        h5["frame_ref"] = np.arange(n, dtype=np.int32)
+        h5["colours"] = np.zeros((42, 3), np.uint8)
+        h5["uframes"] = np.zeros((n, 144, 160), np.uint8)
+        h5["held_p"] = np.zeros((n, 8), np.float16)
+        h5["buttons"] = np.zeros(n, np.uint8)
+        events = np.zeros(n, bool)
+        events[[5, 30, 31]] = True                               # step 0 has one, step 1 two
+        changed = np.zeros(n, bool)
+        changed[30:35] = True                                    # step 1: five frames fixed
+        h5["rule_event"], h5["rule_changed"] = events, changed
+        export.export_dreamer(h5, h5, [(0, n)], tmp_path / "out")
+    with np.load(tmp_path / "out" / "transitions_0001.npz") as d:
+        assert d["rule_events"][:2].tolist() == [1, 2]
+        assert d["rule_fixed"][:2].tolist() == [0, 5]
+        assert d["rule_events"].sum() == 3 and d["rule_fixed"].sum() == 5

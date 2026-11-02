@@ -292,6 +292,8 @@ def main() -> None:
     parser.add_argument("--frames", type=int, default=20_000, help="video frames to repair")
     parser.add_argument("--anchor-state", default=None)
     parser.add_argument("--anchor-search", type=int, nargs=2, default=(6000, 7600))
+    parser.add_argument("--buttons", default="auto",
+                        help="labels to start from: auto = buttons_ruled when present, else buttons")
     parser.add_argument("--max-edits", type=int, default=200)
     parser.add_argument("--max-backtracks", type=int, default=12,
                         help="times to undo recent edits and try the next-best one when stuck")
@@ -304,7 +306,10 @@ def main() -> None:
     started = time.time()
     with h5py.File(args.video) as h5, h5py.File(args.labels) as labels:
         snapper = Snapper(h5["colours"][:])
-        masks = labels["buttons"][:].astype(np.int64)
+        key = args.buttons if args.buttons != "auto" else (
+            "buttons_ruled" if "buttons_ruled" in labels else "buttons")
+        masks = labels[key][:].astype(np.int64)
+        print(f"starting from {key}", flush=True)
         onset_p = labels["onset_p"][:].astype(np.float32)
         env = None
         if args.anchor_state:
@@ -344,7 +349,7 @@ def main() -> None:
     if not args.dry_run:
         with h5py.File(args.labels, "a") as labels:
             if "buttons_repaired" not in labels:
-                labels["buttons_repaired"] = labels["buttons"][:]
+                labels["buttons_repaired"] = labels[key][:]
                 labels["verified"] = np.zeros(len(labels["buttons"]), bool)
             span = slice(first_frame, lost)
             labels["buttons_repaired"][span] = masks[span].astype(np.uint8)
