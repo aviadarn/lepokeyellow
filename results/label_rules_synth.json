@@ -1,0 +1,16 @@
+{
+ "walking_true": 0.99,
+ "walking_true_starts": 301,
+ "walking_true_from_standing": 0.9866,
+ "walking_true_from_standing_starts": 224,
+ "episodes": [
+  "ep_00000.npz",
+  "ep_00001.npz",
+  "ep_00002.npz",
+  "ep_00003.npz",
+  "ep_00004.npz",
+  "ep_00005.npz",
+  "ep_00006.npz",
+  "ep_00007.npz"
+ ]
+}
