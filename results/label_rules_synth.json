@@ -1,8 +1,6 @@
 {
  "walking_true": 0.99,
  "walking_true_starts": 301,
- "walking_true_from_standing": 0.9866,
- "walking_true_from_standing_starts": 224,
  "episodes": [
   "ep_00000.npz",
   "ep_00001.npz",
@@ -12,5 +10,34 @@
   "ep_00005.npz",
   "ep_00006.npz",
   "ep_00007.npz"
- ]
+ ],
+ "walking_inserted_frames": 22,
+ "walking_inserted_precision": 0.0909,
+ "walking_agreement_v3_before": 0.9796,
+ "walking_agreement_v3_after": 1.0,
+ "walking_agreement_true_degraded": 0.9296,
+ "walking_val_starts": 540,
+ "walking_val_episodes": 16,
+ "walking_precision_by_floor": {
+  "0.05": {
+   "inserted": 22,
+   "precision": 0.0909
+  },
+  "0.2": {
+   "inserted": 20,
+   "precision": 0.0
+  },
+  "0.3": {
+   "inserted": 18,
+   "precision": 0.0
+  },
+  "0.5": {
+   "inserted": 18,
+   "precision": 0.0
+  },
+  "0.7": {
+   "inserted": 14,
+   "precision": 0.0
+  }
+ }
 }
