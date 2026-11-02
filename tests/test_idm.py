@@ -116,3 +116,25 @@ def test_cuts_need_the_picture_to_jump():
         p[t] = 0.9
         cuts |= confirm_cuts(p, video, refs)
     assert cuts.tolist() == [False, False, False, True]
+
+
+def test_context_table_counts_by_situation():
+    import numpy as np
+
+    from scripts.eval_idm import context_table
+
+    up, a = 1 << 0, 1 << 4
+    truth = np.array([up, 0, a, 0, 0, 0])
+    pred = np.array([up, 0, 0, a, 0, 0])
+    matter = np.full((6, 8), 255, np.uint8)
+    for t in (0, 2, 3, 4, 5):
+        matter[t] = 0
+    matter[0, 0] = 1                       # up could show on frame 0
+    matter[2:5, 4] = 1                     # A could show on frames 2-4
+    in_battle = np.array([0, 0, 0, 1, 1, 0], bool)
+    dialog = np.array([0, 0, 1, 1, 1, 0], bool)
+    assert context_table(truth, pred, matter, in_battle, dialog) == {
+        "overworld": {"up": [1, 0, 0, 0]},
+        "text box": {"a": [0, 1, 0, 0]},
+        "battle": {"a": [0, 0, 1, 1]},
+    }

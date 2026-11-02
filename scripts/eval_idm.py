@@ -49,6 +49,32 @@ def start_env(state: str):
     return env
 
 
+def context_table(truth: np.ndarray, pred: np.ndarray, matter: np.ndarray,
+                  in_battle: np.ndarray, dialog: np.ndarray) -> dict[str, dict[str, list[int]]]:
+    """Per situation and button, on the sampled frames where a press could
+    show: [caught, missed, wrongly pressed, correctly released]."""
+    from poke.synth import BUTTONS
+
+    out: dict[str, dict[str, list[int]]] = {}
+    for t in np.flatnonzero(matter[:, 0] != 255):
+        where = "battle" if in_battle[t] else "text box" if dialog[t] else "overworld"
+        for k, name in enumerate(BUTTONS):
+            if not matter[t, k]:
+                continue
+            row = out.setdefault(where, {}).setdefault(name, [0, 0, 0, 0])
+            pressed, predicted = truth[t] >> k & 1, pred[t] >> k & 1
+            row[(0 if predicted else 1) if pressed else (2 if predicted else 3)] += 1
+    return out
+
+
+def _add(total: dict, part: dict) -> None:
+    for where, buttons in part.items():
+        for name, row in buttons.items():
+            acc = total.setdefault(where, {}).setdefault(name, [0, 0, 0, 0])
+            for i, v in enumerate(row):
+                acc[i] += v
+
+
 def tiles(sequence) -> list[tuple]:
     """Distinct consecutive (map, y, x): the path, with the timing removed."""
     out = []
@@ -128,6 +154,8 @@ def main() -> None:
     parser.add_argument("--min-episode", type=int, default=None,
                         help="keep only held-out episodes numbered >= this (a batch, e.g. "
                              "20000 for the bump-A episodes)")
+    parser.add_argument("--by-context", action="store_true",
+                        help="also count caught / missed presses per situation (overworld, text, battle)")
     parser.add_argument("--out", default="results/idm_closure.json")
     args = parser.parse_args()
 
@@ -142,12 +170,13 @@ def main() -> None:
         held_out = f"episodes >= {args.unseen_from}"
     if args.min_episode is not None:
         val = [e for e in val if int(e["stem"].split("_")[1]) >= args.min_episode]
-    rows = []
+    rows, by_context = [], {}
     for episode in val[:args.episodes]:
         frames = np.asarray(episode["frames"])
         with np.load(Path(args.synth) / f"{episode['stem']}.npz") as data:
             clean = data["clean"]
             truth_tiles = np.stack([data["map_ids"], data["ys"], data["xs"]], 1)
+            situation = (data["in_battles"], data["dialog_opens"])
         masks = np.asarray(episode["buttons"]).astype(np.int64)
         held, _, _, onset = predict(model, lambda index: frames[index], len(frames), device)
         onset = onset if checkpoint["has_onset"] else None
@@ -156,6 +185,9 @@ def main() -> None:
                       "idm_held_only": decode(held, None),
                       "released": np.zeros_like(masks),
                       "truth_late_1": np.concatenate([[0], masks[:-1]])}
+        if args.by_context:
+            _add(by_context, context_table(masks, candidates["idm"], np.asarray(episode["mattered"]),
+                                           *situation))
         env = start_env(episode["state"])
         try:
             row = closure(env, clean, masks, candidates, colours, truth_tiles)
@@ -175,6 +207,13 @@ def main() -> None:
                for k in ("idm", "idm_overlapping_dirs", "idm_held_only", "released",
                          "truth_late_1")}
     summary["truth_replay_exact"] = all(r["truth_replay_exact"] for r in rows)
+    if args.by_context:
+        summary["by_context"] = by_context
+        for where, buttons in sorted(by_context.items()):
+            for name, (hit, miss, wrong, ok) in sorted(buttons.items()):
+                if hit + miss:
+                    print(f"{where:10s} {name:6s} caught {hit}/{hit + miss}  "
+                          f"wrongly pressed {wrong}/{wrong + ok}", flush=True)
     print(json.dumps(summary), flush=True)
     Path(args.out).write_text(json.dumps(
         {"checkpoint": args.checkpoint, "step": int(checkpoint["step"]),
