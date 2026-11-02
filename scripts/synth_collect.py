@@ -36,7 +36,8 @@ def _episode(job):
     k, state, frames, sample_every, seed, out, options = job
     from poke.env import PokeEnv
     from poke.symbols import load
-    from poke.synth import BUTTONS, HumanLike, MenuTapper, clean_index, degrade, mattered, play
+    from poke.synth import (BUTTONS, HumanLike, MenuTapper, boost_encounters, clean_index, degrade,
+                            mattered, play)
     from poke.video import Snapper
     from poke.warp import TEXT_FAST, set_names, set_text_speed
 
@@ -58,8 +59,11 @@ def _episode(job):
             symbols = load()
             set_names(env, symbols)
             set_text_speed(env, symbols, TEXT_FAST)
-            rgb, masks, labels, blobs = play(env, frames, rng, sample_every,
-                                             policy=HumanLike(rng, bump_a=options["bump_a"]))
+            boost = (lambda e: boost_encounters(e, symbols)) if options.get("encounters") else None
+            rgb, masks, labels, blobs = play(
+                env, frames, rng, sample_every, on_map_change=boost,
+                policy=HumanLike(rng, bump_a=options["bump_a"],
+                                 text_hold=options.get("text_hold", 0.0)))
         played = time.time() - started
         matter = np.full((frames, len(BUTTONS)), 255, np.uint8)
         for t, blob in blobs.items():
@@ -109,10 +113,15 @@ def main() -> None:
                              "uniformly from [LO, HI); ~(1500, 3600) lets the intro play out")
     parser.add_argument("--bump-a", type=float, default=0.0,
                         help="chance of pressing A after a walk that went nowhere")
+    parser.add_argument("--text-hold", type=float, default=0.0,
+                        help="chance an A in a text box is a 10-120 frame hold of A or B")
+    parser.add_argument("--encounters", action="store_true",
+                        help="wild encounters on every grass step (wGrassRate = 255)")
     parser.add_argument("--tag", default=None,
                         help="write collection_TAG.json (train_idm reads every collection*.json)")
     args = parser.parse_args()
-    options = {"idle": tuple(args.intro_idle), "bump_a": args.bump_a}
+    options = {"idle": tuple(args.intro_idle), "bump_a": args.bump_a,
+               "text_hold": args.text_hold, "encounters": args.encounters}
 
     from scripts.collect_dreamer import start_states
 
