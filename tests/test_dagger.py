@@ -295,12 +295,21 @@ def test_an_unsolved_relabelling_contributes_no_demonstrations():
 
 # --------------------------------------------------------------- the dataset
 
+def _stand_ins(tmp_path):
+    """The writer only hashes the ROM and the start state into its attrs, so
+    any bytes will do -- CI has neither file, and neither may be committed."""
+    rom, state = tmp_path / "rom.gbc", tmp_path / "route1.state"
+    rom.write_bytes(b"rom")
+    state.write_bytes(b"state")
+    return str(rom), str(state)
+
+
 def _write(path, episodes):
     from poke.actions import ACTIONS, to_multihot
     from poke.writer import EpisodeWriter
 
-    with EpisodeWriter(path, "pokeyellow.gbc", "states/oracle/route1.state",
-                       60, 0, "yellow", task="dagger_part2") as writer:
+    rom, state = _stand_ins(path.parent)
+    with EpisodeWriter(path, rom, state, 60, 0, "yellow", task="dagger_part2") as writer:
         for names, key, context in episodes:
             for name in names:
                 writer.add_step(np.zeros((144, 160), dtype=np.uint8),
@@ -338,7 +347,6 @@ def test_the_round_writer_lays_one_episode_out_per_relabelled_state(tmp_path):
     frame = np.zeros((144, 160), dtype=np.uint8)
     steps = [ContextStep(frame, 1), DemoStep(frame=frame, action_name="up")]
     path = tmp_path / "r1.h5"
-    assert write_round(path, "pokeyellow.gbc", "states/oracle/route1.state",
-                       [(steps, "get_parcel", 1)]) == 2
+    assert write_round(path, *_stand_ins(tmp_path), [(steps, "get_parcel", 1)]) == 2
     (_, actions, key, context), = load_episodes(path)
     assert key == "get_parcel" and context == 1 and len(actions) == 2
