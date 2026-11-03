@@ -1,0 +1,21 @@
+{
+ "cause": "Rendering phase, not a button. The game copies its tile map to the screen a third at a time, so text appears in batches; at the girl the video shows letters in batches one letter apart from the emulator's (line 1: video 2, 5, 8, 9 letters; emulator 1, 3, 6, 9). Mom's verified dialogue batched identically in both.",
+ "is_button": false,
+ "evidence": [
+  "print rate the same in both: FAST text (wOptions low nibble 1 in the emulator), mom's dialogue first letters at 8,411 / 8,413 / 8,415 in both",
+  "holding A (9,144-9,230) or B (9,150-9,230) leaves the emulator's printing unchanged frame for frame",
+  "B or A+B held 5/20/60 frames from 9,140, 9,145 or 9,150: first loss 9,161-9,165, the same as without",
+  "A tapped at every frame 9,136-9,151 (all three phases of the third-a-frame copy): first loss always A + 21",
+  "at 9,170 the emulator shows 'I'm r' while video frames 9,158-9,182 show 'I'm', 'I'm rai', 'I'm raisin': no single video frame matches, every whole-frame shift fails the text check (10-28 px)"
+ ],
+ "fix": "Per-patch timing slack in the text check: each 8x8 paper/ink patch may match the same patch in any video frame within TEXT_SLACK (12). With it the hand fix plays the whole conversation (next loss 9,364, after the box closes); the old 8,097-frame labels still lose at 3,270 (the options menu) and fail the check on 284 of 365 naming-screen frames (K vs RED). Per-patch slack can only lower the mismatch, so the 0 false alarms on 1.26 M synthetic frames still hold.",
+ "conversation_end": 9335,
+ "hand_fix": {
+  "down_released_at": 9110,
+  "right": [
+   9120,
+   9126
+  ],
+  "a_tap": 9144
+ }
+}
