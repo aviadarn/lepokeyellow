@@ -5,6 +5,7 @@
  "steps": 5909,
  "walking_agreement": 0.9592,
  "answers": 4875,
+ "unexplained": 468,
  "text_agreement_before": 0.9534,
  "text_agreement_after": 1.0,
  "text_taps_added": 227,
@@ -12,5 +13,5 @@
  "text_taps_checked_on_verified": 0,
  "text_applied": true,
  "frames_changed": 1128,
- "seconds": 6.3
+ "seconds": 10.2
 }

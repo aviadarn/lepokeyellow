@@ -33,9 +33,10 @@
  "G5": {
   "v3_same_path_12": 0.608,
   "v4_same_path_12": 0.592,
-  "v3_same_path_40": 0.597,
-  "v4_same_path_40": 0.59,
-  "pass": false
+  "v3_same_path_40": 0.64,
+  "v4_same_path_40": 0.628,
+  "pass": false,
+  "note_40": "re-run after the review fix: boosted episodes now replay with their boost; 0 excluded"
  },
  "G6": {
   "v3_walking": 0.9592,

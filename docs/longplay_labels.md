@@ -79,7 +79,10 @@ walking rule stays a check: the steps the labels miss are forced movement
 (spinner floors), where adding a press was always wrong.
 
 v4 fine-tuned v3 on 200 more episodes aimed at its weak spots, half holding
-A or B through text, half with a wild battle on every grass step. It replays
+A or B through text, half with boosted wild encounters. That batch re-applied
+the boost only on map changes, and the game resets it after every battle, so
+most of its episodes had one boosted battle (battle share 0.26); the boost
+now holds all episode long. It replays
 the video from power-on twice as far (3,081 frames against 1,816) and its
 labels repair with a third of the edits, but it missed three gates narrowly
 (bedroom replay 841 against 843, synthetic same-path 0.592 against the 0.60
@@ -102,10 +105,12 @@ Every exported step says how far it is checked:
 |---|---|---|
 | `verified` | replayed in the emulator frame by frame | 289 |
 | `rule_events` | steps and ▼ answers the screen shows inside it | > 0 on 10,234 (16.6 %) |
-| `rule_fixed` | frames the text rule changed | 1,128 frames |
+| `rule_unexplained` | of those events, the ones the model's own labels failed | > 0 on 447 (241 steps not held, 227 ▼ waits with no press) |
+| `rule_fixed` | frames the text rule changed (a fix can land in the step before its answer) | 1,128 frames |
 
-A step with events and no fixes is one the model got right on its own by the
-screen's account; a step with no events is the model's reading, unchecked. RAM probes are
+A step with events and `rule_unexplained == 0` is one the model got right on
+its own by the screen's account: 9,787 of the 10,234 checked steps (95.6 %).
+A step with no events is the model's reading, unchecked. RAM probes are
 unknown (255 / −1): a video has no RAM. The frames come from someone else's
 upload, so nothing derived from them is published.
 

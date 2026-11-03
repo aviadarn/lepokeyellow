@@ -29,36 +29,37 @@
  ],
  "summary": {
   "idm": {
-   "segments_reproduced": 0.05,
-   "median_frames_to_divergence": 61.5,
-   "same_path": 0.5900000000000001,
-   "same_end_tile": 0.6525000000000001
+   "segments_reproduced": 0.05500000000000001,
+   "median_frames_to_divergence": 69.0,
+   "same_path": 0.6275000000000001,
+   "same_end_tile": 0.6900000000000001
   },
   "idm_overlapping_dirs": {
-   "segments_reproduced": 0.05500000000000001,
-   "median_frames_to_divergence": 62.5,
-   "same_path": 0.5925,
-   "same_end_tile": 0.655
+   "segments_reproduced": 0.06,
+   "median_frames_to_divergence": 69.0,
+   "same_path": 0.63,
+   "same_end_tile": 0.6925000000000001
   },
   "idm_held_only": {
-   "segments_reproduced": 0.0375,
-   "median_frames_to_divergence": 50.5,
-   "same_path": 0.5650000000000001,
-   "same_end_tile": 0.6200000000000001
+   "segments_reproduced": 0.045000000000000005,
+   "median_frames_to_divergence": 58.0,
+   "same_path": 0.605,
+   "same_end_tile": 0.6599999999999999
   },
   "released": {
    "segments_reproduced": 0.02,
-   "median_frames_to_divergence": 12.0,
-   "same_path": 0.2375,
-   "same_end_tile": 0.2625
+   "median_frames_to_divergence": 13.5,
+   "same_path": 0.27,
+   "same_end_tile": 0.29500000000000004
   },
   "truth_late_1": {
-   "segments_reproduced": 0.0725,
-   "median_frames_to_divergence": 76.5,
-   "same_path": 0.8275,
-   "same_end_tile": 0.8574999999999999
+   "segments_reproduced": 0.075,
+   "median_frames_to_divergence": 81.0,
+   "same_path": 0.875,
+   "same_end_tile": 0.9025000000000001
   },
-  "truth_replay_exact": false,
+  "truth_replay_exact": true,
+  "excluded_inexact": 0,
   "by_context": {
    "overworld": {
     "up": [
@@ -3349,192 +3350,192 @@
    "state": "states/cgb/teleport/SafariZoneSecretHouse_w0.state"
   },
   {
-   "truth_replay_exact": false,
+   "truth_replay_exact": true,
    "segments": 10,
    "idm": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 197.0,
     "frames": [
-     38,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     276,
+     90,
+     42,
+     19,
+     158,
+     236,
+     240,
+     291,
+     130
     ],
-    "same_path": 0.0,
-    "same_end_tile": 0.0
+    "same_path": 1.0,
+    "same_end_tile": 1.0
    },
    "idm_overlapping_dirs": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 197.0,
     "frames": [
-     38,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     276,
+     90,
+     42,
+     19,
+     158,
+     236,
+     240,
+     291,
+     130
     ],
-    "same_path": 0.0,
-    "same_end_tile": 0.0
+    "same_path": 1.0,
+    "same_end_tile": 1.0
    },
    "idm_held_only": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 86.0,
     "frames": [
-     38,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     78,
+     90,
+     3,
+     49,
+     300,
+     67,
+     192,
+     82,
+     130
     ],
-    "same_path": 0.0,
-    "same_end_tile": 0.0
+    "same_path": 1.0,
+    "same_end_tile": 1.0
    },
    "released": {
     "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "median_frames_to_divergence": 74.5,
     "frames": [
      3,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     79,
+     26,
+     43,
+     19,
+     158,
+     70,
+     219,
+     82,
+     130
     ],
-    "same_path": 0.0,
-    "same_end_tile": 0.0
+    "same_path": 0.9,
+    "same_end_tile": 0.9
    },
    "truth_late_1": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 80.5,
     "frames": [
-     38,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     79,
+     26,
+     42,
+     19,
+     128,
+     220,
+     219,
+     82,
+     9
     ],
-    "same_path": 0.0,
-    "same_end_tile": 0.0
+    "same_path": 1.0,
+    "same_end_tile": 1.0
    },
    "state": "states/cgb/teleport/RockTunnelB1F_w0.state"
   },
   {
-   "truth_replay_exact": false,
+   "truth_replay_exact": true,
    "segments": 10,
    "idm": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 73.0,
     "frames": [
-     19,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     81,
+     4,
+     8,
+     75,
+     5,
+     5,
+     71,
+     117,
+     214
     ],
-    "same_path": 0.2,
-    "same_end_tile": 0.2
+    "same_path": 0.7,
+    "same_end_tile": 0.7
    },
    "idm_overlapping_dirs": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 73.0,
     "frames": [
-     19,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     81,
+     4,
+     8,
+     75,
+     5,
+     5,
+     71,
+     117,
+     214
     ],
-    "same_path": 0.2,
-    "same_end_tile": 0.2
+    "same_path": 0.7,
+    "same_end_tile": 0.7
    },
    "idm_held_only": {
-    "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 73.0,
     "frames": [
-     19,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     300,
+     80,
+     1,
+     8,
+     75,
+     5,
+     5,
+     71,
+     169,
+     136
     ],
-    "same_path": 0.1,
-    "same_end_tile": 0.1
+    "same_path": 0.7,
+    "same_end_tile": 0.7
    },
    "released": {
     "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "median_frames_to_divergence": 15.0,
     "frames": [
      2,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     81,
+     4,
+     8,
+     19,
+     11,
+     5,
+     71,
+     117,
+     139
     ],
-    "same_path": 0.2,
-    "same_end_tile": 0.2
+    "same_path": 0.6,
+    "same_end_tile": 0.6
    },
    "truth_late_1": {
     "segments_reproduced": 0.0,
-    "median_frames_to_divergence": 0.0,
+    "median_frames_to_divergence": 41.0,
     "frames": [
      2,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0
+     81,
+     3,
+     8,
+     79,
+     11,
+     7,
+     71,
+     169,
+     139
     ],
-    "same_path": 0.1,
-    "same_end_tile": 0.2
+    "same_path": 1.0,
+    "same_end_tile": 1.0
    },
    "state": "states/cgb/teleport/SilphCo9F_w0.state"
   },
