@@ -43,7 +43,6 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from dataclasses import dataclass, field
 from pathlib import Path
 
 import h5py
@@ -51,6 +50,7 @@ import numpy as np
 
 from poke.synth import BUTTONS
 from poke.video import Snapper
+from scripts.edits import Candidate, _peaks, _set, runs  # noqa: F401 (re-exported)
 from scripts.label_video import TAP_FRAMES
 from scripts.sync_opening import (Replayer, align, anchored, boot, find_anchor, in_sync,
                                   release_carried, video_frames)
@@ -68,43 +68,6 @@ CHAIN_WIDTH = 3
 CHAIN_DEPTH = 3
 GRID = 6
 HOLDS = (TAP_FRAMES, 20, 60)
-
-
-@dataclass
-class Candidate:
-    what: str
-    masks: np.ndarray
-    first: int            # first video frame whose buttons differ
-    prior: float          # how plausible the model finds it, 0..1
-    reach: int = field(default=-1)
-
-
-def runs(masks: np.ndarray, k: int) -> list[tuple[int, int]]:
-    """[start, stop) of every run with bit k held."""
-    held = ((masks >> k) & 1).astype(bool)
-    edges = np.flatnonzero(np.diff(np.r_[0, held.astype(np.int8), 0]))
-    return list(zip(edges[::2].tolist(), edges[1::2].tolist()))
-
-
-def _set(masks: np.ndarray, k: int, lo: int, hi: int, on: bool) -> np.ndarray:
-    out = masks.copy()
-    lo, hi = max(lo, 0), min(hi, len(out))
-    if on:
-        out[lo:hi] |= 1 << k
-    else:
-        out[lo:hi] &= ~(1 << k)
-    return out
-
-
-def _peaks(p: np.ndarray, lo: int, hi: int, floor: float, top: int, nms: int = 3) -> list[int]:
-    lo, hi = max(lo, 0), min(hi, len(p))
-    out = []
-    for t in np.argsort(-p[lo:hi]) + lo:
-        if p[t] < floor or len(out) >= top:
-            break
-        if all(abs(t - u) > nms for u in out):
-            out.append(int(t))
-    return out
 
 
 def near_candidates(masks: np.ndarray, onset_p: np.ndarray, lost: int,
