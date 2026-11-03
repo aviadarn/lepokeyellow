@@ -25,7 +25,7 @@ panel on the right is its cost map; the caption is the emulator's ground truth.*
 | 1. World model + planner | From the first frame of a new game: gets Pikachu, wins the rival battle, leaves the lab and leaves Pallet Town — **4/4 milestones on 2 of 3 seeds** (3/4 on the third), in 442–873 actions | [docs/part1_world_model_planner.md](docs/part1_world_model_planner.md) |
 | 2. Learned policy, pixels only | PPO, 9 h: **0/11** runs reach any objective (same as random). Behaviour clone: **0/33**. Five rounds of DAgger: **10/33** reach `get_parcel` (p = 0.0009 against the clone) | [docs/part2_learned_policy.md](docs/part2_learned_policy.md) |
 | 3a. PokeDreamer for Yellow | **500k steps** in colour from 235 start states on **211 maps**; 12.7 maps per 10k steps against 7.0 for the Red original; replays bit-exact | [docs/pokedreamer_yellow.md](docs/pokedreamer_yellow.md) |
-| 3b. Longplay button labels | All 8 buttons labelled on **1,485,634 frames** of a 6 h 53 min video; the first 7,670 frames **verified frame by frame** in the emulator | [docs/longplay_labels.md](docs/longplay_labels.md) |
+| 3b. Longplay button labels | All 8 buttons labelled on **1,485,634 frames** of a 6 h 53 min video, new game to credits; the first 8,097 frames **verified frame by frame** in the emulator, and 5,909 steps and 4,875 text prompts across the whole game checked against the screen | [docs/longplay_labels.md](docs/longplay_labels.md) |
 
 Each doc has the measurements behind its row; the Part 1 and Part 2 docs also
 keep the conclusions that turned out wrong and what caught them. Run outputs
@@ -90,7 +90,9 @@ states the clone gets stuck in, is the first thing that reached an objective. �
   looks like the video reads the presses off every frame. The emulator then
   replays the labels and repairs them wherever the screen stops matching.
   This verification only reaches as far as an emulator state matches the
-  video, which in practice means the opening. →
+  video, which in practice means the opening; past it, every step the player
+  takes and every text prompt answered is checked against what the screen
+  shows. →
   [docs/longplay_labels.md](docs/longplay_labels.md)
 
 Collected data lives in `data/` and is gitignored. Nothing derived from the

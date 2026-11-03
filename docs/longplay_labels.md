@@ -45,18 +45,67 @@ tries one small edit at a time — drop a press, move it, add an A / B / START
 tap or an A / B hold (held A or B speeds up text, and the model never learned
 that) — keeping the edit that plays in sync longest, with backtracking. From
 power-on the labels are now verified frame by frame through the intro, the
-title, OPTION, Oak's speech, both naming screens and the bedroom up to the
-PC's withdraw menu (video frame 7,670, 18 edits), where it needs two
-coordinated changes and stops. Two things it cannot do: tell apart buttons
+title, OPTION, Oak's speech, both naming screens and the bedroom into the
+PC's withdraw menu: to video frame 8,097, from v4's labels with 6 edits
+(v3's needed 18 and stopped at 7,670; see below). Two things it cannot do: tell apart buttons
 with the same effect (A or START on the title screen), and go past the
 opening — verification needs an emulator state that matches the video, and
 edit cuts and the random number generator end that.
 
-Outputs, in `data/longplay/`: `labels.h5` (per frame: held / onset /
-could-it-show probabilities, decoded and repaired buttons, `verified`,
-confirmed cuts), `pokedreamer/` (61,563 PokeDreamer steps, each with its 24
-per-frame held masks, a confidence, and `verified`) and
-`longplay_schema3.h5` (24,544 steps for `scripts/train.py`). RAM probes are
+## Checking the whole game, not just the opening
+
+Past the opening nothing can be replayed, but two things the screen itself
+shows still say a button was pressed (`poke/label_rules.py`,
+`scripts/check_labels.py`, all 1,485,634 frames in 84 s):
+
+- **A step.** The overworld scrolls 2 px on every other frame while the
+  player walks, 16 frames a step, with the direction held just before it.
+  True synthetic labels satisfy that on 99.0 % of 300 steps.
+- **A `▼` answered.** The prompt (tile 0xEE, copied off the cartridge) waits
+  for a new A or B press. B answers ordinary text: 11 of the 12 true-label
+  waits with no A were answered with B. True labels satisfy it on 98.8 % of
+  81 waits.
+
+| | v3 | v4 |
+|---|---|---|
+| Steps found in the video, labels explaining them | 5,909, 95.9 % | 5,906, 96.2 % |
+| ▼ answers found, labels explaining them | 4,875, 95.3 % | 4,875, 95.0 % |
+
+Only the text rule changes labels. Where a wait has no press, it adds an A
+where the onset head peaks: with the true press deleted from 42 held-out
+synthetic waits, its A lands within 8 frames of it every time (and the true
+press was A in 38, B in the others). On the video it added 227 A taps. The
+walking rule stays a check: the steps the labels miss are forced movement
+(spinner floors), where adding a press was always wrong.
+
+v4 fine-tuned v3 on 200 more episodes aimed at its weak spots, half holding
+A or B through text, half with a wild battle on every grass step. It replays
+the video from power-on twice as far (3,081 frames against 1,816) and its
+labels repair with a third of the edits, but it missed three gates narrowly
+(bedroom replay 841 against 843, synthetic same-path 0.592 against the 0.60
+bar, ▼ answers 95.0 % against 95.3 %) and is no better at A in text boxes
+(4 of 12 against 5 of 12). So v3 with the text rule labels the unverified
+frames, and v4's verified opening is kept: a replay in sync proves those
+frames whichever model proposed them (`results/longplay_v4_gates.json`).
+
+## Outputs and how far each step is checked
+
+In `data/longplay/`: `labels.h5` (per frame: held / onset / could-it-show
+probabilities, decoded, rule-checked (`buttons_ruled`) and repaired buttons,
+`verified`, `rule_event`, `rule_changed`, confirmed cuts), `pokedreamer/`
+(61,563 PokeDreamer steps, each with its 24 per-frame held masks and a
+confidence) and `longplay_schema3.h5` (24,544 steps for `scripts/train.py`).
+
+Every exported step says how far it is checked:
+
+| field | meaning | PokeDreamer steps |
+|---|---|---|
+| `verified` | replayed in the emulator frame by frame | 289 |
+| `rule_events` | steps and ▼ answers the screen shows inside it | > 0 on 10,234 (16.6 %) |
+| `rule_fixed` | frames the text rule changed | 1,128 frames |
+
+A step with events and no fixes is one the model got right on its own by the
+screen's account; a step with no events is the model's reading, unchecked. RAM probes are
 unknown (255 / −1): a video has no RAM. The frames come from someone else's
 upload, so nothing derived from them is published.
 
@@ -84,9 +133,18 @@ uv run python -m scripts.train_idm --init checkpoints/idm_v2/last.pt --steps 600
     --lr 1.5e-4 --out checkpoints/idm_v3
 uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt
 
-# Label the video, repair the opening against the emulator, export.
+# Label the video, check it against the screen, repair the opening, export.
 uv run python -m scripts.label_video --checkpoint checkpoints/idm_v3/last.pt
+uv run python -m scripts.check_labels --name v3 --apply
 uv run python -m scripts.repair_labels --frames 14000
 uv run python -m scripts.sync_opening --buttons buttons_repaired
 uv run python -m scripts.export_video
+
+# v4 (not promoted): 200 more episodes, then fine-tune from v3.
+uv run python -m scripts.synth_collect --episodes 100 --first 30000 --frames 3000 \
+    --bump-a 0.6 --text-hold 0.4 --tag text --workers 4
+uv run python -m scripts.synth_collect --episodes 100 --first 31000 --frames 3000 \
+    --encounters --tag battle --workers 4
+uv run python -m scripts.train_idm --init checkpoints/idm_v3/last.pt --steps 6000 \
+    --lr 1.5e-4 --out checkpoints/idm_v4
 ```
