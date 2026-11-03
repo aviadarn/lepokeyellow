@@ -1,0 +1,79 @@
+{
+ "name": "poweron_strict",
+ "start": 0,
+ "verified_until": 9116,
+ "limit": 20000,
+ "edits": [
+  {
+   "edit": "shift a 3264->3261"
+  },
+  {
+   "edit": "add left 3327"
+  },
+  {
+   "edit": "add right 3391"
+  },
+  {
+   "edit": "drop up 3440-3472"
+  },
+  {
+   "edit": "add down 3460 + add down 3516"
+  },
+  {
+   "edit": "swap up->down 3527-3574"
+  },
+  {
+   "edit": "add right 5010 + add right 5022 + add right 5047"
+  },
+  {
+   "edit": "add right 5040 + add right 5058 + add right 5080"
+  },
+  {
+   "edit": "add right 5106"
+  },
+  {
+   "edit": "add left 5130 + add left 5136 + add left 5160"
+  },
+  {
+   "edit": "add left 5166 + add up 5199"
+  },
+  {
+   "edit": "add a 5202 + add left 5205"
+  },
+  {
+   "edit": "add a 5215"
+  },
+  {
+   "edit": "drop b 6239-6244"
+  },
+  {
+   "edit": "add a 6384"
+  },
+  {
+   "edit": "add a 7518"
+  },
+  {
+   "edit": "shift a 7695->7704 + add down 7716 + add down 7725"
+  },
+  {
+   "edit": "add down 7734 + add a 7755"
+  },
+  {
+   "edit": "move left release 8096->8088 + drop left 8114-8124"
+  },
+  {
+   "edit": "add left 8484"
+  },
+  {
+   "edit": "add a 8805x20"
+  },
+  {
+   "edit": "drop a 8496-8501"
+  }
+ ],
+ "frames_changed": 255,
+ "anchor_state": null,
+ "check": "pixel share >= 0.98 and no 8x8 paper/ink patch differing in >= 6 px (12-frame timing slack), 20 frames in a row",
+ "started_from": "buttons_repaired (the v4 opening verified to 8,097 under the pixel-share check alone)",
+ "stopped": "by hand at 9,116, where the player stops beside a Pallet Town girl and talks to her: the labels hold DOWN too long, hold RIGHT 157 frames for a turn and miss the A, more than the search can chain (first logged as a random NPC; frames showed the NPC in the same place in both). The 22 edits are this run's log (results/repair_strict.log); a fresh replay from power-on of the labels written loses sync first at 9,116"
+}

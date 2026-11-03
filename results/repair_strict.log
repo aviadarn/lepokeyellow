@@ -1,0 +1,64 @@
+2026-11-03 12:52:14 repair (strict text check) from buttons_repaired, 20000 frames
+2026-11-03 12:52:14 watchdog strict: group 54859, swap baseline 4444M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7516M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_repaired
+labels as decoded: in sync until video frame 3270
+shift a 3264->3261               sync 3270 -> 3342  (63s, 22328 frames played)
+move left release 3417->3416     sync 3342 -> 3444  (78s, 46962 frames played)
+drop up 3440-3472                sync 3444 -> 3487  (56s, 61962 frames played)
+add down 3460 + add down 3516    sync 3487 -> 3529  (165s, 102664 frames played)
+swap up->down 3527-3574          sync 3529 -> 5035  (55s, 119393 frames played)
+  backtrack: undo swap up->down 3527-3574 -> no alternative
+2026-11-03 13:15:02 exit 0
+2026-11-03 13:15:04 stopped by hand: candidates edited after the loss were judged from a later snapshot
+2026-11-03 13:15:07 watchdog strict: pipeline gone, exiting
+2026-11-03 13:16:19 --- restart with candidates judged from before the loss ---
+2026-11-03 13:16:19 repair (strict text check) from buttons_repaired, 20000 frames
+2026-11-03 13:16:19 watchdog strict: group 65680, swap baseline 4428M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7500M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_repaired
+labels as decoded: in sync until video frame 3270
+shift a 3264->3261               sync 3270 -> 3342  (64s, 22150 frames played)
+add left 3327                    sync 3342 -> 3395  (77s, 45873 frames played)
+add right 3391                   sync 3395 -> 3444  (109s, 76260 frames played)
+drop up 3440-3472                sync 3444 -> 3487  (81s, 98608 frames played)
+add down 3460 + add down 3516    sync 3487 -> 3529  (203s, 145395 frames played)
+swap up->down 3527-3574          sync 3529 -> 5035  (61s, 163956 frames played)
+  backtrack: undo swap up->down 3527-3574 -> no alternative
+2026-11-03 13:42:07 exit 0
+2026-11-03 13:42:08 watchdog strict: pipeline gone, exiting
+2026-11-03 13:42:09 stopped by hand at 5035: name typing needs chains of 3 edits
+2026-11-03 13:42:43 --- restart with chains of up to 3 edits ---
+2026-11-03 13:42:43 repair (strict text check) from buttons_repaired, 20000 frames
+2026-11-03 13:42:43 watchdog strict: group 76263, swap baseline 4428M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7500M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_repaired
+labels as decoded: in sync until video frame 3270
+shift a 3264->3261               sync 3270 -> 3342  (62s, 22150 frames played)
+add left 3327                    sync 3342 -> 3395  (76s, 45873 frames played)
+add right 3391                   sync 3395 -> 3444  (108s, 76260 frames played)
+drop up 3440-3472                sync 3444 -> 3487  (75s, 98608 frames played)
+add down 3460 + add down 3516    sync 3487 -> 3529  (189s, 145395 frames played)
+swap up->down 3527-3574          sync 3529 -> 5035  (61s, 163956 frames played)
+add right 5010 + add right 5022 + add right 5047 sync 5035 -> 5068  (321s, 276094 frames played)
+add right 5040 + add right 5058 + add right 5080 sync 5068 -> 5104  (390s, 390665 frames played)
+add right 5106                   sync 5104 -> 5151  (129s, 421045 frames played)
+add left 5130 + add left 5136 + add left 5160 sync 5151 -> 5187  (506s, 547406 frames played)
+add left 5166 + add up 5199      sync 5187 -> 5219  (355s, 638899 frames played)
+add a 5202 + add left 5205       sync 5219 -> 5249  (358s, 730436 frames played)
+add a 5215                       sync 5249 -> 6267  (22s, 736196 frames played)
+drop b 6239-6244                 sync 6267 -> 6408  (79s, 765105 frames played)
+add a 6384                       sync 6408 -> 7554  (3s, 766928 frames played)
+add a 7518                       sync 7554 -> 7696  (71s, 786933 frames played)
+shift a 7695->7704 + add down 7716 + add down 7725 sync 7696 -> 7735  (356s, 880159 frames played)
+add down 7734 + add a 7755       sync 7735 -> 8097  (307s, 959364 frames played)
+move left release 8096->8088 + drop left 8114-8124 sync 8097 -> 8514  (188s, 1063992 frames played)
+add left 8484                    sync 8514 -> 8833  (73s, 1096365 frames played)
+add a 8808x20                    sync 8833 -> 9116  (77s, 1121990 frames played)
+  backtrack: undo add a 8808x20 -> add a 8805x20
+add a 8805x20                    sync 8833 -> 8994  (869s, 1395730 frames played)
+drop a 8496-8501                 sync 8994 -> 9116  (98s, 1438821 frames played)
+2026-11-03 15:03:35 exit 0
+2026-11-03 15:03:37 stopped by hand at 9116: Pallet Town NPC wanders differently (RNG), no edit can pass; labels written from this log's edits, checked by a fresh replay
+2026-11-03 15:03:40 watchdog strict: pipeline gone, exiting
+2026-11-03 15:18:31 correction: the 9116 wall is not the NPC's random walk (she is in the same place in both); the labels walk one step too far, hold RIGHT 157 frames for a turn and miss the A

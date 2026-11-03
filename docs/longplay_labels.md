@@ -41,16 +41,40 @@ swap explains them.
 
 `scripts/repair_labels.py` then lets the emulator correct the labels. It
 replays them from power-on, and where the screen stops matching the video it
-tries one small edit at a time — drop a press, move it, add an A / B / START
-tap or an A / B hold (held A or B speeds up text, and the model never learned
-that) — keeping the edit that plays in sync longest, with backtracking. From
-power-on the labels are now verified frame by frame through the intro, the
-title, OPTION, Oak's speech, both naming screens and the bedroom into the
-PC's withdraw menu: to video frame 8,097, from v4's labels with 6 edits
-(v3's needed 18 and stopped at 7,670; see below). Two things it cannot do: tell apart buttons
-with the same effect (A or START on the title screen), and go past the
-opening — verification needs an emulator state that matches the video, and
-edit cuts and the random number generator end that.
+tries one small edit at a time — drop a press, move it, swap a direction for
+another, add an A / B / START or direction tap, or an A / B hold (held A or B
+speeds up text, and the model never learned that) — keeping the edit that
+plays in sync longest, with backtracking. Where presses come faster than one
+edit can prove (typing a name: a tap every ~12 frames), it chains up to three.
+
+In sync means two things. At least 98 % of the pixels match, and no 8×8
+patch of text differs: patches made only of the text box's paper and ink in
+both frames, so sprites, the title's Pikachu and wandering NPCs are left to
+the pixel share. The share alone had passed a player named K where the video
+says RED, and menu cursors in the wrong place — under 2 % of the screen — so
+the opening once reported verified to 8,097 frames had the name and three
+menus wrong (found by replaying five minutes from the labels alone). Text
+printed up to 12 frames early or late counts as timing, not content. On
+1.26 M frames of synthetic play replayed with the true buttons the text check
+never fired.
+
+From power-on the labels are now verified frame by frame, every letter and
+cursor included, through the intro, the title, OPTION, Oak's speech, both
+naming screens, the bedroom and its PC, downstairs past the TV and out of the
+door: to video frame 9,116 (2 min 32 s), with 22 edits to the old opening.
+There the player stops beside a girl in Pallet Town and talks to her. The
+labels hold DOWN a few frames too long (one step too many), hold RIGHT for
+157 frames where the player turned with a tap, and miss the A: three edits
+that each gain under MARGIN frames, and a hold shortened by more than the 8
+frames a release may move. Made by hand, they have the emulator talk to her
+too, with a text-speed difference still unexplained.
+
+Verified means the emulator reproduces the screens, not that each key is the
+one the player pressed: the options menu, for one, is matched with an extra
+LEFT and a RIGHT where the player probably tapped LEFT twice. Nor can it tell
+apart buttons with the same effect (A or START on the title screen), or go
+past the opening: verification needs an emulator state that matches the
+video, and edit cuts and the random number generator end that.
 
 ## Checking the whole game, not just the opening
 
@@ -103,7 +127,7 @@ Every exported step says how far it is checked:
 
 | field | meaning | PokeDreamer steps |
 |---|---|---|
-| `verified` | replayed in the emulator frame by frame | 289 |
+| `verified` | replayed in the emulator frame by frame | 331 |
 | `rule_events` | steps and ▼ answers the screen shows inside it | > 0 on 10,234 (16.6 %) |
 | `rule_unexplained` | of those events, the ones the model's own labels failed | > 0 on 447 (241 steps not held, 227 ▼ waits with no press) |
 | `rule_fixed` | frames the text rule changed (a fix can land in the step before its answer) | 1,128 frames |
@@ -142,6 +166,8 @@ uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt
 uv run python -m scripts.label_video --checkpoint checkpoints/idm_v3/last.pt
 uv run python -m scripts.check_labels --name v3 --apply
 uv run python -m scripts.repair_labels --frames 14000
+uv run python -m scripts.repair_labels --buttons buttons_repaired --name poweron_strict \
+    --frames 20000 --max-backtracks 1     # the text check; stops at 9,116
 uv run python -m scripts.sync_opening --buttons buttons_repaired
 uv run python -m scripts.export_video
 

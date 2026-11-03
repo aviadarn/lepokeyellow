@@ -1,0 +1,39 @@
+{
+ "what": "text check (scripts/sync_opening.text_mismatch_near, TEXT_LIMIT 6, slack 12) on synthetic play: clean emulator frames vs the same frames through the video degradation, true buttons, so every loss would be a false alarm",
+ "episodes": 360,
+ "frames": 1260000,
+ "frames_over_limit": 0,
+ "text_losses": 0,
+ "by_collection": {
+  "collection_text": {
+   "episodes": 100,
+   "frames": 300000,
+   "text_losses": 0,
+   "frames_over_limit": 0
+  },
+  "collection_intro": {
+   "episodes": 30,
+   "frames": 180000,
+   "text_losses": 0,
+   "frames_over_limit": 0
+  },
+  "collection_intro_idle": {
+   "episodes": 30,
+   "frames": 180000,
+   "text_losses": 0,
+   "frames_over_limit": 0
+  },
+  "collection_battle": {
+   "episodes": 100,
+   "frames": 300000,
+   "text_losses": 0,
+   "frames_over_limit": 0
+  },
+  "collection": {
+   "episodes": 100,
+   "frames": 300000,
+   "text_losses": 0,
+   "frames_over_limit": 0
+  }
+ }
+}

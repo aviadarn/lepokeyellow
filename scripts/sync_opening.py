@@ -11,9 +11,10 @@ the emulator draws differently from the video.
      whether one video frame really is one game frame.
   2. Replay. From power-on, before each tick, hold the buttons the labels
      give for the video frame that tick will be compared to.
-  3. Score. A frame is in sync if at least SYNC_SHARE of its pixels match.
-     Both sides go through the same path (Gambatte correction, snap), so an
-     off-palette screen like the title compares like with like.
+  3. Score. A frame is in sync if at least SYNC_SHARE of its pixels match
+     and no 8x8 patch of text differs (`text_mismatch`). Both sides go
+     through the same path (Gambatte correction, snap), so an off-palette
+     screen like the title compares like with like.
 
 It cannot run far: the first random event (the rival battle's damage rolls,
 NPCs that wander) depends on exact timing since power-on, including a boot
@@ -40,6 +41,14 @@ from poke.video import Snapper, correct
 
 ROM = "pokeyellow.gbc"
 SYNC_SHARE = 0.98
+# The share alone passed a player named K where the video says RED: a name,
+# a menu cursor or one word is under 2 % of the screen. So text is judged on
+# its own, in 8x8 patches (one font tile) that are all paper and ink in both
+# frames -- sprites, the title's Pikachu and wandering NPCs are never all
+# paper and ink, and are left to the share.
+TEXT_PATCH = 8
+TEXT_LIMIT = 6        # pixels of one patch that differ: a different letter or cursor
+TEXT_SLACK = 12       # frames: text printed a few frames early or late is timing
 
 
 def boot() -> PyBoy:
@@ -59,6 +68,48 @@ def video_frames(h5, first: int, count: int) -> np.ndarray:
 
 def match(a: np.ndarray, b: np.ndarray) -> float:
     return float((a == b).mean())
+
+
+def text_classes(colours: np.ndarray) -> np.ndarray:
+    """(256,) int8 per colour index: 0 paper (white), 1 ink (black or the
+    near-blacks codec noise snaps it to), 2 anything else, 255 included."""
+    colours = np.asarray(colours, np.int32)
+    classes = np.full(256, 2, np.int8)
+    classes[:len(colours)][colours.sum(1) >= 720] = 0
+    classes[:len(colours)][(colours.max(1) <= 40) & (np.ptp(colours, 1) <= 16)] = 1
+    return classes
+
+
+def _patch_sums(mask: np.ndarray) -> np.ndarray:
+    total = np.pad(mask.astype(np.int32).cumsum(0).cumsum(1), ((1, 0), (1, 0)))
+    k = TEXT_PATCH
+    return total[k:, k:] - total[:-k, k:] - total[k:, :-k] + total[:-k, :-k]
+
+
+def text_mismatch(a: np.ndarray, b: np.ndarray, classes: np.ndarray) -> int:
+    """Most pixels that differ in any 8x8 patch made only of paper and ink
+    in both frames (any position, so scrolled text is covered too)."""
+    ca, cb = classes[a], classes[b]
+    judged = _patch_sums((ca == 2) | (cb == 2)) == 0
+    if not judged.any():
+        return 0
+    return int(_patch_sums(ca != cb)[judged].max())
+
+
+def text_mismatch_near(frame: np.ndarray, video: np.ndarray, v: int, classes: np.ndarray,
+                       slack: int = TEXT_SLACK) -> int:
+    """`text_mismatch` against video frame v, or, when that is TEXT_LIMIT or
+    more, the least against any video frame within `slack`: a letter that
+    printed early or late matches a neighbour, a wrong letter matches none."""
+    worst = text_mismatch(frame, video[v], classes)
+    if worst < TEXT_LIMIT:
+        return worst
+    near = range(max(v - slack, 0), min(v + slack + 1, len(video)))
+    return min(text_mismatch(frame, video[u], classes) for u in near)
+
+
+def in_sync(share: float, text: int) -> bool:
+    return share >= SYNC_SHARE and text < TEXT_LIMIT
 
 
 def align(h5, snapper, span: int = 2400, search: int = 900) -> tuple[int, list[float]]:
@@ -152,6 +203,7 @@ class Replayer:
                  offset: int, slack: int = 2, patience: int = 3):
         self.pyboy, self.video, self.masks = pyboy, video, masks
         self.lut = emulator_lut(snapper)
+        self.classes = text_classes(snapper.colours)
         self.pad = Pad(pyboy)
         self.slack, self.patience = slack, patience
         self.e, self.offset, self.streak, self.pending = 0, offset, 0, 0
@@ -161,8 +213,9 @@ class Replayer:
         return self.lut[(q[..., 0] << 10) | (q[..., 1] << 5) | q[..., 2]]
 
     def step(self):
-        """Tick one frame: (video frame, match share at the tracked offset),
-        or None when that frame has no video neighbours to compare with."""
+        """Tick one frame: (video frame, match share and `text_mismatch_near`
+        at the tracked offset), or None when that frame has no video
+        neighbours to compare with."""
         v = self.e + self.offset
         self.pad.set(int(self.masks[v]) if 0 <= v < len(self.masks) else 0)
         self.pyboy.tick(1, True)
@@ -180,7 +233,7 @@ class Replayer:
                 self.streak = 0
         else:
             self.streak = 0
-        return v, scores[0]
+        return v, scores[0], text_mismatch_near(frame, self.video, v, self.classes)
 
     def save(self) -> tuple:
         buffer = io.BytesIO()
@@ -208,7 +261,7 @@ def replay(h5, labels, snapper, offset: int, frames: int, slack: int = 2,
     has matched strictly better for `patience` frames in a row.
 
     Returns per compared frame: (match share at the tracked offset, offset
-    used, video frame).
+    used, video frame, text mismatch).
     """
     own = pyboy is None
     pyboy = boot() if own else pyboy
@@ -221,7 +274,7 @@ def replay(h5, labels, snapper, offset: int, frames: int, slack: int = 2,
     if 0 < offset < len(masks):
         masks = release_carried(masks, offset)
     replayer = Replayer(pyboy, snapper, video, masks, offset, slack, patience)
-    shares, offsets, seen = [], [], []
+    shares, offsets, seen, texts = [], [], [], []
     for _ in range(frames):
         before = replayer.offset
         out = replayer.step()
@@ -230,9 +283,10 @@ def replay(h5, labels, snapper, offset: int, frames: int, slack: int = 2,
         shares.append(out[1])
         offsets.append(before)
         seen.append(out[0])
+        texts.append(out[2])
     if own:
         pyboy.stop(save=False)
-    return np.array(shares), np.array(offsets), np.array(seen)
+    return np.array(shares), np.array(offsets), np.array(seen), np.array(texts)
 
 
 def main() -> None:
@@ -275,21 +329,23 @@ def main() -> None:
                       f"({share:.4f})", flush=True)
             with h5py.File(args.labels) as labels:
                 labels = {"buttons": labels[args.buttons][:]}
-                shares, offsets, seen = replay(h5, labels, snapper, offset, args.frames,
-                                               pyboy=env.pyboy if env else None)
+                shares, offsets, seen, texts = replay(h5, labels, snapper, offset, args.frames,
+                                                      pyboy=env.pyboy if env else None)
             if env:
                 env.close()
-            in_sync = shares >= SYNC_SHARE
+            synced = (shares >= SYNC_SHARE) & (texts < TEXT_LIMIT)
             # Lost = out of sync for a full second; a single unmatched frame is
             # usually the offset catching up.
-            lost = np.convolve(~in_sync, np.ones(60), "valid") >= 60
+            lost = np.convolve(~synced, np.ones(60), "valid") >= 60
             first_lost = int(np.argmax(lost)) if lost.any() else len(shares)
-            report.update(replayed=int(len(shares)), in_sync_share=float(in_sync.mean()),
+            report.update(replayed=int(len(shares)), in_sync_share=float(synced.mean()),
+                          pixel_share_only=float((shares >= SYNC_SHARE).mean()),
+                          text_mismatch_frames=int((texts >= TEXT_LIMIT).sum()),
                           frames_before_lost=first_lost,
                           lost_at_video_frame=int(seen[min(first_lost, len(seen) - 1)]),
                           offset_moves=int((np.diff(offsets) != 0).sum()),
                           final_offset=int(offsets[-1]))
-            print(f"replay: {in_sync.mean():.3f} of {len(shares)} frames in sync; lost for "
+            print(f"replay: {synced.mean():.3f} of {len(shares)} frames in sync; lost for "
                   f"good (60 frames off) after {first_lost} frames, at video frame "
                   f"{report['lost_at_video_frame']}; offset moved "
                   f"{report['offset_moves']} times, ended {offsets[-1]}", flush=True)

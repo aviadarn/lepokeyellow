@@ -11,14 +11,22 @@ What comes out is buttons the emulator has checked frame by frame, up to the
 first place no small edit explains: a random event the two emulators roll
 differently, an edit cut, or a mistake further back than the search looks.
 
-Search, at each loss of sync (first of RUN frames in a row under SYNC_SHARE):
+Search, at each loss of sync (first of RUN frames in a row out of sync: under
+SYNC_SHARE, or text that differs, scripts/sync_opening.in_sync):
   * near: every press starting in the NEAR frames before it -- removed, its
     start moved by 1-2 frames, its end by 1-64, a whole tap by 3-12 -- and A / B / START taps (and
     A / B holds of 20 or 60 frames: held A or B speeds up text) added where
     the onset head peaks or on a 6-frame grid;
+    every direction press swapped for another, and direction taps added in
+    the DIR_NEAR frames before it (menu cursors: the naming screen's LEFT
+    read as RIGHT, and the small moves after it missed altogether);
   * far, only if near finds nothing: removing any tap up to FAR frames back
     (a wrong tap can sit unnoticed: the intro's false A at 1,785 shows only
-    when the title screen comes up early).
+    when the title screen comes up early);
+  * chained, only if neither finds anything: up to CHAIN_DEPTH near edits at
+    once, each at the loss the one before reaches, from the CHAIN_WIDTH firsts
+    that got furthest (presses closer together than MARGIN: typing a name, a
+    tap every ~12 frames, gains 9-12 frames per tap).
 Candidates are tried in order of how plausible the model finds them; the
 first to play HORIZON frames past the old loss wins, else the one that got
 furthest, if it beat the old loss by MARGIN.
@@ -44,7 +52,7 @@ import numpy as np
 from poke.synth import BUTTONS
 from poke.video import Snapper
 from scripts.label_video import TAP_FRAMES
-from scripts.sync_opening import (SYNC_SHARE, Replayer, align, anchored, boot, find_anchor,
+from scripts.sync_opening import (Replayer, align, anchored, boot, find_anchor, in_sync,
                                   release_carried, video_frames)
 
 RUN = 20
@@ -54,6 +62,10 @@ HORIZON = 600
 MARGIN = 30
 SNAPSHOT_EVERY = 20
 TAPS = ("a", "b", "start")
+DIRECTIONS = ("up", "down", "left", "right")
+DIR_NEAR = 30
+CHAIN_WIDTH = 3
+CHAIN_DEPTH = 3
 GRID = 6
 HOLDS = (TAP_FRAMES, 20, 60)
 
@@ -121,6 +133,14 @@ def near_candidates(masks: np.ndarray, onset_p: np.ndarray, lost: int,
                     moved = _set(_set(masks, k, start, stop, False), k, start + d, stop + d, True)
                     out.append(Candidate(f"shift {name} {start}->{start + d}", moved,
                                          min(start, start + d), 0.45 - 0.01 * abs(d)))
+            if name in DIRECTIONS:
+                for other in DIRECTIONS:
+                    if other == name:
+                        continue
+                    j = BUTTONS.index(other)
+                    out.append(Candidate(f"swap {name}->{other} {start}-{stop}",
+                                         _set(_set(masks, k, start, stop, False), j, start, stop, True),
+                                         start, float(onset_p[start, j])))
             for d in (-8, -4, -2, -1, 1, 2, 4, 8, 16, 32, 64):
                 e = stop + d
                 if e <= start:
@@ -143,6 +163,15 @@ def near_candidates(masks: np.ndarray, onset_p: np.ndarray, lost: int,
                 out.append(Candidate(f"add {name} {t}" + ("" if length == TAP_FRAMES else f"x{length}"),
                                      _set(masks, k, t, t + length, True), t,
                                      float(onset_p[t, k]) * (1.0 if length == TAP_FRAMES else 0.8)))
+    first = lost - DIR_NEAR + (DIR_NEAR - lost) % GRID
+    for name in DIRECTIONS:
+        k = BUTTONS.index(name)
+        starts = set(_peaks(onset_p[:, k], lost - DIR_NEAR, hi, 0.02, 4))
+        for t in sorted(starts | set(range(first, hi, GRID))):
+            if not 0 <= t < len(masks) or masks[t] >> k & 1:
+                continue
+            out.append(Candidate(f"add {name} {t}", _set(masks, k, t, t + TAP_FRAMES, True), t,
+                                 float(onset_p[t, k])))
     return out
 
 
@@ -180,8 +209,8 @@ class Search:
         return self.rep.e + self.rep.offset
 
     def play(self, snapshot: tuple, masks: np.ndarray, stop_at: int, record: bool = False) -> int:
-        """Video frame where sync is lost (first of `run` frames under
-        SYNC_SHARE), or `stop_at`."""
+        """Video frame where sync is lost (first of `run` frames out of
+        sync), or `stop_at`."""
         self.rep.load(snapshot)
         self.rep.masks = masks
         bad, first_bad = 0, None
@@ -194,10 +223,10 @@ class Search:
                 if self._next() >= stop_at:
                     return stop_at
                 continue
-            v, share = out
+            v, share, text = out
             if v >= stop_at:
                 return stop_at
-            if share < SYNC_SHARE and v >= self.judge_from:
+            if not in_sync(share, text) and v >= self.judge_from:
                 bad += 1
                 first_bad = v if first_bad is None else first_bad
                 if bad >= self.run:
@@ -221,7 +250,10 @@ class Search:
         for c in sorted(candidates, key=lambda c: -c.prior):
             if c.what in exclude:
                 continue
-            c.reach = self.play(latest(self.snapshots, c.first)[1], c.masks, cap)
+            # From before the loss even when the edit is after it (a later
+            # release): starting at a snapshot inside the lost frames would
+            # skip them, and call an edit that cannot touch them a fix.
+            c.reach = self.play(latest(self.snapshots, min(c.first, lost))[1], c.masks, cap)
             if c.reach == avoid_reach:
                 continue
             if winner is None or c.reach > winner.reach:
@@ -242,8 +274,25 @@ def repair(search: Search, masks: np.ndarray, onset_p: np.ndarray, lost: int, li
     The furthest-reaching labels found are returned.
     """
     def find(m, at, exclude, avoid=None):
-        found = search.best(near_candidates(m, onset_p, at), at, exclude, avoid)
-        return found or search.best(far_candidates(m, onset_p, at), at, exclude, avoid)
+        near = near_candidates(m, onset_p, at)
+        found = search.best(near, at, exclude, avoid)
+        found = found or search.best(far_candidates(m, onset_p, at), at, exclude, avoid)
+        return found or chain(near, at, exclude, avoid)
+
+    def chain(near, at, exclude, avoid, depth=CHAIN_DEPTH, width=CHAIN_WIDTH):
+        # `best` left each edit's reach on it. The CHAIN_WIDTH furthest firsts
+        # each get a second edit; past two, only the furthest chain goes on.
+        firsts = sorted((c for c in near if c.reach > at), key=lambda c: -c.reach)
+        for p in firsts[:width]:
+            longer = [Candidate(f"{p.what} + {c.what}", c.masks, min(p.first, c.first),
+                                p.prior * c.prior)
+                      for c in near_candidates(p.masks, onset_p, p.reach)]
+            found = search.best(longer, at, exclude, avoid)
+            if not found and depth > 2:
+                found = chain(longer, at, exclude, avoid, depth - 1, 1)
+            if found:
+                return found
+        return None
 
     # stack entries: (masks before the edit, sync lost before it, edit, tried edits)
     stack: list[tuple[np.ndarray, int, Candidate, set]] = []
@@ -269,9 +318,9 @@ def repair(search: Search, masks: np.ndarray, onset_p: np.ndarray, lost: int, li
                 print(f"stuck at video frame {best[1]}: no edit plays {MARGIN} frames longer",
                       flush=True)
                 break
-            first = min(winner.first, undone_first)
+            first = min(winner.first, undone_first, lost)
         else:
-            first = winner.first
+            first = min(winner.first, lost)
         stack.append((masks, lost, winner, tried))
         masks = winner.masks
         new_lost = search.base(masks, first)
@@ -282,6 +331,23 @@ def repair(search: Search, masks: np.ndarray, onset_p: np.ndarray, lost: int, li
             best = (masks, lost, [{"edit": e.what, "at": e.first, "lost_before": lb,
                                    "prior": round(e.prior, 3)} for _, lb, e, _ in stack])
     return best
+
+
+def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
+                 name: str, edits: int) -> None:
+    """Store a run's buttons over everything it replayed, [first, limit), and
+    mark [first, lost) verified -- and only that: a rerun under a stricter
+    check must not inherit an earlier run's further reach."""
+    if "buttons_repaired" not in labels:
+        labels["buttons_repaired"] = labels[key][:]
+        labels["verified"] = np.zeros(len(labels["buttons"]), bool)
+    labels["buttons_repaired"][first:limit] = masks[first:limit].astype(np.uint8)
+    verified = labels["verified"][:]
+    verified[first:limit] = False
+    verified[first:lost] = True
+    labels["verified"][:] = verified
+    labels["verified"].attrs[f"repair_{name}"] = json.dumps(
+        {"start": first, "until": lost, "edits": edits})
 
 
 def main() -> None:
@@ -348,16 +414,7 @@ def main() -> None:
     Path(f"results/repair_{args.name}.json").write_text(json.dumps(report, indent=1))
     if not args.dry_run:
         with h5py.File(args.labels, "a") as labels:
-            if "buttons_repaired" not in labels:
-                labels["buttons_repaired"] = labels[key][:]
-                labels["verified"] = np.zeros(len(labels["buttons"]), bool)
-            span = slice(first_frame, lost)
-            labels["buttons_repaired"][span] = masks[span].astype(np.uint8)
-            verified = labels["verified"][:]
-            verified[span] = True
-            labels["verified"][:] = verified
-            labels["verified"].attrs[f"repair_{args.name}"] = json.dumps(
-                {"start": first_frame, "until": int(lost), "edits": len(edits)})
+            write_repair(labels, key, masks, first_frame, int(lost), limit, args.name, len(edits))
 
 
 if __name__ == "__main__":
