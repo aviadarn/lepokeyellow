@@ -215,3 +215,262 @@ ep 31099 px_err 0.0032 unk 161280 {'play': 2.1, 'mattered': 8.8, 'total': 31.7} 
 100 episodes in 805s
 2026-11-02 17:57:17 === COLLECTION DONE
 2026-11-02 17:57:18 watchdog v4: pipeline gone, exiting
+2026-11-02 17:58:11 === uv run python -m scripts.train_idm --init checkpoints/idm_v3/last.pt --steps 6000 --lr 1.5e-4 --out checkpoints/idm_v4
+2026-11-02 17:58:12 watchdog v4: group 43666, swap baseline 4002M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7074M
+669 train / 71 val episodes; held-out maps: ['BikeShop', 'CeladonChiefHouse', 'CeladonHotel', 'CeladonMart2F', 'CinnabarLab', 'FuchsiaGym', 'IndigoPlateauLobby', 'LavenderCuboneHouse', 'RockTunnelB1F', 'RocketHideoutB2F', 'Route12SuperRodHouse', 'Route15Gate2F', 'Route18', 'Route18Gate2F', 'Route23', 'Route25', 'Route8Gate', 'SSAnneB1FRooms', 'SafariZoneSecretHouse', 'SafariZoneWest', 'SeafoamIslandsB3F', 'SilphCo9F', 'VermilionMart', 'VermilionPokecenter']
+held share [0.1353, 0.1438, 0.1357, 0.1358, 0.0541, 0.0188, 0.0049, 0.0026] pos_weight [6.400000095367432, 6.0, 6.400000095367432, 6.400000095367432, 17.5, 20.0, 20.0, 20.0]
+initialised from checkpoints/idm_v3/last.pt
+step 100 held 0.2862 mattered 0.0952 cut 0.0595 onset 0.1680 34s
+step 200 held 0.3970 mattered 0.1580 cut 0.0006 onset 0.2277 67s
+step 300 held 0.5579 mattered 0.2004 cut 0.0002 onset 0.2616 101s
+step 400 held 0.3521 mattered 0.1409 cut 0.0276 onset 0.1642 134s
+step 500 held 0.4203 mattered 0.2059 cut 0.0251 onset 0.2234 168s
+step 600 held 0.4232 mattered 0.1027 cut 0.0020 onset 0.2864 201s
+step 700 held 0.4665 mattered 0.1412 cut 0.0054 onset 0.2453 234s
+step 800 held 0.5981 mattered 0.1584 cut 0.1317 onset 0.3026 267s
+step 900 held 0.3659 mattered 0.1673 cut 0.0060 onset 0.1901 300s
+step 1000 held 0.4380 mattered 0.1924 cut 0.0091 onset 0.1871 334s
+{"step": 1000, "val": {"frames": 6144, "accuracy_all": 0.88763427734375, "press_recall_where_mattered": 0.8571428571428571, "release_kept_where_mattered": 0.8876404494382022, "balanced_where_mattered": 0.8723916532905296, "mattered_pairs": 473, "mattered_presses": 28, "mattered_head_accuracy": 0.9145367412140575, "f1_per_button": {"0": 0.603, "1": 0.654, "2": 0.682, "3": 0.609, "4": 0.232, "5": 0.104, "6": 0.111, "7": 0.0}, "onset_f1_pm1": {"0": 0.363, "1": 0.462, "2": 0.396, "3": 0.376, "4": 0.213, "5": 0.05, "6": 0.24, "7": 0.0}, "cut_recall": 0.9886363636363636, "cut_false_per_10k_frames": 7.430647291941876}, "train": {"frames": 3072, "accuracy_all": 0.9026692708333334, "press_recall_where_mattered": 0.8333333333333334, "release_kept_where_mattered": 0.8757062146892656, "balanced_where_mattered": 0.8545197740112995, "mattered_pairs": 189, "mattered_presses": 12, "mattered_head_accuracy": 0.9477272727272728, "f1_per_button": {"0": 0.596, "1": 0.793, "2": 0.765, "3": 0.699, "4": 0.187, "5": 0.142, "6": 0.0, "7": 0.743}, "onset_f1_pm1": {"0": 0.435, "1": 0.294, "2": 0.572, "3": 0.417, "4": 0.264, "5": 0.174, "6": 0.0, "7": 0.0}, "cut_recall": 0.9647058823529412, "cut_false_per_10k_frames": 6.601749463607857}}
+step 1100 held 0.4813 mattered 0.1560 cut 0.0019 onset 0.1536 369s
+step 1200 held 0.4617 mattered 0.1712 cut 0.0011 onset 0.2529 403s
+step 1300 held 0.3274 mattered 0.0776 cut 0.0007 onset 0.1717 436s
+step 1400 held 0.4221 mattered 0.1313 cut 0.0008 onset 0.2104 470s
+step 1500 held 0.7234 mattered 0.1960 cut 0.0021 onset 0.2248 503s
+step 1600 held 0.4066 mattered 0.0843 cut 0.0145 onset 0.2209 536s
+step 1700 held 0.3650 mattered 0.2026 cut 0.0041 onset 0.1899 570s
+step 1800 held 0.4089 mattered 0.2178 cut 0.0038 onset 0.1420 603s
+step 1900 held 0.3833 mattered 0.1578 cut 0.0031 onset 0.2103 635s
+step 2000 held 0.4526 mattered 0.1782 cut 0.0013 onset 0.2564 668s
+{"step": 2000, "val": {"frames": 6144, "accuracy_all": 0.8832194010416666, "press_recall_where_mattered": 0.8571428571428571, "release_kept_where_mattered": 0.8719101123595505, "balanced_where_mattered": 0.8645264847512037, "mattered_pairs": 473, "mattered_presses": 28, "mattered_head_accuracy": 0.8965654952076677, "f1_per_button": {"0": 0.631, "1": 0.622, "2": 0.705, "3": 0.628, "4": 0.231, "5": 0.106, "6": 0.229, "7": 0.0}, "onset_f1_pm1": {"0": 0.368, "1": 0.477, "2": 0.423, "3": 0.406, "4": 0.277, "5": 0.097, "6": 0.375, "7": 0.0}, "cut_recall": 0.9829545454545454, "cut_false_per_10k_frames": 8.256274768824307}, "train": {"frames": 3072, "accuracy_all": 0.8896891276041666, "press_recall_where_mattered": 0.9166666666666666, "release_kept_where_mattered": 0.8700564971751412, "balanced_where_mattered": 0.893361581920904, "mattered_pairs": 189, "mattered_presses": 12, "mattered_head_accuracy": 0.943939393939394, "f1_per_button": {"0": 0.626, "1": 0.776, "2": 0.684, "3": 0.696, "4": 0.208, "5": 0.106, "6": 0.0, "7": 0.607}, "onset_f1_pm1": {"0": 0.459, "1": 0.336, "2": 0.531, "3": 0.45, "4": 0.304, "5": 0.125, "6": 0.0, "7": 0.0}, "cut_recall": 0.9764705882352941, "cut_false_per_10k_frames": 3.3008747318039284}}
+step 2100 held 0.3078 mattered 0.1742 cut 0.0004 onset 0.1854 704s
+step 2200 held 0.3890 mattered 0.2046 cut 0.0105 onset 0.1687 738s
+step 2300 held 0.4678 mattered 0.1535 cut 0.0015 onset 0.2038 771s
+step 2400 held 0.3224 mattered 0.1054 cut 0.0007 onset 0.1622 804s
+step 2500 held 0.4558 mattered 0.1919 cut 0.0023 onset 0.2763 837s
+step 2600 held 0.3775 mattered 0.1286 cut 0.0023 onset 0.1887 870s
+step 2700 held 0.3550 mattered 0.0953 cut 0.0076 onset 0.1929 903s
+step 2800 held 0.4060 mattered 0.1192 cut 0.0002 onset 0.2146 936s
+step 2900 held 0.4145 mattered 0.1377 cut 0.0035 onset 0.2599 969s
+step 3000 held 0.3694 mattered 0.1464 cut 0.0026 onset 0.2225 1002s
+{"step": 3000, "val": {"frames": 6144, "accuracy_all": 0.8882853190104166, "press_recall_where_mattered": 0.8571428571428571, "release_kept_where_mattered": 0.8741573033707866, "balanced_where_mattered": 0.8656500802568219, "mattered_pairs": 473, "mattered_presses": 28, "mattered_head_accuracy": 0.9033546325878594, "f1_per_button": {"0": 0.638, "1": 0.672, "2": 0.679, "3": 0.615, "4": 0.222, "5": 0.115, "6": 0.32, "7": 0.0}, "onset_f1_pm1": {"0": 0.375, "1": 0.479, "2": 0.408, "3": 0.404, "4": 0.264, "5": 0.074, "6": 0.25, "7": 0.0}, "cut_recall": 0.9943181818181818, "cut_false_per_10k_frames": 4.953764861294584}, "train": {"frames": 3072, "accuracy_all": 0.8970947265625, "press_recall_where_mattered": 0.8333333333333334, "release_kept_where_mattered": 0.8700564971751412, "balanced_where_mattered": 0.8516949152542372, "mattered_pairs": 189, "mattered_presses": 12, "mattered_head_accuracy": 0.9371212121212121, "f1_per_button": {"0": 0.614, "1": 0.825, "2": 0.694, "3": 0.722, "4": 0.189, "5": 0.125, "6": 0.0, "7": 0.955}, "onset_f1_pm1": {"0": 0.45, "1": 0.351, "2": 0.558, "3": 0.391, "4": 0.231, "5": 0.186, "6": 0.0, "7": 0.0}, "cut_recall": 0.9764705882352941, "cut_false_per_10k_frames": 0.0}}
+step 3100 held 0.3686 mattered 0.1181 cut 0.0003 onset 0.2443 1038s
+step 3200 held 0.3882 mattered 0.1448 cut 0.0037 onset 0.2395 1071s
+step 3300 held 0.3886 mattered 0.1231 cut 0.0006 onset 0.1634 2986s
+step 3400 held 0.2530 mattered 0.0877 cut 0.0003 onset 0.1197 3089s
+step 3500 held 0.3686 mattered 0.1045 cut 0.0008 onset 0.1944 3140s
+step 3600 held 0.2619 mattered 0.1341 cut 0.0006 onset 0.1931 3410s
+step 3700 held 0.4945 mattered 0.1404 cut 0.0023 onset 0.2234 3443s
+step 3800 held 0.3046 mattered 0.1397 cut 0.0023 onset 0.2345 3589s
+step 3900 held 0.4185 mattered 0.0800 cut 0.0037 onset 0.1840 4607s
+step 4000 held 0.4812 mattered 0.0897 cut 0.0014 onset 0.2448 4640s
+{"step": 4000, "val": {"frames": 6144, "accuracy_all": 0.8910319010416666, "press_recall_where_mattered": 0.8928571428571429, "release_kept_where_mattered": 0.8921348314606742, "balanced_where_mattered": 0.8924959871589085, "mattered_pairs": 473, "mattered_presses": 28, "mattered_head_accuracy": 0.9041533546325878, "f1_per_button": {"0": 0.622, "1": 0.711, "2": 0.662, "3": 0.634, "4": 0.235, "5": 0.1, "6": 0.182, "7": 0.0}, "onset_f1_pm1": {"0": 0.344, "1": 0.496, "2": 0.384, "3": 0.397, "4": 0.289, "5": 0.15, "6": 0.154, "7": 0.0}, "cut_recall": 0.9886363636363636, "cut_false_per_10k_frames": 4.953764861294584}, "train": {"frames": 3072, "accuracy_all": 0.9025472005208334, "press_recall_where_mattered": 0.9166666666666666, "release_kept_where_mattered": 0.8870056497175142, "balanced_where_mattered": 0.9018361581920904, "mattered_pairs": 189, "mattered_presses": 12, "mattered_head_accuracy": 0.946969696969697, "f1_per_button": {"0": 0.657, "1": 0.851, "2": 0.696, "3": 0.742, "4": 0.218, "5": 0.123, "6": 0.0, "7": 0.83}, "onset_f1_pm1": {"0": 0.428, "1": 0.352, "2": 0.518, "3": 0.429, "4": 0.263, "5": 0.222, "6": 0.0, "7": 0.0}, "cut_recall": 0.9647058823529412, "cut_false_per_10k_frames": 3.3008747318039284}}
+step 4100 held 0.4540 mattered 0.1051 cut 0.0267 onset 0.2623 6462s
+step 4200 held 0.4249 mattered 0.1868 cut 0.0009 onset 0.2654 6495s
+step 4300 held 0.3842 mattered 0.1724 cut 0.0029 onset 0.2267 6529s
+step 4400 held 0.6552 mattered 0.1968 cut 0.0005 onset 0.3045 6562s
+step 4500 held 0.4086 mattered 0.0951 cut 0.0005 onset 0.2779 6595s
+step 4600 held 0.3240 mattered 0.1669 cut 0.0003 onset 0.2210 6629s
+step 4700 held 0.3668 mattered 0.0876 cut 0.0117 onset 0.2240 6662s
+step 4800 held 0.3208 mattered 0.1836 cut 0.0007 onset 0.1892 6695s
+step 4900 held 0.3388 mattered 0.0770 cut 0.0042 onset 0.1854 6728s
+step 5000 held 0.3097 mattered 0.0457 cut 0.0007 onset 0.2042 6761s
+{"step": 5000, "val": {"frames": 6144, "accuracy_all": 0.8956298828125, "press_recall_where_mattered": 0.8214285714285714, "release_kept_where_mattered": 0.8853932584269663, "balanced_where_mattered": 0.8534109149277689, "mattered_pairs": 473, "mattered_presses": 28, "mattered_head_accuracy": 0.9009584664536742, "f1_per_button": {"0": 0.629, "1": 0.691, "2": 0.674, "3": 0.639, "4": 0.246, "5": 0.113, "6": 0.2, "7": 0.0}, "onset_f1_pm1": {"0": 0.398, "1": 0.496, "2": 0.406, "3": 0.399, "4": 0.286, "5": 0.095, "6": 0.286, "7": 0.0}, "cut_recall": 0.9829545454545454, "cut_false_per_10k_frames": 4.953764861294584}, "train": {"frames": 3072, "accuracy_all": 0.9034016927083334, "press_recall_where_mattered": 0.9166666666666666, "release_kept_where_mattered": 0.8926553672316384, "balanced_where_mattered": 0.9046610169491525, "mattered_pairs": 189, "mattered_presses": 12, "mattered_head_accuracy": 0.9477272727272728, "f1_per_button": {"0": 0.678, "1": 0.807, "2": 0.699, "3": 0.745, "4": 0.212, "5": 0.132, "6": 0.0, "7": 0.824}, "onset_f1_pm1": {"0": 0.464, "1": 0.343, "2": 0.567, "3": 0.429, "4": 0.289, "5": 0.227, "6": 0.0, "7": 0.0}, "cut_recall": 0.9764705882352941, "cut_false_per_10k_frames": 0.0}}
+step 5100 held 0.3342 mattered 0.1114 cut 0.0006 onset 0.2097 6797s
+step 5200 held 0.5922 mattered 0.0720 cut 0.0002 onset 0.1958 6830s
+step 5300 held 0.3561 mattered 0.1124 cut 0.0011 onset 0.2013 6863s
+step 5400 held 0.3941 mattered 0.0955 cut 0.0004 onset 0.1776 6896s
+step 5500 held 0.3302 mattered 0.0818 cut 0.0004 onset 0.1898 6929s
+step 5600 held 0.3657 mattered 0.1540 cut 0.0015 onset 0.2189 7575s
+step 5700 held 0.3563 mattered 0.1369 cut 0.0005 onset 0.1643 7608s
+step 5800 held 0.3503 mattered 0.1575 cut 0.0012 onset 0.1700 7658s
+step 5900 held 0.2863 mattered 0.1190 cut 0.0005 onset 0.1628 7708s
+step 6000 held 0.3625 mattered 0.1258 cut 0.0012 onset 0.2445 8701s
+{"step": 6000, "val": {"frames": 6144, "accuracy_all": 0.897216796875, "press_recall_where_mattered": 0.8214285714285714, "release_kept_where_mattered": 0.8898876404494382, "balanced_where_mattered": 0.8556581059390048, "mattered_pairs": 473, "mattered_presses": 28, "mattered_head_accuracy": 0.9017571884984026, "f1_per_button": {"0": 0.64, "1": 0.698, "2": 0.676, "3": 0.638, "4": 0.243, "5": 0.091, "6": 0.2, "7": 0.0}, "onset_f1_pm1": {"0": 0.377, "1": 0.497, "2": 0.387, "3": 0.393, "4": 0.285, "5": 0.105, "6": 0.308, "7": 0.0}, "cut_recall": 0.9829545454545454, "cut_false_per_10k_frames": 4.953764861294584}, "train": {"frames": 3072, "accuracy_all": 0.9049072265625, "press_recall_where_mattered": 0.9166666666666666, "release_kept_where_mattered": 0.8926553672316384, "balanced_where_mattered": 0.9046610169491525, "mattered_pairs": 189, "mattered_presses": 12, "mattered_head_accuracy": 0.9484848484848485, "f1_per_button": {"0": 0.68, "1": 0.803, "2": 0.702, "3": 0.748, "4": 0.216, "5": 0.157, "6": 0.0, "7": 0.778}, "onset_f1_pm1": {"0": 0.463, "1": 0.343, "2": 0.553, "3": 0.444, "4": 0.29, "5": 0.222, "6": 0.0, "7": 0.0}, "cut_recall": 0.9764705882352941, "cut_false_per_10k_frames": 1.6504373659019642}}
+best val balanced accuracy where mattered 0.8925
+2026-11-02 20:38:56 === uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v4/last.pt --out results/idm_v4_closure.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+Route18_w0                   exact=True idm: px 0.00 path 0.40 end 0.60  idm_overlapping_dirs: px 0.00 path 0.50 end 0.70  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.90  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w0                   exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.30 end 0.60  truth_late_1: px 0.10 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.40 end 0.40  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.30 end 0.30  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.20 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.10 path 0.50 end 0.50  idm_overlapping_dirs: px 0.10 path 0.50 end 0.50  idm_held_only: px 0.10 path 0.70 end 0.70  released: px 0.10 path 0.30 end 0.30  truth_late_1: px 0.10 path 0.40 end 0.40
+BikeShop_w0                  exact=True idm: px 0.00 path 0.50 end 0.70  idm_overlapping_dirs: px 0.00 path 0.50 end 0.70  idm_held_only: px 0.00 path 0.20 end 0.30  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.70 end 0.90
+Route8Gate_w0                exact=True idm: px 0.00 path 0.40 end 0.60  idm_overlapping_dirs: px 0.00 path 0.40 end 0.60  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.80 end 0.80
+VermilionPokecenter_w0       exact=True idm: px 0.20 path 0.90 end 0.90  idm_overlapping_dirs: px 0.20 path 0.90 end 0.90  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.10 path 0.90 end 1.00
+VermilionMart_w0             exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.30 end 0.50  idm_held_only: px 0.00 path 0.30 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.80 end 0.80
+SSAnneB1FRooms_w0            exact=True idm: px 0.00 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 0.70
+CeladonMart2F_w0             exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.10 path 0.70 end 0.80  idm_held_only: px 0.00 path 0.70 end 0.80  released: px 0.00 path 0.40 end 0.50  truth_late_1: px 0.10 path 0.90 end 0.90
+CeladonChiefHouse_w0         exact=True idm: px 0.30 path 0.90 end 0.90  idm_overlapping_dirs: px 0.30 path 1.00 end 1.00  idm_held_only: px 0.30 path 0.80 end 0.80  released: px 0.00 path 0.10 end 0.20  truth_late_1: px 0.10 path 0.90 end 1.00
+{"idm": {"segments_reproduced": 0.05000000000000001, "median_frames_to_divergence": 74.5, "same_path": 0.5916666666666667, "same_end_tile": 0.6666666666666666}, "idm_overlapping_dirs": {"segments_reproduced": 0.05833333333333333, "median_frames_to_divergence": 72.5, "same_path": 0.6166666666666666, "same_end_tile": 0.7083333333333334}, "idm_held_only": {"segments_reproduced": 0.041666666666666664, "median_frames_to_divergence": 68.0, "same_path": 0.5416666666666666, "same_end_tile": 0.6}, "released": {"segments_reproduced": 0.016666666666666666, "median_frames_to_divergence": 12.0, "same_path": 0.15833333333333335, "same_end_tile": 0.20833333333333334}, "truth_late_1": {"segments_reproduced": 0.08333333333333333, "median_frames_to_divergence": 71.5, "same_path": 0.8416666666666668, "same_end_tile": 0.875}, "truth_replay_exact": true}
+2026-11-02 21:14:37 === uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v4/last.pt --episodes 40 --by-context --out results/idm_v4_by_context.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+Route18_w0                   exact=True idm: px 0.00 path 0.40 end 0.60  idm_overlapping_dirs: px 0.00 path 0.50 end 0.70  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.90  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w0                   exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.30 end 0.60  truth_late_1: px 0.10 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.40 end 0.40  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.30 end 0.30  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.20 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.10 path 0.50 end 0.50  idm_overlapping_dirs: px 0.10 path 0.50 end 0.50  idm_held_only: px 0.10 path 0.70 end 0.70  released: px 0.10 path 0.30 end 0.30  truth_late_1: px 0.10 path 0.40 end 0.40
+BikeShop_w0                  exact=True idm: px 0.00 path 0.50 end 0.70  idm_overlapping_dirs: px 0.00 path 0.50 end 0.70  idm_held_only: px 0.00 path 0.20 end 0.30  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.70 end 0.90
+Route8Gate_w0                exact=True idm: px 0.00 path 0.40 end 0.60  idm_overlapping_dirs: px 0.00 path 0.40 end 0.60  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.80 end 0.80
+VermilionPokecenter_w0       exact=True idm: px 0.20 path 0.90 end 0.90  idm_overlapping_dirs: px 0.20 path 0.90 end 0.90  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.10 path 0.90 end 1.00
+2026-11-02 21:19:51 battery guard: pause on battery < 30 %, resume when charging or >= 40 %
+VermilionMart_w0             exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.30 end 0.50  idm_held_only: px 0.00 path 0.30 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.80 end 0.80
+SSAnneB1FRooms_w0            exact=True idm: px 0.00 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 0.70
+CeladonMart2F_w0             exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.10 path 0.70 end 0.80  idm_held_only: px 0.00 path 0.70 end 0.80  released: px 0.00 path 0.40 end 0.50  truth_late_1: px 0.10 path 0.90 end 0.90
+CeladonChiefHouse_w0         exact=True idm: px 0.30 path 0.90 end 0.90  idm_overlapping_dirs: px 0.30 path 1.00 end 1.00  idm_held_only: px 0.30 path 0.80 end 0.80  released: px 0.00 path 0.10 end 0.20  truth_late_1: px 0.10 path 0.90 end 1.00
+CeladonHotel_w0              exact=True idm: px 0.00 path 0.50 end 0.60  idm_overlapping_dirs: px 0.00 path 0.80 end 0.90  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.40 end 0.50  truth_late_1: px 0.00 path 0.80 end 0.90
+LavenderCuboneHouse_w0       exact=True idm: px 0.60 path 0.90 end 1.00  idm_overlapping_dirs: px 0.60 path 0.90 end 1.00  idm_held_only: px 0.30 path 0.90 end 1.00  released: px 0.30 path 0.60 end 0.60  truth_late_1: px 0.30 path 0.90 end 1.00
+FuchsiaGym_w0                exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.70 end 0.70  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 0.80 end 0.80
+SeafoamIslandsB3F_w0         exact=True idm: px 0.10 path 0.70 end 0.90  idm_overlapping_dirs: px 0.10 path 0.60 end 0.70  idm_held_only: px 0.10 path 0.70 end 0.90  released: px 0.10 path 0.60 end 0.60  truth_late_1: px 0.10 path 0.70 end 0.70
+CinnabarLab_w0               exact=True idm: px 0.00 path 0.60 end 0.70  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.80 end 0.90
+IndigoPlateauLobby_w0        exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.10 path 0.40 end 0.50  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.40 end 0.40  truth_late_1: px 0.10 path 0.80 end 0.80
+Route15Gate2F_w0             exact=True idm: px 0.10 path 0.60 end 0.60  idm_overlapping_dirs: px 0.10 path 0.60 end 0.60  idm_held_only: px 0.10 path 0.60 end 0.60  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.10 path 1.00 end 1.00
+Route12SuperRodHouse_w0      exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.10 path 0.70 end 0.80  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.90 end 1.00
+Route18Gate2F_w0             exact=True idm: px 0.00 path 0.30 end 0.40  idm_overlapping_dirs: px 0.00 path 0.30 end 0.40  idm_held_only: px 0.00 path 0.30 end 0.40  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.90 end 0.90
+RocketHideoutB2F_w0          exact=True idm: px 0.10 path 0.90 end 0.90  idm_overlapping_dirs: px 0.10 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.90 end 0.90  released: px 0.00 path 0.60 end 0.60  truth_late_1: px 0.00 path 0.90 end 0.90
+SafariZoneWest_w0            exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.10 path 0.40 end 0.50  idm_held_only: px 0.00 path 0.40 end 0.40  released: px 0.00 path 0.10 end 0.10  truth_late_1: px 0.10 path 0.90 end 0.90
+SafariZoneSecretHouse_w0     exact=True idm: px 0.00 path 0.20 end 0.50  idm_overlapping_dirs: px 0.00 path 0.20 end 0.40  idm_held_only: px 0.00 path 0.30 end 0.60  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.00 path 0.70 end 0.80
+RockTunnelB1F_w0             exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.80 end 0.80  truth_late_1: px 0.00 path 0.90 end 0.90
+SilphCo9F_w0                 exact=True idm: px 0.10 path 0.80 end 0.90  idm_overlapping_dirs: px 0.10 path 0.80 end 0.90  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.10 path 0.40 end 0.40  truth_late_1: px 0.20 path 0.80 end 0.90
+Route18_w0                   exact=True idm: px 0.00 path 0.60 end 0.60  idm_overlapping_dirs: px 0.00 path 0.60 end 0.60  idm_held_only: px 0.00 path 0.60 end 0.60  released: px 0.00 path 0.40 end 0.40  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.10 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.40 end 0.40  idm_held_only: px 0.10 path 0.40 end 0.50  released: px 0.00 path 0.10 end 0.20  truth_late_1: px 0.00 path 0.80 end 0.80
+Route23_w0                   exact=True idm: px 0.10 path 0.90 end 0.90  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.80 end 0.80
+Route23_w2                   exact=True idm: px 0.10 path 0.70 end 0.70  idm_overlapping_dirs: px 0.10 path 0.70 end 0.70  idm_held_only: px 0.00 path 0.70 end 0.70  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.00 path 0.60 end 0.60  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.40 end 0.40  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.20 path 0.70 end 0.80
+SafariZoneWest_w0            exact=True idm: px 0.00 path 0.60 end 0.60  idm_overlapping_dirs: px 0.00 path 0.60 end 0.60  idm_held_only: px 0.00 path 0.60 end 0.60  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 1.00 end 1.00
+SafariZoneSecretHouse_w0     exact=True idm: px 0.00 path 0.40 end 0.60  idm_overlapping_dirs: px 0.00 path 0.30 end 0.40  idm_held_only: px 0.00 path 0.40 end 0.60  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.90 end 0.90
+RockTunnelB1F_w0             exact=False idm: px 0.00 path 0.00 end 0.00  idm_overlapping_dirs: px 0.00 path 0.00 end 0.00  idm_held_only: px 0.00 path 0.00 end 0.00  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.00 end 0.00
+SilphCo9F_w0                 exact=False idm: px 0.00 path 0.20 end 0.20  idm_overlapping_dirs: px 0.00 path 0.20 end 0.20  idm_held_only: px 0.00 path 0.10 end 0.10  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 0.10 end 0.20
+Route18_w0                   exact=True idm: px 0.00 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.20 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.50 end 0.60  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.30 end 0.40  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w0                   exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.90 end 0.90  released: px 0.00 path 0.60 end 0.60  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.60 end 0.70  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.30 end 0.30  truth_late_1: px 0.10 path 0.90 end 0.90
+Route25_w0                   exact=True idm: px 0.10 path 0.90 end 0.90  idm_overlapping_dirs: px 0.10 path 0.90 end 0.90  idm_held_only: px 0.20 path 0.90 end 0.90  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.20 path 1.00 end 1.00
+battle     a      caught 10/21  wrongly pressed 0/218
+battle     b      caught 1/2  wrongly pressed 1/181
+overworld  a      caught 1/3  wrongly pressed 9/1153
+overworld  b      caught 0/5  wrongly pressed 0/711
+overworld  down   caught 98/180  wrongly pressed 52/1036
+overworld  left   caught 61/67  wrongly pressed 18/317
+overworld  right  caught 76/82  wrongly pressed 11/205
+overworld  start  caught 1/2  wrongly pressed 0/1330
+overworld  up     caught 130/188  wrongly pressed 82/870
+text box   a      caught 4/12  wrongly pressed 10/248
+text box   b      caught 0/1  wrongly pressed 0/248
+{"idm": {"segments_reproduced": 0.05, "median_frames_to_divergence": 61.5, "same_path": 0.5900000000000001, "same_end_tile": 0.6525000000000001}, "idm_overlapping_dirs": {"segments_reproduced": 0.05500000000000001, "median_frames_to_divergence": 62.5, "same_path": 0.5925, "same_end_tile": 0.655}, "idm_held_only": {"segments_reproduced": 0.0375, "median_frames_to_divergence": 50.5, "same_path": 0.5650000000000001, "same_end_tile": 0.6200000000000001}, "released": {"segments_reproduced": 0.02, "median_frames_to_divergence": 12.0, "same_path": 0.2375, "same_end_tile": 0.2625}, "truth_late_1": {"segments_reproduced": 0.0725, "median_frames_to_divergence": 76.5, "same_path": 0.8275, "same_end_tile": 0.8574999999999999}, "truth_replay_exact": false, "by_context": {"overworld": {"up": [130, 58, 82, 788], "down": [98, 82, 52, 984], "left": [61, 6, 18, 299], "right": [76, 6, 11, 194], "start": [1, 1, 0, 1330], "a": [1, 2, 9, 1144], "b": [0, 5, 0, 711], "select": [0, 0, 0, 25]}, "text box": {"a": [4, 8, 10, 238], "b": [0, 1, 0, 248], "up": [0, 0, 0, 1], "down": [0, 0, 0, 1], "left": [0, 0, 0, 1], "right": [0, 0, 0, 1], "start": [0, 0, 0, 1], "select": [0, 0, 0, 1]}, "battle": {"a": [10, 11, 0, 218], "b": [1, 1, 1, 180], "down": [0, 0, 0, 118], "left": [0, 0, 0, 34], "up": [0, 0, 5, 46], "right": [0, 0, 1, 68], "start": [0, 0, 0, 26], "select": [0, 0, 0, 46]}}}
+2026-11-02 22:35:51 === uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt --episodes 40 --by-context --out results/idm_v3_by_context.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+Route18_w0                   exact=True idm: px 0.00 path 0.60 end 0.70  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.80 end 1.00  idm_overlapping_dirs: px 0.00 path 0.80 end 0.90  idm_held_only: px 0.00 path 0.80 end 1.00  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w0                   exact=True idm: px 0.00 path 0.90 end 0.90  idm_overlapping_dirs: px 0.00 path 0.90 end 0.90  idm_held_only: px 0.00 path 0.50 end 0.60  released: px 0.00 path 0.30 end 0.60  truth_late_1: px 0.10 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.20 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.10 path 0.60 end 0.60  idm_overlapping_dirs: px 0.10 path 0.60 end 0.60  idm_held_only: px 0.10 path 0.60 end 0.60  released: px 0.10 path 0.30 end 0.30  truth_late_1: px 0.10 path 0.40 end 0.40
+BikeShop_w0                  exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.00 path 0.50 end 0.60  idm_held_only: px 0.00 path 0.50 end 0.60  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.70 end 0.90
+Route8Gate_w0                exact=True idm: px 0.00 path 0.40 end 0.50  idm_overlapping_dirs: px 0.10 path 0.30 end 0.40  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.80 end 0.80
+VermilionPokecenter_w0       exact=True idm: px 0.10 path 0.90 end 0.90  idm_overlapping_dirs: px 0.10 path 0.90 end 0.90  idm_held_only: px 0.10 path 0.90 end 0.90  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.10 path 0.90 end 1.00
+VermilionMart_w0             exact=True idm: px 0.00 path 0.20 end 0.20  idm_overlapping_dirs: px 0.00 path 0.20 end 0.30  idm_held_only: px 0.00 path 0.10 end 0.20  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.80 end 0.80
+SSAnneB1FRooms_w0            exact=True idm: px 0.00 path 0.40 end 0.40  idm_overlapping_dirs: px 0.00 path 0.40 end 0.40  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.70 end 0.70
+CeladonMart2F_w0             exact=True idm: px 0.00 path 0.70 end 0.80  idm_overlapping_dirs: px 0.00 path 0.70 end 0.80  idm_held_only: px 0.00 path 0.70 end 0.80  released: px 0.00 path 0.40 end 0.50  truth_late_1: px 0.10 path 0.90 end 0.90
+CeladonChiefHouse_w0         exact=True idm: px 0.20 path 0.90 end 0.90  idm_overlapping_dirs: px 0.30 path 1.00 end 1.00  idm_held_only: px 0.10 path 0.60 end 0.80  released: px 0.00 path 0.10 end 0.20  truth_late_1: px 0.10 path 0.90 end 1.00
+CeladonHotel_w0              exact=True idm: px 0.00 path 0.80 end 0.90  idm_overlapping_dirs: px 0.00 path 0.80 end 0.90  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.40 end 0.50  truth_late_1: px 0.00 path 0.80 end 0.90
+LavenderCuboneHouse_w0       exact=True idm: px 0.40 path 0.90 end 1.00  idm_overlapping_dirs: px 0.40 path 0.90 end 1.00  idm_held_only: px 0.30 path 0.90 end 1.00  released: px 0.30 path 0.60 end 0.60  truth_late_1: px 0.30 path 0.90 end 1.00
+FuchsiaGym_w0                exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.70 end 0.70  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 0.80 end 0.80
+SeafoamIslandsB3F_w0         exact=True idm: px 0.10 path 0.60 end 0.70  idm_overlapping_dirs: px 0.10 path 0.60 end 0.70  idm_held_only: px 0.10 path 0.60 end 0.70  released: px 0.10 path 0.60 end 0.60  truth_late_1: px 0.10 path 0.70 end 0.70
+CinnabarLab_w0               exact=True idm: px 0.00 path 0.50 end 0.60  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.00 path 0.60 end 0.70  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.80 end 0.90
+IndigoPlateauLobby_w0        exact=True idm: px 0.00 path 0.50 end 0.60  idm_overlapping_dirs: px 0.00 path 0.30 end 0.40  idm_held_only: px 0.00 path 0.50 end 0.70  released: px 0.00 path 0.40 end 0.40  truth_late_1: px 0.10 path 0.80 end 0.80
+Route15Gate2F_w0             exact=True idm: px 0.20 path 0.60 end 0.60  idm_overlapping_dirs: px 0.20 path 0.70 end 0.80  idm_held_only: px 0.10 path 0.70 end 0.70  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.10 path 1.00 end 1.00
+Route12SuperRodHouse_w0      exact=True idm: px 0.10 path 0.80 end 0.90  idm_overlapping_dirs: px 0.20 path 0.70 end 0.90  idm_held_only: px 0.10 path 0.80 end 0.90  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.90 end 1.00
+Route18Gate2F_w0             exact=True idm: px 0.00 path 0.40 end 0.40  idm_overlapping_dirs: px 0.00 path 0.40 end 0.40  idm_held_only: px 0.00 path 0.50 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.90 end 0.90
+RocketHideoutB2F_w0          exact=True idm: px 0.10 path 0.80 end 0.90  idm_overlapping_dirs: px 0.10 path 0.80 end 0.90  idm_held_only: px 0.00 path 0.80 end 0.90  released: px 0.00 path 0.60 end 0.60  truth_late_1: px 0.00 path 0.90 end 0.90
+SafariZoneWest_w0            exact=True idm: px 0.00 path 0.60 end 0.80  idm_overlapping_dirs: px 0.10 path 0.60 end 0.90  idm_held_only: px 0.00 path 0.60 end 0.80  released: px 0.00 path 0.10 end 0.10  truth_late_1: px 0.10 path 0.90 end 0.90
+SafariZoneSecretHouse_w0     exact=True idm: px 0.00 path 0.10 end 0.40  idm_overlapping_dirs: px 0.00 path 0.10 end 0.40  idm_held_only: px 0.00 path 0.10 end 0.40  released: px 0.00 path 0.00 end 0.10  truth_late_1: px 0.00 path 0.70 end 0.80
+RockTunnelB1F_w0             exact=True idm: px 0.00 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.80 end 0.80  truth_late_1: px 0.00 path 0.90 end 0.90
+SilphCo9F_w0                 exact=True idm: px 0.00 path 0.80 end 0.90  idm_overlapping_dirs: px 0.00 path 0.90 end 1.00  idm_held_only: px 0.10 path 0.80 end 0.90  released: px 0.10 path 0.40 end 0.40  truth_late_1: px 0.20 path 0.80 end 0.90
+Route18_w0                   exact=True idm: px 0.10 path 0.70 end 0.70  idm_overlapping_dirs: px 0.10 path 0.70 end 0.70  idm_held_only: px 0.10 path 0.60 end 0.60  released: px 0.00 path 0.40 end 0.40  truth_late_1: px 0.10 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.10 path 0.70 end 0.70  idm_overlapping_dirs: px 0.00 path 0.50 end 0.50  idm_held_only: px 0.10 path 0.50 end 0.50  released: px 0.00 path 0.10 end 0.20  truth_late_1: px 0.00 path 0.80 end 0.80
+Route23_w0                   exact=True idm: px 0.10 path 0.80 end 0.80  idm_overlapping_dirs: px 0.00 path 0.80 end 0.80  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.80 end 0.80
+Route23_w2                   exact=True idm: px 0.10 path 0.60 end 0.60  idm_overlapping_dirs: px 0.10 path 0.60 end 0.60  idm_held_only: px 0.00 path 0.40 end 0.40  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 1.00 end 1.00
+Route25_w0                   exact=True idm: px 0.00 path 0.50 end 0.50  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.40 end 0.40  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.20 path 0.70 end 0.80
+SafariZoneWest_w0            exact=True idm: px 0.00 path 0.70 end 0.70  idm_overlapping_dirs: px 0.00 path 0.70 end 0.70  idm_held_only: px 0.00 path 0.70 end 0.70  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 1.00 end 1.00
+SafariZoneSecretHouse_w0     exact=True idm: px 0.00 path 0.30 end 0.40  idm_overlapping_dirs: px 0.00 path 0.20 end 0.30  idm_held_only: px 0.00 path 0.30 end 0.50  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.10 path 0.90 end 0.90
+RockTunnelB1F_w0             exact=False idm: px 0.00 path 0.00 end 0.00  idm_overlapping_dirs: px 0.00 path 0.00 end 0.00  idm_held_only: px 0.00 path 0.00 end 0.00  released: px 0.00 path 0.00 end 0.00  truth_late_1: px 0.00 path 0.00 end 0.00
+SilphCo9F_w0                 exact=False idm: px 0.00 path 0.10 end 0.10  idm_overlapping_dirs: px 0.00 path 0.10 end 0.10  idm_held_only: px 0.00 path 0.10 end 0.10  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.00 path 0.10 end 0.20
+Route18_w0                   exact=True idm: px 0.00 path 0.50 end 0.60  idm_overlapping_dirs: px 0.00 path 0.50 end 0.60  idm_held_only: px 0.00 path 0.40 end 0.50  released: px 0.00 path 0.20 end 0.20  truth_late_1: px 0.20 path 1.00 end 1.00
+Route18_w2                   exact=True idm: px 0.00 path 0.60 end 0.60  idm_overlapping_dirs: px 0.00 path 0.60 end 0.60  idm_held_only: px 0.00 path 0.60 end 0.60  released: px 0.00 path 0.30 end 0.40  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w0                   exact=True idm: px 0.00 path 0.70 end 0.70  idm_overlapping_dirs: px 0.00 path 0.70 end 0.70  idm_held_only: px 0.00 path 0.80 end 0.80  released: px 0.00 path 0.60 end 0.60  truth_late_1: px 0.00 path 1.00 end 1.00
+Route23_w2                   exact=True idm: px 0.00 path 0.60 end 0.70  idm_overlapping_dirs: px 0.00 path 0.60 end 0.70  idm_held_only: px 0.00 path 0.50 end 0.60  released: px 0.00 path 0.30 end 0.30  truth_late_1: px 0.10 path 0.90 end 0.90
+Route25_w0                   exact=True idm: px 0.10 path 0.80 end 0.80  idm_overlapping_dirs: px 0.10 path 0.90 end 0.90  idm_held_only: px 0.10 path 0.80 end 0.80  released: px 0.10 path 0.80 end 0.80  truth_late_1: px 0.20 path 1.00 end 1.00
+battle     a      caught 10/21  wrongly pressed 2/218
+battle     b      caught 1/2  wrongly pressed 0/181
+overworld  a      caught 0/3  wrongly pressed 9/1153
+overworld  b      caught 0/5  wrongly pressed 0/711
+overworld  down   caught 98/180  wrongly pressed 45/1036
+overworld  left   caught 63/67  wrongly pressed 22/317
+overworld  right  caught 73/82  wrongly pressed 9/205
+overworld  start  caught 1/2  wrongly pressed 0/1330
+overworld  up     caught 131/188  wrongly pressed 116/870
+text box   a      caught 5/12  wrongly pressed 10/248
+text box   b      caught 0/1  wrongly pressed 1/248
+{"idm": {"segments_reproduced": 0.045000000000000005, "median_frames_to_divergence": 62.5, "same_path": 0.5974999999999999, "same_end_tile": 0.6525000000000001}, "idm_overlapping_dirs": {"segments_reproduced": 0.05, "median_frames_to_divergence": 59.0, "same_path": 0.595, "same_end_tile": 0.6575}, "idm_held_only": {"segments_reproduced": 0.0325, "median_frames_to_divergence": 49.5, "same_path": 0.5650000000000001, "same_end_tile": 0.635}, "released": {"segments_reproduced": 0.02, "median_frames_to_divergence": 12.0, "same_path": 0.2375, "same_end_tile": 0.2625}, "truth_late_1": {"segments_reproduced": 0.0725, "median_frames_to_divergence": 76.5, "same_path": 0.8275, "same_end_tile": 0.8574999999999999}, "truth_replay_exact": false, "by_context": {"overworld": {"up": [131, 57, 116, 754], "down": [98, 82, 45, 991], "left": [63, 4, 22, 295], "right": [73, 9, 9, 196], "start": [1, 1, 0, 1330], "a": [0, 3, 9, 1144], "b": [0, 5, 0, 711], "select": [0, 0, 0, 25]}, "text box": {"a": [5, 7, 10, 238], "b": [0, 1, 1, 247], "up": [0, 0, 0, 1], "down": [0, 0, 0, 1], "left": [0, 0, 0, 1], "right": [0, 0, 0, 1], "start": [0, 0, 0, 1], "select": [0, 0, 0, 1]}, "battle": {"a": [10, 11, 2, 216], "b": [1, 1, 0, 181], "down": [0, 0, 1, 117], "left": [0, 0, 0, 34], "up": [0, 0, 2, 49], "right": [0, 0, 0, 69], "start": [0, 0, 0, 26], "select": [0, 0, 0, 46]}}}
+2026-11-02 22:56:36 === uv run python -m scripts.label_video --checkpoint checkpoints/idm_v4/last.pt --out data/longplay/labels_v4.h5
+labelled 1485634 frames in 1955s; held share [0.005, 0.007, 0.003, 0.003, 0.003, 0.0, 0.0, 0.0]; decided share 0.075; unknown frames 1373; cuts 293 (head fired on 3881 runs)
+2026-11-02 23:29:12 === uv run python -m scripts.check_labels --labels data/longplay/labels_v4.h5 --truth data/longplay/labels.h5 --name v4 --apply
+{"name": "v4", "labels": "data/longplay/labels_v4.h5", "frames": 1485634, "steps": 5906, "walking_agreement": 0.9621, "answers": 4875, "text_agreement_before": 0.9504, "text_agreement_after": 1.0, "text_taps_added": 242, "text_precision_on_verified": null, "text_taps_checked_on_verified": 0, "text_applied": true, "frames_changed": 1201, "seconds": 10.1}
+2026-11-02 23:29:23 === uv run python -m scripts.sync_opening --frames 12000 --labels data/longplay/labels_v4.h5 --buttons buttons_ruled --out results/sync_opening_v4.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+replay: 0.295 of 11931 frames in sync; lost for good (60 frames off) after 3081 frames, at video frame 3082; offset moved 9 times, ended -68
+wrote results/sync_opening_v4.json
+2026-11-02 23:29:37 === uv run python -m scripts.sync_opening --frames 12000 --labels data/longplay/labels_v4.h5 --buttons buttons_ruled --anchor-state states/cgb/bedroom.state --out results/sync_opening_v4_bedroom.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+anchor: states/cgb/bedroom.state matches video frame 6784 (1.0000)
+replay: 0.067 of 11997 frames in sync; lost for good (60 frames off) after 841 frames, at video frame 7630; offset moved 3 times, ended 6789
+wrote results/sync_opening_v4_bedroom.json
+2026-11-02 23:30:22 === uv run python -m scripts.sync_opening --frames 12000 --buttons buttons_ruled --out results/sync_opening_v3_ruled.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+replay: 0.281 of 11931 frames in sync; lost for good (60 frames off) after 1816 frames, at video frame 1818; offset moved 8 times, ended -67
+wrote results/sync_opening_v3_ruled.json
+2026-11-02 23:30:32 === uv run python -m scripts.sync_opening --frames 12000 --buttons buttons_ruled --anchor-state states/cgb/bedroom.state --out results/sync_opening_v3_ruled_bedroom.json
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+offset -67: emulator frame e = video frame e + -67; 1757/1913 informative intro frames match (median share 0.9983)
+anchor: states/cgb/bedroom.state matches video frame 6784 (1.0000)
+replay: 0.066 of 11999 frames in sync; lost for good (60 frames off) after 843 frames, at video frame 7630; offset moved 2 times, ended 6787
+wrote results/sync_opening_v3_ruled_bedroom.json
+2026-11-02 23:30:47 === uv run python -m scripts.repair_labels --labels data/longplay/labels_v4.h5 --frames 14000 --name poweron_v4
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_ruled
+labels as decoded: in sync until video frame 3082
+add a 3030                       sync 3082 -> 3270  (255s, 26072 frames played)
+add a 3264                       sync 3270 -> 3574  (7s, 49026 frames played)
+add b 3570                       sync 3574 -> 3693  (10s, 72916 frames played)
+shift a 3671->3662               sync 3693 -> 7630  (7s, 82878 frames played)
+shift a 7540->7537               sync 7630 -> 7760  (15s, 115258 frames played)
+add b 7760                       sync 7760 -> 8097  (533s, 146096 frames played)
+  backtrack: undo add b 7760 -> no alternative
+  backtrack: undo shift a 7540->7537 -> no alternative
+  backtrack: undo shift a 3671->3662 -> add a 3667
+add a 3667                       sync 3693 -> 3725  (1329s, 330717 frames played)
+add a 3647                       sync 3725 -> 7630  (7s, 338850 frames played)
+shift a 7540->7537               sync 7630 -> 7760  (15s, 371225 frames played)
+add b 7760                       sync 7760 -> 8097  (910s, 401867 frames played)
+  backtrack: undo add b 7760 -> no alternative
+  backtrack: undo shift a 7540->7537 -> no alternative
+  backtrack: undo add a 3647 -> no alternative
+  backtrack: undo add a 3667 -> shift a 3671->3659
+shift a 3671->3659               sync 3693 -> 7630  (1040s, 591699 frames played)
+shift a 7540->7537               sync 7630 -> 7760  (14s, 624074 frames played)
+add b 7760                       sync 7760 -> 8097  (89s, 654716 frames played)
+  backtrack: undo add b 7760 -> no alternative
+  backtrack: undo shift a 7540->7537 -> no alternative
+  backtrack: undo shift a 3671->3659 -> add a 3666
+add a 3666                       sync 3693 -> 3725  (1123s, 838416 frames played)
+add a 3647                       sync 3725 -> 7630  (6s, 846294 frames played)
+shift a 7540->7537               sync 7630 -> 7760  (15s, 878669 frames played)
+add b 7760                       sync 7760 -> 8097  (465s, 909311 frames played)
+  backtrack: undo add b 7760 -> no alternative
+  backtrack: undo shift a 7540->7537 -> no alternative
+stuck at video frame 8097: no edit plays 30 frames longer
+verified video frames 0-8097 with 6 edits (36 frames changed) in 5940s
+2026-11-03 01:09:48 === V4 DONE
+2026-11-03 01:09:50 watchdog v4: pipeline gone, exiting

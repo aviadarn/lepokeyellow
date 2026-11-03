@@ -1,0 +1,47 @@
+{
+ "name": "poweron_v4",
+ "start": 0,
+ "verified_until": 8097,
+ "limit": 14000,
+ "edits": [
+  {
+   "edit": "add a 3030",
+   "at": 3030,
+   "lost_before": 3082,
+   "prior": 0.07
+  },
+  {
+   "edit": "add a 3264",
+   "at": 3264,
+   "lost_before": 3270,
+   "prior": 0.423
+  },
+  {
+   "edit": "add b 3570",
+   "at": 3570,
+   "lost_before": 3574,
+   "prior": 0.065
+  },
+  {
+   "edit": "shift a 3671->3662",
+   "at": 3662,
+   "lost_before": 3693,
+   "prior": 0.36
+  },
+  {
+   "edit": "shift a 7540->7537",
+   "at": 7537,
+   "lost_before": 7630,
+   "prior": 0.42
+  },
+  {
+   "edit": "add b 7760",
+   "at": 7760,
+   "lost_before": 7760,
+   "prior": 0.22
+  }
+ ],
+ "frames_changed": 36,
+ "anchor_state": null,
+ "seconds": 5940
+}

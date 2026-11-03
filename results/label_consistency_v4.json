@@ -1,0 +1,16 @@
+{
+ "name": "v4",
+ "labels": "data/longplay/labels_v4.h5",
+ "frames": 1485634,
+ "steps": 5906,
+ "walking_agreement": 0.9621,
+ "answers": 4875,
+ "text_agreement_before": 0.9504,
+ "text_agreement_after": 1.0,
+ "text_taps_added": 242,
+ "text_precision_on_verified": null,
+ "text_taps_checked_on_verified": 0,
+ "text_applied": true,
+ "frames_changed": 1201,
+ "seconds": 10.1
+}

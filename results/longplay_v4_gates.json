@@ -1,0 +1,48 @@
+{
+ "G1": {
+  "walking_true": 0.99,
+  "text_true": 0.9877,
+  "pass": true
+ },
+ "G2": {
+  "walking_inserted_precision": 0.0,
+  "walking": "fails -> report only",
+  "text_ablation_timing_within_8": 1.0,
+  "text_ablation_button_is_a": 0.9048,
+  "text": "passes -> applied"
+ },
+ "G3": {
+  "v3_poweron": 1816,
+  "v4_poweron": 3081,
+  "v3_bedroom": 843,
+  "v4_bedroom": 841,
+  "pass": false,
+  "note": "bedroom replay a tie: both lose sync at video frame 7630 in the PC withdraw menu"
+ },
+ "G4": {
+  "v3": {
+   "verified_until": 7670,
+   "edits": 18
+  },
+  "v4": {
+   "verified_until": 8097,
+   "edits": 6
+  },
+  "reported": true
+ },
+ "G5": {
+  "v3_same_path_12": 0.608,
+  "v4_same_path_12": 0.592,
+  "v3_same_path_40": 0.597,
+  "v4_same_path_40": 0.59,
+  "pass": false
+ },
+ "G6": {
+  "v3_walking": 0.9592,
+  "v4_walking": 0.9621,
+  "v3_text": 0.9534,
+  "v4_text": 0.9504,
+  "pass": false
+ },
+ "decision": "keep v3 (with the text rule) for unverified frames: G3, G5, G6 not all passed; take v4's emulator-verified opening (0-8097, 6 edits) in place of v3's (0-7670, 18 edits): verified frames are proven by replay whichever model proposed them"
+}

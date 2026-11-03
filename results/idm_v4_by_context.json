@@ -1,0 +1,4017 @@
+{
+ "checkpoint": "checkpoints/idm_v4/last.pt",
+ "step": 6000,
+ "held_out_maps": [
+  "BikeShop",
+  "CeladonChiefHouse",
+  "CeladonHotel",
+  "CeladonMart2F",
+  "CinnabarLab",
+  "FuchsiaGym",
+  "IndigoPlateauLobby",
+  "LavenderCuboneHouse",
+  "RockTunnelB1F",
+  "RocketHideoutB2F",
+  "Route12SuperRodHouse",
+  "Route15Gate2F",
+  "Route18",
+  "Route18Gate2F",
+  "Route23",
+  "Route25",
+  "Route8Gate",
+  "SSAnneB1FRooms",
+  "SafariZoneSecretHouse",
+  "SafariZoneWest",
+  "SeafoamIslandsB3F",
+  "SilphCo9F",
+  "VermilionMart",
+  "VermilionPokecenter"
+ ],
+ "summary": {
+  "idm": {
+   "segments_reproduced": 0.05,
+   "median_frames_to_divergence": 61.5,
+   "same_path": 0.5900000000000001,
+   "same_end_tile": 0.6525000000000001
+  },
+  "idm_overlapping_dirs": {
+   "segments_reproduced": 0.05500000000000001,
+   "median_frames_to_divergence": 62.5,
+   "same_path": 0.5925,
+   "same_end_tile": 0.655
+  },
+  "idm_held_only": {
+   "segments_reproduced": 0.0375,
+   "median_frames_to_divergence": 50.5,
+   "same_path": 0.5650000000000001,
+   "same_end_tile": 0.6200000000000001
+  },
+  "released": {
+   "segments_reproduced": 0.02,
+   "median_frames_to_divergence": 12.0,
+   "same_path": 0.2375,
+   "same_end_tile": 0.2625
+  },
+  "truth_late_1": {
+   "segments_reproduced": 0.0725,
+   "median_frames_to_divergence": 76.5,
+   "same_path": 0.8275,
+   "same_end_tile": 0.8574999999999999
+  },
+  "truth_replay_exact": false,
+  "by_context": {
+   "overworld": {
+    "up": [
+     130,
+     58,
+     82,
+     788
+    ],
+    "down": [
+     98,
+     82,
+     52,
+     984
+    ],
+    "left": [
+     61,
+     6,
+     18,
+     299
+    ],
+    "right": [
+     76,
+     6,
+     11,
+     194
+    ],
+    "start": [
+     1,
+     1,
+     0,
+     1330
+    ],
+    "a": [
+     1,
+     2,
+     9,
+     1144
+    ],
+    "b": [
+     0,
+     5,
+     0,
+     711
+    ],
+    "select": [
+     0,
+     0,
+     0,
+     25
+    ]
+   },
+   "text box": {
+    "a": [
+     4,
+     8,
+     10,
+     238
+    ],
+    "b": [
+     0,
+     1,
+     0,
+     248
+    ],
+    "up": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "down": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "left": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "right": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "start": [
+     0,
+     0,
+     0,
+     1
+    ],
+    "select": [
+     0,
+     0,
+     0,
+     1
+    ]
+   },
+   "battle": {
+    "a": [
+     10,
+     11,
+     0,
+     218
+    ],
+    "b": [
+     1,
+     1,
+     1,
+     180
+    ],
+    "down": [
+     0,
+     0,
+     0,
+     118
+    ],
+    "left": [
+     0,
+     0,
+     0,
+     34
+    ],
+    "up": [
+     0,
+     0,
+     5,
+     46
+    ],
+    "right": [
+     0,
+     0,
+     1,
+     68
+    ],
+    "start": [
+     0,
+     0,
+     0,
+     26
+    ],
+    "select": [
+     0,
+     0,
+     0,
+     46
+    ]
+   }
+  }
+ },
+ "episodes": [
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 62.0,
+    "frames": [
+     3,
+     49,
+     113,
+     102,
+     58,
+     6,
+     66,
+     117,
+     125,
+     49
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 53.5,
+    "frames": [
+     3,
+     49,
+     16,
+     102,
+     58,
+     6,
+     66,
+     117,
+     125,
+     49
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 53.5,
+    "frames": [
+     3,
+     49,
+     113,
+     102,
+     58,
+     6,
+     9,
+     117,
+     125,
+     49
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 12.0,
+    "frames": [
+     3,
+     8,
+     8,
+     14,
+     18,
+     10,
+     68,
+     117,
+     4,
+     14
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.1
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 62.5,
+    "frames": [
+     94,
+     25,
+     16,
+     284,
+     300,
+     57,
+     68,
+     117,
+     22,
+     49
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route18_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 76.5,
+    "frames": [
+     35,
+     56,
+     69,
+     82,
+     100,
+     195,
+     109,
+     31,
+     71,
+     102
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 76.5,
+    "frames": [
+     35,
+     56,
+     69,
+     82,
+     100,
+     195,
+     109,
+     31,
+     71,
+     102
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 71.5,
+    "frames": [
+     35,
+     56,
+     69,
+     72,
+     100,
+     195,
+     109,
+     31,
+     71,
+     102
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 13.0,
+    "frames": [
+     3,
+     12,
+     69,
+     14,
+     100,
+     16,
+     35,
+     5,
+     7,
+     7
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 135.5,
+    "frames": [
+     187,
+     56,
+     69,
+     84,
+     210,
+     223,
+     223,
+     62,
+     202,
+     24
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route18_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 95.5,
+    "frames": [
+     240,
+     85,
+     31,
+     45,
+     190,
+     280,
+     106,
+     114,
+     34,
+     68
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 95.5,
+    "frames": [
+     240,
+     85,
+     31,
+     45,
+     190,
+     280,
+     106,
+     114,
+     34,
+     68
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 32.0,
+    "frames": [
+     240,
+     28,
+     31,
+     33,
+     190,
+     22,
+     13,
+     54,
+     34,
+     5
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 28.0,
+    "frames": [
+     10,
+     31,
+     31,
+     15,
+     13,
+     25,
+     13,
+     57,
+     34,
+     50
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.6
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 46.0,
+    "frames": [
+     300,
+     34,
+     31,
+     15,
+     58,
+     154,
+     106,
+     66,
+     34,
+     5
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route23_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 27.5,
+    "frames": [
+     166,
+     31,
+     146,
+     5,
+     24,
+     74,
+     10,
+     10,
+     21,
+     75
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 27.5,
+    "frames": [
+     166,
+     31,
+     146,
+     5,
+     24,
+     74,
+     10,
+     10,
+     21,
+     81
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 52.5,
+    "frames": [
+     92,
+     67,
+     146,
+     5,
+     24,
+     38,
+     10,
+     10,
+     78,
+     75
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.3
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 19.5,
+    "frames": [
+     26,
+     13,
+     2,
+     7,
+     7,
+     53,
+     72,
+     4,
+     78,
+     71
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 62.0,
+    "frames": [
+     300,
+     31,
+     19,
+     7,
+     50,
+     74,
+     288,
+     16,
+     87,
+     300
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route23_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 102.0,
+    "frames": [
+     128,
+     55,
+     132,
+     66,
+     47,
+     12,
+     76,
+     183,
+     300,
+     299
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 98.0,
+    "frames": [
+     128,
+     55,
+     120,
+     66,
+     47,
+     12,
+     76,
+     183,
+     300,
+     299
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 86.5,
+    "frames": [
+     128,
+     55,
+     132,
+     66,
+     46,
+     12,
+     76,
+     177,
+     300,
+     97
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 13.0,
+    "frames": [
+     5,
+     6,
+     20,
+     5,
+     11,
+     12,
+     14,
+     180,
+     300,
+     98
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.3
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 111.5,
+    "frames": [
+     168,
+     33,
+     135,
+     74,
+     125,
+     47,
+     79,
+     183,
+     300,
+     98
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "state": "states/cgb/teleport/Route25_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 87.0,
+    "frames": [
+     9,
+     59,
+     209,
+     95,
+     70,
+     95,
+     79,
+     176,
+     45,
+     265
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.7
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 95.0,
+    "frames": [
+     9,
+     59,
+     209,
+     95,
+     70,
+     95,
+     79,
+     176,
+     176,
+     265
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 87.0,
+    "frames": [
+     9,
+     41,
+     209,
+     95,
+     70,
+     95,
+     79,
+     176,
+     45,
+     164
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.3
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 10.5,
+    "frames": [
+     9,
+     5,
+     135,
+     19,
+     17,
+     10,
+     6,
+     19,
+     8,
+     11
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 65.5,
+    "frames": [
+     9,
+     61,
+     135,
+     19,
+     70,
+     44,
+     109,
+     31,
+     174,
+     300
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/BikeShop_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 84.0,
+    "frames": [
+     37,
+     115,
+     198,
+     26,
+     162,
+     131,
+     28,
+     36,
+     84,
+     84
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 99.5,
+    "frames": [
+     37,
+     115,
+     198,
+     26,
+     162,
+     131,
+     28,
+     36,
+     84,
+     142
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.6
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 62.5,
+    "frames": [
+     41,
+     102,
+     15,
+     26,
+     162,
+     131,
+     28,
+     16,
+     84,
+     84
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 10.5,
+    "frames": [
+     3,
+     47,
+     7,
+     26,
+     11,
+     10,
+     30,
+     7,
+     15,
+     3
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 124.5,
+    "frames": [
+     28,
+     165,
+     200,
+     26,
+     40,
+     172,
+     300,
+     36,
+     84,
+     168
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/Route8Gate_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 106.0,
+    "frames": [
+     197,
+     69,
+     300,
+     75,
+     150,
+     40,
+     137,
+     14,
+     47,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 106.0,
+    "frames": [
+     197,
+     69,
+     300,
+     75,
+     150,
+     40,
+     137,
+     14,
+     47,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 72.0,
+    "frames": [
+     197,
+     69,
+     300,
+     75,
+     150,
+     4,
+     51,
+     14,
+     20,
+     153
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 49.5,
+    "frames": [
+     9,
+     14,
+     300,
+     75,
+     150,
+     5,
+     139,
+     14,
+     24,
+     154
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 107.0,
+    "frames": [
+     9,
+     267,
+     300,
+     75,
+     150,
+     5,
+     139,
+     20,
+     24,
+     154
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/VermilionPokecenter_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 78.5,
+    "frames": [
+     122,
+     80,
+     18,
+     135,
+     77,
+     88,
+     67,
+     5,
+     88,
+     35
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 78.5,
+    "frames": [
+     122,
+     80,
+     18,
+     135,
+     77,
+     179,
+     67,
+     5,
+     148,
+     35
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 78.5,
+    "frames": [
+     122,
+     80,
+     18,
+     135,
+     77,
+     88,
+     67,
+     5,
+     88,
+     35
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 11.0,
+    "frames": [
+     4,
+     8,
+     12,
+     64,
+     12,
+     10,
+     5,
+     9,
+     88,
+     18
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 79.5,
+    "frames": [
+     4,
+     116,
+     18,
+     198,
+     81,
+     78,
+     75,
+     13,
+     88,
+     150
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/VermilionMart_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 28.0,
+    "frames": [
+     190,
+     19,
+     5,
+     209,
+     17,
+     16,
+     95,
+     10,
+     37,
+     42
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 28.0,
+    "frames": [
+     190,
+     19,
+     41,
+     4,
+     17,
+     16,
+     95,
+     10,
+     37,
+     42
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 27.0,
+    "frames": [
+     190,
+     7,
+     5,
+     209,
+     17,
+     10,
+     95,
+     7,
+     37,
+     42
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 8.5,
+    "frames": [
+     10,
+     38,
+     5,
+     4,
+     29,
+     17,
+     47,
+     7,
+     6,
+     7
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 23.0,
+    "frames": [
+     10,
+     100,
+     7,
+     4,
+     71,
+     17,
+     47,
+     10,
+     29,
+     231
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "state": "states/cgb/teleport/SSAnneB1FRooms_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 44.0,
+    "frames": [
+     17,
+     227,
+     70,
+     13,
+     177,
+     57,
+     31,
+     10,
+     67,
+     3
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 61.0,
+    "frames": [
+     17,
+     227,
+     300,
+     13,
+     177,
+     57,
+     65,
+     10,
+     67,
+     3
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 34.0,
+    "frames": [
+     17,
+     227,
+     70,
+     13,
+     177,
+     39,
+     29,
+     10,
+     67,
+     3
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 9.0,
+    "frames": [
+     9,
+     5,
+     15,
+     9,
+     5,
+     9,
+     6,
+     13,
+     70,
+     7
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 77.5,
+    "frames": [
+     114,
+     229,
+     105,
+     45,
+     300,
+     59,
+     31,
+     85,
+     70,
+     7
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/CeladonMart2F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.3,
+    "median_frames_to_divergence": 108.5,
+    "frames": [
+     300,
+     300,
+     153,
+     6,
+     300,
+     126,
+     19,
+     77,
+     91,
+     26
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.3,
+    "median_frames_to_divergence": 84.0,
+    "frames": [
+     300,
+     300,
+     23,
+     6,
+     300,
+     126,
+     19,
+     77,
+     91,
+     26
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.3,
+    "median_frames_to_divergence": 106.5,
+    "frames": [
+     300,
+     300,
+     153,
+     6,
+     300,
+     126,
+     19,
+     77,
+     87,
+     26
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 8.0,
+    "frames": [
+     9,
+     11,
+     5,
+     7,
+     9,
+     4,
+     2,
+     18,
+     11,
+     4
+    ],
+    "same_path": 0.1,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 33.5,
+    "frames": [
+     9,
+     33,
+     23,
+     7,
+     9,
+     145,
+     72,
+     77,
+     300,
+     34
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/CeladonChiefHouse_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 23.0,
+    "frames": [
+     31,
+     8,
+     4,
+     23,
+     15,
+     23,
+     73,
+     145,
+     16,
+     56
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 15.5,
+    "frames": [
+     31,
+     8,
+     4,
+     23,
+     15,
+     23,
+     1,
+     1,
+     16,
+     56
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 14.5,
+    "frames": [
+     4,
+     8,
+     4,
+     23,
+     15,
+     23,
+     73,
+     145,
+     14,
+     4
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 11.5,
+    "frames": [
+     4,
+     14,
+     4,
+     9,
+     5,
+     25,
+     79,
+     148,
+     22,
+     4
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 101.0,
+    "frames": [
+     4,
+     8,
+     112,
+     90,
+     5,
+     25,
+     232,
+     160,
+     138,
+     179
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/CeladonHotel_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.6,
+    "median_frames_to_divergence": 300.0,
+    "frames": [
+     77,
+     157,
+     52,
+     164,
+     300,
+     300,
+     300,
+     300,
+     300,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.6,
+    "median_frames_to_divergence": 300.0,
+    "frames": [
+     77,
+     157,
+     52,
+     164,
+     300,
+     300,
+     300,
+     300,
+     300,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.3,
+    "median_frames_to_divergence": 195.5,
+    "frames": [
+     77,
+     157,
+     35,
+     164,
+     238,
+     227,
+     300,
+     300,
+     140,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "released": {
+    "segments_reproduced": 0.3,
+    "median_frames_to_divergence": 186.0,
+    "frames": [
+     9,
+     17,
+     18,
+     4,
+     242,
+     228,
+     300,
+     300,
+     144,
+     300
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.3,
+    "median_frames_to_divergence": 192.5,
+    "frames": [
+     9,
+     157,
+     138,
+     119,
+     242,
+     228,
+     300,
+     300,
+     144,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/LavenderCuboneHouse_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 40.0,
+    "frames": [
+     96,
+     16,
+     9,
+     43,
+     43,
+     49,
+     41,
+     27,
+     39,
+     24
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 42.0,
+    "frames": [
+     96,
+     16,
+     69,
+     43,
+     43,
+     49,
+     41,
+     1,
+     1,
+     24
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 40.0,
+    "frames": [
+     96,
+     16,
+     9,
+     43,
+     43,
+     49,
+     41,
+     27,
+     39,
+     24
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 15.5,
+    "frames": [
+     10,
+     18,
+     5,
+     65,
+     13,
+     52,
+     5,
+     30,
+     30,
+     8
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 68.0,
+    "frames": [
+     104,
+     79,
+     71,
+     65,
+     13,
+     112,
+     41,
+     204,
+     30,
+     58
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/FuchsiaGym_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 41.0,
+    "frames": [
+     25,
+     12,
+     6,
+     7,
+     300,
+     197,
+     57,
+     24,
+     119,
+     62
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 43.5,
+    "frames": [
+     30,
+     12,
+     6,
+     7,
+     300,
+     197,
+     57,
+     24,
+     119,
+     62
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 13.5,
+    "frames": [
+     25,
+     12,
+     6,
+     7,
+     300,
+     15,
+     21,
+     3,
+     83,
+     7
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 11.0,
+    "frames": [
+     4,
+     4,
+     4,
+     7,
+     300,
+     15,
+     2,
+     21,
+     84,
+     62
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 27.0,
+    "frames": [
+     4,
+     178,
+     8,
+     30,
+     300,
+     18,
+     22,
+     24,
+     84,
+     62
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "state": "states/cgb/teleport/SeafoamIslandsB3F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 59.0,
+    "frames": [
+     180,
+     127,
+     60,
+     42,
+     46,
+     4,
+     79,
+     58,
+     150,
+     15
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 69.5,
+    "frames": [
+     180,
+     127,
+     60,
+     42,
+     46,
+     4,
+     79,
+     193,
+     150,
+     15
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 52.0,
+    "frames": [
+     180,
+     127,
+     5,
+     42,
+     46,
+     4,
+     75,
+     58,
+     66,
+     15
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 8.0,
+    "frames": [
+     5,
+     12,
+     19,
+     6,
+     12,
+     10,
+     65,
+     6,
+     2,
+     5
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 57.5,
+    "frames": [
+     163,
+     37,
+     59,
+     42,
+     56,
+     10,
+     79,
+     60,
+     122,
+     17
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/CinnabarLab_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 21.0,
+    "frames": [
+     5,
+     255,
+     6,
+     75,
+     213,
+     6,
+     202,
+     1,
+     36,
+     2
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 24.5,
+    "frames": [
+     5,
+     300,
+     6,
+     98,
+     194,
+     6,
+     202,
+     1,
+     43,
+     2
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 21.0,
+    "frames": [
+     5,
+     255,
+     6,
+     75,
+     213,
+     6,
+     202,
+     1,
+     36,
+     2
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 11.5,
+    "frames": [
+     5,
+     25,
+     10,
+     75,
+     53,
+     4,
+     205,
+     13,
+     8,
+     5
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 66.5,
+    "frames": [
+     11,
+     221,
+     10,
+     114,
+     51,
+     26,
+     300,
+     82,
+     168,
+     5
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/IndigoPlateauLobby_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 102.5,
+    "frames": [
+     254,
+     300,
+     8,
+     126,
+     120,
+     85,
+     24,
+     123,
+     20,
+     20
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 104.0,
+    "frames": [
+     254,
+     300,
+     8,
+     193,
+     245,
+     85,
+     79,
+     123,
+     33,
+     2
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 40.5,
+    "frames": [
+     254,
+     300,
+     8,
+     126,
+     120,
+     57,
+     24,
+     24,
+     20,
+     20
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 13.5,
+    "frames": [
+     10,
+     9,
+     6,
+     15,
+     12,
+     49,
+     12,
+     24,
+     21,
+     23
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 65.0,
+    "frames": [
+     292,
+     300,
+     8,
+     128,
+     122,
+     49,
+     28,
+     81,
+     21,
+     23
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route15Gate2F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 95.5,
+    "frames": [
+     189,
+     181,
+     38,
+     26,
+     240,
+     114,
+     174,
+     36,
+     77,
+     13
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 144.0,
+    "frames": [
+     189,
+     181,
+     38,
+     300,
+     240,
+     114,
+     174,
+     36,
+     77,
+     13
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 79.5,
+    "frames": [
+     189,
+     181,
+     38,
+     26,
+     240,
+     114,
+     82,
+     36,
+     77,
+     13
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 7.0,
+    "frames": [
+     10,
+     5,
+     6,
+     4,
+     7,
+     6,
+     10,
+     16,
+     7,
+     7
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 58.5,
+    "frames": [
+     247,
+     5,
+     40,
+     28,
+     103,
+     6,
+     174,
+     252,
+     77,
+     13
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route12SuperRodHouse_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 50.5,
+    "frames": [
+     111,
+     6,
+     138,
+     82,
+     29,
+     13,
+     68,
+     5,
+     33,
+     129
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.4
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 51.5,
+    "frames": [
+     111,
+     6,
+     138,
+     82,
+     29,
+     13,
+     70,
+     5,
+     33,
+     129
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.4
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 50.5,
+    "frames": [
+     93,
+     6,
+     138,
+     82,
+     29,
+     9,
+     68,
+     5,
+     33,
+     129
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.4
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 9.5,
+    "frames": [
+     5,
+     4,
+     9,
+     10,
+     5,
+     9,
+     18,
+     55,
+     16,
+     131
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 119.0,
+    "frames": [
+     140,
+     6,
+     138,
+     10,
+     33,
+     203,
+     101,
+     211,
+     35,
+     137
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/Route18Gate2F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 71.0,
+    "frames": [
+     79,
+     10,
+     17,
+     63,
+     20,
+     274,
+     293,
+     14,
+     205,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 91.5,
+    "frames": [
+     79,
+     10,
+     104,
+     63,
+     20,
+     274,
+     293,
+     14,
+     205,
+     300
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 21.0,
+    "frames": [
+     79,
+     10,
+     17,
+     63,
+     2,
+     273,
+     293,
+     14,
+     25,
+     3
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 18.5,
+    "frames": [
+     5,
+     14,
+     5,
+     17,
+     20,
+     274,
+     293,
+     16,
+     82,
+     159
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 128.5,
+    "frames": [
+     172,
+     14,
+     206,
+     296,
+     20,
+     274,
+     291,
+     16,
+     85,
+     9
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/RocketHideoutB2F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 94.0,
+    "frames": [
+     81,
+     268,
+     30,
+     120,
+     17,
+     72,
+     266,
+     107,
+     40,
+     112
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 95.5,
+    "frames": [
+     81,
+     268,
+     30,
+     217,
+     17,
+     72,
+     300,
+     2,
+     110,
+     112
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 92.5,
+    "frames": [
+     81,
+     268,
+     30,
+     120,
+     17,
+     72,
+     266,
+     104,
+     40,
+     112
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 8.0,
+    "frames": [
+     5,
+     2,
+     12,
+     3,
+     7,
+     14,
+     86,
+     107,
+     9,
+     2
+    ],
+    "same_path": 0.1,
+    "same_end_tile": 0.1
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 84.5,
+    "frames": [
+     83,
+     300,
+     32,
+     217,
+     55,
+     74,
+     86,
+     107,
+     9,
+     114
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/SafariZoneWest_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 75.0,
+    "frames": [
+     163,
+     77,
+     42,
+     16,
+     86,
+     73,
+     27,
+     81,
+     189,
+     53
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 75.0,
+    "frames": [
+     163,
+     77,
+     42,
+     16,
+     86,
+     73,
+     27,
+     81,
+     195,
+     53
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.4
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 75.0,
+    "frames": [
+     163,
+     77,
+     42,
+     16,
+     86,
+     73,
+     15,
+     81,
+     189,
+     53
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.6
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 7.5,
+    "frames": [
+     5,
+     60,
+     16,
+     12,
+     6,
+     4,
+     21,
+     5,
+     8,
+     7
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.1
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 73.5,
+    "frames": [
+     179,
+     95,
+     44,
+     16,
+     199,
+     75,
+     37,
+     5,
+     215,
+     72
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/SafariZoneSecretHouse_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 80.5,
+    "frames": [
+     20,
+     96,
+     222,
+     143,
+     86,
+     1,
+     75,
+     155,
+     71,
+     63
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 80.5,
+    "frames": [
+     20,
+     96,
+     222,
+     143,
+     86,
+     1,
+     75,
+     155,
+     71,
+     63
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 75.5,
+    "frames": [
+     20,
+     96,
+     222,
+     142,
+     83,
+     4,
+     50,
+     137,
+     68,
+     60
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 67.5,
+    "frames": [
+     3,
+     54,
+     222,
+     95,
+     86,
+     4,
+     50,
+     140,
+     71,
+     64
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 80.0,
+    "frames": [
+     201,
+     97,
+     222,
+     94,
+     89,
+     4,
+     50,
+     11,
+     71,
+     64
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/RockTunnelB1F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 90.5,
+    "frames": [
+     19,
+     77,
+     201,
+     121,
+     24,
+     10,
+     104,
+     259,
+     300,
+     76
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 90.0,
+    "frames": [
+     19,
+     47,
+     201,
+     121,
+     24,
+     10,
+     104,
+     259,
+     300,
+     76
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 90.5,
+    "frames": [
+     19,
+     77,
+     201,
+     119,
+     22,
+     10,
+     104,
+     259,
+     300,
+     40
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 30.0,
+    "frames": [
+     2,
+     7,
+     36,
+     17,
+     24,
+     12,
+     104,
+     259,
+     300,
+     40
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 114.5,
+    "frames": [
+     2,
+     93,
+     201,
+     125,
+     24,
+     300,
+     104,
+     203,
+     300,
+     40
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/SilphCo9F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 14.5,
+    "frames": [
+     3,
+     1,
+     32,
+     14,
+     14,
+     53,
+     249,
+     1,
+     15,
+     44
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 14.5,
+    "frames": [
+     3,
+     1,
+     32,
+     14,
+     2,
+     53,
+     249,
+     1,
+     15,
+     44
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 23.5,
+    "frames": [
+     3,
+     1,
+     32,
+     14,
+     14,
+     53,
+     249,
+     57,
+     15,
+     94
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 18.5,
+    "frames": [
+     3,
+     59,
+     124,
+     44,
+     16,
+     116,
+     10,
+     1,
+     21,
+     8
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 106.0,
+    "frames": [
+     18,
+     59,
+     124,
+     44,
+     232,
+     116,
+     249,
+     1,
+     300,
+     96
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route18_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 60.5,
+    "frames": [
+     300,
+     163,
+     57,
+     14,
+     45,
+     64,
+     3,
+     105,
+     2,
+     68
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 60.5,
+    "frames": [
+     176,
+     163,
+     57,
+     2,
+     45,
+     64,
+     3,
+     105,
+     2,
+     68
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 54.5,
+    "frames": [
+     300,
+     163,
+     26,
+     14,
+     45,
+     64,
+     17,
+     105,
+     2,
+     68
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 7.0,
+    "frames": [
+     3,
+     163,
+     4,
+     104,
+     4,
+     10,
+     3,
+     105,
+     1,
+     70
+    ],
+    "same_path": 0.1,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 87.0,
+    "frames": [
+     176,
+     163,
+     30,
+     104,
+     47,
+     109,
+     3,
+     105,
+     2,
+     70
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/Route18_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 72.0,
+    "frames": [
+     88,
+     34,
+     88,
+     300,
+     37,
+     162,
+     131,
+     14,
+     56,
+     50
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 64.0,
+    "frames": [
+     88,
+     34,
+     90,
+     72,
+     37,
+     162,
+     131,
+     14,
+     56,
+     50
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 54.5,
+    "frames": [
+     88,
+     7,
+     88,
+     300,
+     37,
+     53,
+     131,
+     14,
+     56,
+     50
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 10.5,
+    "frames": [
+     10,
+     16,
+     16,
+     15,
+     3,
+     6,
+     11,
+     16,
+     3,
+     5
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 132.5,
+    "frames": [
+     130,
+     34,
+     90,
+     135,
+     147,
+     6,
+     147,
+     8,
+     136,
+     300
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/Route23_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 99.5,
+    "frames": [
+     300,
+     30,
+     89,
+     51,
+     82,
+     110,
+     188,
+     228,
+     74,
+     110
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 110.0,
+    "frames": [
+     300,
+     36,
+     89,
+     51,
+     146,
+     110,
+     188,
+     228,
+     74,
+     110
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 87.0,
+    "frames": [
+     168,
+     30,
+     2,
+     51,
+     82,
+     110,
+     188,
+     228,
+     2,
+     92
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 15.5,
+    "frames": [
+     2,
+     4,
+     8,
+     51,
+     14,
+     17,
+     18,
+     12,
+     254,
+     92
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 123.0,
+    "frames": [
+     2,
+     36,
+     20,
+     51,
+     208,
+     272,
+     192,
+     136,
+     254,
+     110
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route23_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 34.5,
+    "frames": [
+     23,
+     7,
+     14,
+     53,
+     46,
+     138,
+     19,
+     153,
+     104,
+     15
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 21.0,
+    "frames": [
+     23,
+     7,
+     14,
+     53,
+     46,
+     138,
+     19,
+     153,
+     15,
+     15
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 34.0,
+    "frames": [
+     23,
+     7,
+     14,
+     53,
+     46,
+     45,
+     19,
+     124,
+     104,
+     15
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.4
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 9.5,
+    "frames": [
+     5,
+     10,
+     9,
+     9,
+     7,
+     13,
+     50,
+     16,
+     6,
+     15
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 131.5,
+    "frames": [
+     24,
+     223,
+     11,
+     122,
+     49,
+     159,
+     50,
+     141,
+     300,
+     300
+    ],
+    "same_path": 0.7,
+    "same_end_tile": 0.8
+   },
+   "state": "states/cgb/teleport/Route25_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 84.0,
+    "frames": [
+     68,
+     8,
+     100,
+     50,
+     130,
+     162,
+     59,
+     13,
+     151,
+     200
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 84.0,
+    "frames": [
+     68,
+     8,
+     100,
+     50,
+     130,
+     162,
+     59,
+     13,
+     151,
+     200
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 74.0,
+    "frames": [
+     3,
+     8,
+     98,
+     50,
+     130,
+     162,
+     18,
+     13,
+     151,
+     200
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 13.5,
+    "frames": [
+     3,
+     10,
+     11,
+     16,
+     24,
+     4,
+     18,
+     9,
+     151,
+     200
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 80.5,
+    "frames": [
+     26,
+     10,
+     102,
+     267,
+     34,
+     170,
+     59,
+     13,
+     221,
+     247
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/SafariZoneWest_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 67.0,
+    "frames": [
+     10,
+     18,
+     119,
+     90,
+     26,
+     165,
+     135,
+     106,
+     44,
+     30
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 67.0,
+    "frames": [
+     10,
+     18,
+     119,
+     90,
+     26,
+     167,
+     135,
+     106,
+     44,
+     30
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.4
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 51.0,
+    "frames": [
+     10,
+     18,
+     119,
+     90,
+     26,
+     165,
+     58,
+     80,
+     44,
+     30
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.6
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 8.5,
+    "frames": [
+     10,
+     40,
+     7,
+     4,
+     4,
+     11,
+     7,
+     12,
+     46,
+     3
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 84.5,
+    "frames": [
+     79,
+     40,
+     123,
+     90,
+     26,
+     169,
+     58,
+     300,
+     95,
+     32
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/SafariZoneSecretHouse_w0.state"
+  },
+  {
+   "truth_replay_exact": false,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     38,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     38,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     38,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     38,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.0,
+    "same_end_tile": 0.0
+   },
+   "state": "states/cgb/teleport/RockTunnelB1F_w0.state"
+  },
+  {
+   "truth_replay_exact": false,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     19,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     19,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     19,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.1,
+    "same_end_tile": 0.1
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 0.0,
+    "frames": [
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "same_path": 0.1,
+    "same_end_tile": 0.2
+   },
+   "state": "states/cgb/teleport/SilphCo9F_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 38.5,
+    "frames": [
+     5,
+     70,
+     25,
+     46,
+     4,
+     6,
+     54,
+     61,
+     31,
+     68
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 57.5,
+    "frames": [
+     5,
+     70,
+     25,
+     46,
+     180,
+     76,
+     54,
+     61,
+     31,
+     68
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 38.5,
+    "frames": [
+     5,
+     70,
+     25,
+     46,
+     4,
+     6,
+     54,
+     61,
+     31,
+     68
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 12.5,
+    "frames": [
+     5,
+     97,
+     28,
+     13,
+     4,
+     6,
+     48,
+     12,
+     7,
+     68
+    ],
+    "same_path": 0.2,
+    "same_end_tile": 0.2
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 111.0,
+    "frames": [
+     45,
+     97,
+     300,
+     111,
+     300,
+     76,
+     130,
+     112,
+     111,
+     68
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route18_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 36.0,
+    "frames": [
+     29,
+     43,
+     43,
+     222,
+     2,
+     5,
+     1,
+     15,
+     58,
+     70
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.6
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 37.0,
+    "frames": [
+     31,
+     43,
+     43,
+     222,
+     2,
+     5,
+     1,
+     15,
+     58,
+     70
+    ],
+    "same_path": 0.5,
+    "same_end_tile": 0.5
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 36.0,
+    "frames": [
+     29,
+     44,
+     43,
+     180,
+     2,
+     5,
+     1,
+     6,
+     59,
+     70
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 14.0,
+    "frames": [
+     5,
+     44,
+     11,
+     180,
+     5,
+     13,
+     4,
+     15,
+     59,
+     70
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.4
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 45.5,
+    "frames": [
+     200,
+     44,
+     47,
+     180,
+     5,
+     13,
+     25,
+     15,
+     59,
+     70
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route18_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 46.5,
+    "frames": [
+     190,
+     109,
+     39,
+     106,
+     61,
+     49,
+     44,
+     42,
+     2,
+     2
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 43.0,
+    "frames": [
+     190,
+     109,
+     39,
+     106,
+     61,
+     2,
+     44,
+     42,
+     2,
+     2
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 46.5,
+    "frames": [
+     84,
+     157,
+     4,
+     106,
+     61,
+     49,
+     44,
+     42,
+     2,
+     2
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 44.5,
+    "frames": [
+     10,
+     91,
+     22,
+     14,
+     63,
+     49,
+     47,
+     42,
+     32,
+     98
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.6
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 103.0,
+    "frames": [
+     102,
+     109,
+     22,
+     106,
+     198,
+     49,
+     53,
+     42,
+     104,
+     132
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route23_w0.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 51.0,
+    "frames": [
+     106,
+     55,
+     116,
+     92,
+     47,
+     38,
+     16,
+     10,
+     77,
+     25
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 48.0,
+    "frames": [
+     40,
+     55,
+     116,
+     92,
+     47,
+     38,
+     16,
+     69,
+     49,
+     25
+    ],
+    "same_path": 0.6,
+    "same_end_tile": 0.7
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 54.0,
+    "frames": [
+     106,
+     120,
+     116,
+     62,
+     47,
+     2,
+     16,
+     10,
+     61,
+     25
+    ],
+    "same_path": 0.4,
+    "same_end_tile": 0.5
+   },
+   "released": {
+    "segments_reproduced": 0.0,
+    "median_frames_to_divergence": 24.0,
+    "frames": [
+     2,
+     46,
+     19,
+     89,
+     47,
+     20,
+     18,
+     4,
+     50,
+     28
+    ],
+    "same_path": 0.3,
+    "same_end_tile": 0.3
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 73.5,
+    "frames": [
+     2,
+     55,
+     116,
+     92,
+     11,
+     95,
+     300,
+     52,
+     50,
+     106
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "state": "states/cgb/teleport/Route23_w2.state"
+  },
+  {
+   "truth_replay_exact": true,
+   "segments": 10,
+   "idm": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 184.0,
+    "frames": [
+     82,
+     75,
+     200,
+     300,
+     113,
+     196,
+     155,
+     172,
+     247,
+     243
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_overlapping_dirs": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 184.0,
+    "frames": [
+     82,
+     75,
+     200,
+     300,
+     113,
+     196,
+     155,
+     172,
+     247,
+     243
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "idm_held_only": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 204.5,
+    "frames": [
+     82,
+     70,
+     191,
+     300,
+     300,
+     156,
+     152,
+     218,
+     250,
+     243
+    ],
+    "same_path": 0.9,
+    "same_end_tile": 0.9
+   },
+   "released": {
+    "segments_reproduced": 0.1,
+    "median_frames_to_divergence": 164.5,
+    "frames": [
+     5,
+     17,
+     191,
+     300,
+     113,
+     156,
+     155,
+     173,
+     247,
+     243
+    ],
+    "same_path": 0.8,
+    "same_end_tile": 0.8
+   },
+   "truth_late_1": {
+    "segments_reproduced": 0.2,
+    "median_frames_to_divergence": 165.0,
+    "frames": [
+     92,
+     99,
+     200,
+     300,
+     113,
+     156,
+     158,
+     172,
+     247,
+     300
+    ],
+    "same_path": 1.0,
+    "same_end_tile": 1.0
+   },
+   "state": "states/cgb/teleport/Route25_w0.state"
+  }
+ ]
+}
