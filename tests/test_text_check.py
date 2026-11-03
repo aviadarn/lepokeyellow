@@ -1,7 +1,7 @@
 import numpy as np
 
-from scripts.sync_opening import (SYNC_SHARE, TEXT_LIMIT, in_sync, match, text_classes,
-                                  text_mismatch, text_mismatch_near)
+from scripts.sync_opening import (SYNC_SHARE, TEXT_LIMIT, _patch_sums, in_sync, match,
+                                  text_classes, text_mismatch, text_mismatch_near)
 
 # Snapper order (sorted): black, near-black ink, yellow art, white paper.
 COLOURS = np.array([(0, 0, 0), (8, 8, 8), (248, 248, 0), (248, 248, 248)], np.uint8)
@@ -86,3 +86,113 @@ def test_repair_search_loses_sync_on_wrong_text():
     assert search.play(0, None, 400) == 50
     text[50:50 + RUN] = 0
     assert search.play(0, None, 400) == 400
+
+
+def _reference_text_mismatch(a, b, classes):
+    """text_mismatch as first written: the patch maximum, always computed."""
+    ca, cb = classes[a], classes[b]
+    judged = _patch_sums((ca == 2) | (cb == 2)) == 0
+    if not judged.any():
+        return 0
+    return int(_patch_sums(ca != cb)[judged].max())
+
+
+def _random_screen(rng):
+    frame = screen()
+    for _ in range(rng.integers(0, 4)):
+        glyph = (K, R)[rng.integers(2)]
+        colour = (INK, INK2, ART, 255)[rng.integers(4)]
+        at = (int(rng.integers(0, 136)), int(rng.integers(0, 152)))
+        y, x = at
+        for dy, row in enumerate(glyph):
+            for dx, c in enumerate(row):
+                if c == "X" and y + dy < 144 and x + dx < 160:
+                    frame[y + dy, x + dx] = colour
+    return frame
+
+
+def test_fast_text_check_agrees_with_the_full_one():
+    classes = text_classes(COLOURS)
+    rng = np.random.default_rng(0)
+    for _ in range(200):
+        a, b = _random_screen(rng), _random_screen(rng)
+        assert (text_mismatch(a, b, classes) >= TEXT_LIMIT) == \
+            (_reference_text_mismatch(a, b, classes) >= TEXT_LIMIT)
+
+
+class _Watched:
+    """A video that records which frames are read."""
+
+    def __init__(self, frames):
+        self.frames, self.read = frames, set()
+
+    def __len__(self):
+        return len(self.frames)
+
+    def __getitem__(self, u):
+        self.read.add(int(u))
+        return self.frames[u]
+
+
+def test_near_stops_once_every_patch_has_a_match():
+    classes = text_classes(COLOURS)
+    frames = np.stack([screen() for _ in range(30)])
+    frames[16] = screen(K)
+    video = _Watched(frames)
+    assert text_mismatch_near(screen(K), video, 15, classes) == 0
+    assert video.read <= {14, 15, 16}          # v, then v-1, v+1: no further
+
+
+def test_letters_shown_in_other_batches_match_patch_by_patch():
+    # The game copies the screen a third at a time, so the capture emulator
+    # can show "K", then "K R K" where PyBoy shows "K R": no single video
+    # frame equals it, but every letter matches some frame.
+    classes = text_classes(COLOURS)
+    one = screen(K, at=(120, 40))
+    three = screen(K, at=(120, 40))
+    for x, g in ((48, R), (56, K)):
+        three = np.minimum(three, screen(g, at=(120, x)))
+    video = np.stack([screen()] * 5 + [one] * 2 + [three] * 10)
+    emulator = np.minimum(screen(K, at=(120, 40)), screen(R, at=(120, 48)))
+    assert min(text_mismatch(emulator, f, classes) for f in video) >= TEXT_LIMIT
+    assert text_mismatch_near(emulator, video, 6, classes) < TEXT_LIMIT
+
+
+def test_a_wrong_letter_fails_patch_by_patch_too():
+    classes = text_classes(COLOURS)
+    video = np.stack([screen(K, at=(120, 40))] * 30)
+    assert text_mismatch_near(screen(R, at=(120, 40)), video, 15, classes) >= TEXT_LIMIT
+
+
+class _FakeScreen:
+    def __init__(self, rgb):
+        self.ndarray = np.concatenate([rgb, np.full(rgb.shape[:2] + (1,), 255, np.uint8)], -1)
+
+
+class _FakePyBoy:
+    def __init__(self, rgb):
+        self.screen = _FakeScreen(rgb)
+
+    def tick(self, *args):
+        pass
+
+    def button_press(self, name):
+        pass
+
+    def button_release(self, name):
+        pass
+
+
+def test_text_is_not_judged_when_the_share_failed():
+    from poke.video import Snapper
+    from scripts.sync_opening import Replayer
+
+    snapper = Snapper(COLOURS)
+    left_half = np.full((144, 160, 3), 248, np.uint8)
+    left_half[:, :80] = 0                    # half black: share 0.5 against white
+    video = np.stack([screen()] * 10)
+    replayer = Replayer(_FakePyBoy(left_half), snapper, video, np.zeros(10, np.int64), 0)
+    replayer.e = 4
+    v, share, text = replayer.step()
+    assert share < SYNC_SHARE and text is None
+    assert not in_sync(share, text) and not in_sync(0.99, None)

@@ -12,7 +12,7 @@ the emulator draws differently from the video.
   2. Replay. From power-on, before each tick, hold the buttons the labels
      give for the video frame that tick will be compared to.
   3. Score. A frame is in sync if at least SYNC_SHARE of its pixels match
-     and no 8x8 patch of text differs (`text_mismatch`). Both sides go
+     and no 8x8 patch of text differs (`text_mismatch_near`). Both sides go
      through the same path (Gambatte correction, snap), so an off-palette
      screen like the title compares like with like.
 
@@ -86,30 +86,68 @@ def _patch_sums(mask: np.ndarray) -> np.ndarray:
     return total[k:, k:] - total[:-k, k:] - total[k:, :-k] + total[:-k, :-k]
 
 
+def _tile_sums(mask: np.ndarray) -> np.ndarray:
+    """Per 8x8 tile of the screen's own grid (text is drawn on it)."""
+    h, w = mask.shape
+    k = TEXT_PATCH
+    return mask.reshape(h // k, k, w // k, k).sum((1, 3), dtype=np.int32)
+
+
 def text_mismatch(a: np.ndarray, b: np.ndarray, classes: np.ndarray) -> int:
     """Most pixels that differ in any 8x8 patch made only of paper and ink
-    in both frames (any position, so scrolled text is covered too)."""
+    in both frames (any position, so scrolled text is covered too). Below
+    TEXT_LIMIT it may return any smaller count: when fewer paper/ink pixels
+    differ in the whole frame than that, no patch can reach it."""
     ca, cb = classes[a], classes[b]
+    differ = (ca != cb) & (ca != 2) & (cb != 2)
+    total = int(np.count_nonzero(differ))
+    if total < TEXT_LIMIT:
+        return total
     judged = _patch_sums((ca == 2) | (cb == 2)) == 0
     if not judged.any():
         return 0
     return int(_patch_sums(ca != cb)[judged].max())
 
 
-def text_mismatch_near(frame: np.ndarray, video: np.ndarray, v: int, classes: np.ndarray,
+def text_mismatch_near(frame: np.ndarray, video, v: int, classes: np.ndarray,
                        slack: int = TEXT_SLACK) -> int:
     """`text_mismatch` against video frame v, or, when that is TEXT_LIMIT or
-    more, the least against any video frame within `slack`: a letter that
-    printed early or late matches a neighbour, a wrong letter matches none."""
+    more, tile by tile: each 8x8 tile of the screen's grid that is paper and
+    ink takes the fewest differing pixels against that tile in any video
+    frame within `slack` where it is paper and ink too, and the worst tile
+    is returned (tiles, not sliding patches: a patch straddling two letters
+    printed in different batches matches no frame).
+
+    Patch by patch because the game copies its tile map to the screen a
+    third at a time: at 2:32 the capture emulator shows a line of text in
+    batches one letter apart from PyBoy's, so no single neighbour frame
+    matches though every letter does. A wrong letter matches no frame.
+    Neighbours are read nearest first, and the search ends once every patch
+    has a match under TEXT_LIMIT (it may then return less than the true
+    worst, never TEXT_LIMIT or more).
+    """
     worst = text_mismatch(frame, video[v], classes)
     if worst < TEXT_LIMIT:
         return worst
-    near = range(max(v - slack, 0), min(v + slack + 1, len(video)))
-    return min(text_mismatch(frame, video[u], classes) for u in near)
+    ce = classes[frame]
+    mine = _tile_sums(ce == 2) == 0
+    best = np.full(mine.shape, np.iinfo(np.int32).max, np.int64)
+    order = sorted(range(max(v - slack, 0), min(v + slack + 1, len(video))),
+                   key=lambda u: (abs(u - v), u))
+    for u in order:
+        cu = classes[video[u]]
+        both = mine & (_tile_sums(cu == 2) == 0)
+        best = np.where(both, np.minimum(best, _tile_sums(ce != cu)), best)
+        judged = best[mine & (best < np.iinfo(np.int32).max)]
+        if judged.size and judged.max() < TEXT_LIMIT and (best[mine] < TEXT_LIMIT).all():
+            return int(judged.max())
+    judged = best[mine & (best < np.iinfo(np.int32).max)]
+    return int(judged.max()) if judged.size else 0
 
 
-def in_sync(share: float, text: int) -> bool:
-    return share >= SYNC_SHARE and text < TEXT_LIMIT
+def in_sync(share: float, text: int | None) -> bool:
+    """`text` is None when the share already failed and text was not judged."""
+    return share >= SYNC_SHARE and text is not None and text < TEXT_LIMIT
 
 
 def align(h5, snapper, span: int = 2400, search: int = 900) -> tuple[int, list[float]]:
@@ -214,8 +252,8 @@ class Replayer:
 
     def step(self):
         """Tick one frame: (video frame, match share and `text_mismatch_near`
-        at the tracked offset), or None when that frame has no video
-        neighbours to compare with."""
+        at the tracked offset -- None when the share already failed), or
+        None when that frame has no video neighbours to compare with."""
         v = self.e + self.offset
         self.pad.set(int(self.masks[v]) if 0 <= v < len(self.masks) else 0)
         self.pyboy.tick(1, True)
@@ -233,6 +271,8 @@ class Replayer:
                 self.streak = 0
         else:
             self.streak = 0
+        if scores[0] < SYNC_SHARE:
+            return v, scores[0], None
         return v, scores[0], text_mismatch_near(frame, self.video, v, self.classes)
 
     def save(self) -> tuple:
@@ -283,9 +323,10 @@ def replay(h5, labels, snapper, offset: int, frames: int, slack: int = 2,
         shares.append(out[1])
         offsets.append(before)
         seen.append(out[0])
-        texts.append(out[2])
+        texts.append(-1 if out[2] is None else out[2])
     if own:
         pyboy.stop(save=False)
+    # Text not judged (the share failed) is -1.
     return np.array(shares), np.array(offsets), np.array(seen), np.array(texts)
 
 
@@ -340,7 +381,8 @@ def main() -> None:
             first_lost = int(np.argmax(lost)) if lost.any() else len(shares)
             report.update(replayed=int(len(shares)), in_sync_share=float(synced.mean()),
                           pixel_share_only=float((shares >= SYNC_SHARE).mean()),
-                          text_mismatch_frames=int((texts >= TEXT_LIMIT).sum()),
+                          text_mismatch_frames=int(((shares >= SYNC_SHARE)
+                                                    & (texts >= TEXT_LIMIT)).sum()),
                           frames_before_lost=first_lost,
                           lost_at_video_frame=int(seen[min(first_lost, len(seen) - 1)]),
                           offset_moves=int((np.diff(offsets) != 0).sum()),
