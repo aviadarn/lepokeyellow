@@ -61,6 +61,7 @@ def test_check_labels_end_to_end(tmp_path, monkeypatch):
     report = json.loads((tmp_path / "results" / "label_consistency_t.json").read_text())
     with h5py.File(labels) as h5:
         ruled, changed, events = h5["buttons_ruled"][:], h5["rule_changed"][:], h5["rule_event"][:]
+        unexplained = h5["rule_unexplained"][:]
     # One walk, the cut not counted; walking is reported, never applied.
     assert report["steps"] == 1 and report["walking_agreement"] == 0.0
     assert not (ruled[15:40] & LEFT).any()
@@ -70,3 +71,68 @@ def test_check_labels_end_to_end(tmp_path, monkeypatch):
     assert np.flatnonzero(ruled & A).tolist() == [50, 51, 52, 53, 54]
     assert np.flatnonzero(changed).tolist() == [50, 51, 52, 53, 54]
     assert np.flatnonzero(events).tolist() == [21, 60]
+    # The labels pressed nothing, so both events were unexplained before the rules.
+    assert np.flatnonzero(unexplained).tolist() == [21, 60]
+    assert report["unexplained"] == 2
+
+
+def test_limit_and_apply_together_are_refused(tmp_path, monkeypatch):
+    import pytest
+
+    from scripts import check_labels
+
+    video, labels = tmp_path / "video.h5", tmp_path / "labels.h5"
+    _fake_video(video)
+    _labels(labels)
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "results").mkdir()
+    monkeypatch.setattr(sys, "argv", ["check_labels", "--video", str(video), "--labels", str(labels),
+                                      "--apply", "--limit", "40", "--cache", str(tmp_path / "ev.npz")])
+    with pytest.raises(SystemExit):
+        check_labels.main()
+    with h5py.File(labels) as h5:
+        assert "buttons_ruled" not in h5              # nothing truncated was written
+
+
+def _run(tmp_path, monkeypatch, cut=(), unreadable=()):
+    from scripts import check_labels
+
+    video, labels = tmp_path / "video.h5", tmp_path / "labels.h5"
+    _fake_video(video)
+    _labels(labels)
+    with h5py.File(labels, "a") as h5:
+        c = h5["cut"][:]
+        c[:] = False
+        c[list(cut)] = True
+        h5["cut"][:] = c
+        st = h5["state"][:]
+        st[list(unreadable)] = 255
+        h5["state"][:] = st
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "results").mkdir(exist_ok=True)
+    monkeypatch.setattr(sys, "argv", ["check_labels", "--video", str(video), "--labels", str(labels),
+                                      "--name", "t", "--apply", "--cache", str(tmp_path / "ev.npz")])
+    check_labels.main()
+    with h5py.File(labels) as h5:
+        return np.flatnonzero(h5["rule_event"][:]).tolist()
+
+
+def test_a_cut_on_a_walks_first_frame_does_not_start_a_step_there(tmp_path, monkeypatch):
+    assert 21 in _run(tmp_path, monkeypatch)
+    assert 21 not in _run(tmp_path, monkeypatch, cut=[21])
+
+
+def test_a_cut_or_unreadable_frame_inside_a_wait_drops_it(tmp_path, monkeypatch):
+    assert 60 not in _run(tmp_path, monkeypatch, cut=[55])
+    assert 60 not in _run(tmp_path, monkeypatch, unreadable=[52])
+
+
+def test_screen_events_do_not_depend_on_the_chunk(tmp_path):
+    from scripts.check_labels import screen_events
+
+    _fake_video(tmp_path / "video.h5")
+    with h5py.File(tmp_path / "video.h5") as video:
+        whole = screen_events(video, chunk=4096)
+        for chunk in (1, 2, 7, 21):
+            parts = screen_events(video, chunk=chunk)
+            assert all(np.array_equal(a, b) for a, b in zip(whole, parts)), chunk

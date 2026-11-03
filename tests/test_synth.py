@@ -108,11 +108,16 @@ def test_text_hold_off_keeps_the_old_stream():
 
 class _FakePyBoy:
     def __init__(self):
-        self.ticks, self.memory = 0, {}
+        from collections import defaultdict
+        self.ticks, self.memory, self.writes = 0, defaultdict(int), 0
         self.screen = type("S", (), {"ndarray": np.zeros((144, 160, 4), np.uint8)})()
 
     def tick(self, n, render):
         self.ticks += n
+        if self.ticks == 5:
+            # A battle ends: the game reloads the map's wild data, rate and all,
+            # without the map id changing.
+            self.memory[0xD886] = 25
 
     def save_state(self, buffer):
         buffer.write(b"state")
@@ -149,11 +154,25 @@ def test_boost_encounters_writes_the_rate():
     assert env.pyboy.memory == {0xD886: 255}
 
 
-def test_play_calls_back_on_each_map_change():
-    from poke.synth import play
+def test_encounters_are_boosted_again_after_the_game_resets_them():
+    from poke.synth import boost_encounters, play
 
     env = _FakeEnv()
-    seen = []
     play(env, 10, np.random.default_rng(0), sample_every=20, policy=lambda observe: 0,
-         on_map_change=lambda e: seen.append(e.pyboy.ticks))
-    assert seen == [0, 4, 8]
+         on_frame=lambda e: boost_encounters(e, {"wGrassRate": (0, 0xD886)}))
+    assert env.pyboy.memory[0xD886] == 255
+
+
+def test_encounter_hook_replays_how_each_batch_was_collected():
+    from poke.synth import encounter_hook
+
+    symbols = {"wGrassRate": (0, 0xD886)}
+    for mode, expected in (("every_frame", 255), ("map_change", 25)):
+        env = _FakeEnv()
+        hook = encounter_hook(symbols, mode)
+        from poke.synth import play
+        play(env, 6, np.random.default_rng(0), sample_every=20, policy=lambda observe: 0, on_frame=hook)
+        # The fake game resets the rate at tick 5 without changing map: only
+        # the every-frame boost writes it back (map_change is how v4's battle
+        # batch was collected, and how it must be replayed).
+        assert env.pyboy.memory[0xD886] == expected, mode

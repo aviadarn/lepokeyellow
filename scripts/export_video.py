@@ -6,8 +6,9 @@ the best each frame has: `buttons_repaired` where scripts/repair_labels.py
 verified them against the emulator (`verified` True, confidence 1), else
 `buttons_ruled` (scripts/check_labels.py: every answered ▼ has a press),
 else the decoded ones. Each step also counts `rule_events` (steps and ▼
-answers the screen shows inside it) and `rule_fixed` (frames the rules
-changed).
+answers the screen shows inside it), `rule_unexplained` (those of them the
+model's own labels failed) and `rule_fixed` (frames the rules changed; a
+text fix can land in the step before its answer).
 
 Segments: the video is split wherever the cut head fires (cut_p > 0.5) or a
 frame is unreadable (labels state 255); no step spans a split.
@@ -112,7 +113,7 @@ def frames_at(video, refs, colours, index: np.ndarray) -> np.ndarray:
 
 def label_arrays(labels):
     """(held (N, 8) bool, confidence source (N, 8) f4, verified (N,) bool,
-    rule_changed (N,) bool, rule_event (N,) bool).
+    rule_changed (N,) bool, rule_event (N,) bool, rule_unexplained (N,) bool).
 
     Buttons come from the best source each frame has: the emulator-repaired
     labels where `verified`, else the rule-checked ones (`buttons_ruled`,
@@ -134,17 +135,19 @@ def label_arrays(labels):
     held_p[verified] = held[verified]
     changed = labels["rule_changed"][:] if "rule_changed" in labels else np.zeros(n, bool)
     events = labels["rule_event"][:] if "rule_event" in labels else np.zeros(n, bool)
-    return held, held_p, verified, changed, events
+    unexplained = labels["rule_unexplained"][:] if "rule_unexplained" in labels else np.zeros(n, bool)
+    return held, held_p, verified, changed, events, unexplained
 
 
 def export_dreamer(video, labels, bounds, out: Path) -> dict:
     refs = video["frame_ref"][:]
     colours = video["colours"][:]
-    held, held_p, verified, changed, events = label_arrays(labels)
+    held, held_p, verified, changed, events, unexplained = label_arrays(labels)
     out.mkdir(parents=True, exist_ok=True)
     rows: dict[str, list] = {k: [] for k in ("obs", "actions", "episode_starts", "frame_index",
                                                "segment_ids", "held_masks", "action_confidence",
-                                               "verified", "rule_events", "rule_fixed")}
+                                               "verified", "rule_events", "rule_fixed",
+                                               "rule_unexplained")}
     written, select_dropped, steps = [], 0, 0
 
     def flush(final=False):
@@ -171,6 +174,7 @@ def export_dreamer(video, labels, bounds, out: Path) -> dict:
                 "verified": np.array(rows["verified"][:take], bool),
                 "rule_events": np.array(rows["rule_events"][:take], np.uint8),
                 "rule_fixed": np.array(rows["rule_fixed"][:take], np.uint8),
+                "rule_unexplained": np.array(rows["rule_unexplained"][:take], np.uint8),
             }
             path = out / f"transitions_{len(written) + 1:04d}.npz"
             np.savez_compressed(path, **arrays)
@@ -205,6 +209,7 @@ def export_dreamer(video, labels, bounds, out: Path) -> dict:
             rows["verified"].append(bool(verified[s:s + STEP].all()))
             rows["rule_events"].append(int(events[s:s + STEP].sum()))
             rows["rule_fixed"].append(int(changed[s:s + STEP].sum()))
+            rows["rule_unexplained"].append(int(unexplained[s:s + STEP].sum()))
             steps += 1
         flush()
     flush(final=True)
@@ -218,8 +223,8 @@ def export_schema3(video, labels, bounds, path: Path) -> dict:
 
     refs = video["frame_ref"][:]
     grey = greys(video["colours"][:])
-    held, held_p, verified, changed, events = label_arrays(labels)
-    confidence, checked, rule_events, rule_fixed = [], [], [], []
+    held, held_p, verified, changed, events, unexplained = label_arrays(labels)
+    confidence, checked, rule_events, rule_fixed, rule_unexplained = [], [], [], [], []
     with EpisodeWriter(path, rom="pokeyellow.gbc", state="pokeyellow.gbc", act_frames=60,
                        seed=0, game="yellow", task="longplay_video") as writer:
         for start, stop in bounds:
@@ -237,12 +242,14 @@ def export_schema3(video, labels, bounds, path: Path) -> dict:
                 checked.append(bool(verified[s:s + 60].all()))
                 rule_events.append(int(events[s:s + 60].sum()))
                 rule_fixed.append(int(changed[s:s + 60].sum()))
+                rule_unexplained.append(int(unexplained[s:s + 60].sum()))
             writer.end_episode(kind="video", name=f"segment_{start}")
     with h5py.File(path, "a") as h5:
         h5["action_confidence"] = np.array(confidence, np.float16)
         h5["verified"] = np.array(checked, bool)
         h5["rule_events"] = np.array(rule_events, np.uint8)
         h5["rule_fixed"] = np.array(rule_fixed, np.uint8)
+        h5["rule_unexplained"] = np.array(rule_unexplained, np.uint8)
         h5.attrs["source"] = "video:aqr_YgqF2vM, IDM labels"
         h5.attrs["note"] = ("60-frame steps cut from human play, not env steps; party_counts "
                             "255 = unknown; location -1; state_sha1 is a placeholder")

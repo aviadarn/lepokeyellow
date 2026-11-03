@@ -36,7 +36,7 @@ def _episode(job):
     k, state, frames, sample_every, seed, out, options = job
     from poke.env import PokeEnv
     from poke.symbols import load
-    from poke.synth import (BUTTONS, HumanLike, MenuTapper, boost_encounters, clean_index, degrade,
+    from poke.synth import (BUTTONS, HumanLike, MenuTapper, clean_index, degrade, encounter_hook,
                             mattered, play)
     from poke.video import Snapper
     from poke.warp import TEXT_FAST, set_names, set_text_speed
@@ -59,9 +59,9 @@ def _episode(job):
             symbols = load()
             set_names(env, symbols)
             set_text_speed(env, symbols, TEXT_FAST)
-            boost = (lambda e: boost_encounters(e, symbols)) if options.get("encounters") else None
+            boost = encounter_hook(symbols, options["boost"]) if options.get("encounters") else None
             rgb, masks, labels, blobs = play(
-                env, frames, rng, sample_every, on_map_change=boost,
+                env, frames, rng, sample_every, on_frame=boost,
                 policy=HumanLike(rng, bump_a=options["bump_a"],
                                  text_hold=options.get("text_hold", 0.0)))
         played = time.time() - started
@@ -121,7 +121,8 @@ def main() -> None:
                         help="write collection_TAG.json (train_idm reads every collection*.json)")
     args = parser.parse_args()
     options = {"idle": tuple(args.intro_idle), "bump_a": args.bump_a,
-               "text_hold": args.text_hold, "encounters": args.encounters}
+               "text_hold": args.text_hold, "encounters": args.encounters,
+               "boost": "every_frame" if args.encounters else None}
 
     from scripts.collect_dreamer import start_states
 

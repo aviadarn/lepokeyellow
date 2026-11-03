@@ -83,7 +83,7 @@ def test_repaired_beats_ruled_beats_decoded():
               "buttons_repaired": np.full(n, left, np.uint8),
               "verified": np.r_[np.ones(10, bool), np.zeros(10, bool)],
               "rule_changed": np.zeros(n, bool), "rule_event": np.zeros(n, bool)}
-    held, held_p, verified, changed, events = label_arrays(labels)
+    held, held_p, verified, changed, events, unexplained = label_arrays(labels)
     assert held[:10, 2].all() and not held[:10, 1].any()      # verified: repaired (left)
     assert held[10:, 1].all() and not held[10:, 0].any()      # elsewhere: ruled (down)
     assert (held_p[:10, 2] == 1).all()                         # verified frames are certain
@@ -109,8 +109,12 @@ def test_export_carries_rule_counts(tmp_path):
         changed = np.zeros(n, bool)
         changed[30:35] = True                                    # step 1: five frames fixed
         h5["rule_event"], h5["rule_changed"] = events, changed
+        unexplained = np.zeros(n, bool)
+        unexplained[30] = True                                   # one of step 1's events failed
+        h5["rule_unexplained"] = unexplained
         export.export_dreamer(h5, h5, [(0, n)], tmp_path / "out")
     with np.load(tmp_path / "out" / "transitions_0001.npz") as d:
         assert d["rule_events"][:2].tolist() == [1, 2]
         assert d["rule_fixed"][:2].tolist() == [0, 5]
         assert d["rule_events"].sum() == 3 and d["rule_fixed"].sum() == 5
+        assert d["rule_unexplained"][:2].tolist() == [0, 1]

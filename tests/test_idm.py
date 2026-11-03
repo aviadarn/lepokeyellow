@@ -138,3 +138,28 @@ def test_context_table_counts_by_situation():
         "text box": {"a": [0, 1, 0, 0]},
         "battle": {"a": [0, 0, 1, 1]},
     }
+
+
+def test_episode_rows_carry_their_batchs_options(tmp_path):
+    import json
+
+    from scripts.train_idm import episode_rows
+
+    (tmp_path / "collection.json").write_text(json.dumps({"episodes": [{"file": "a", "state": "s"}]}))
+    (tmp_path / "collection_battle.json").write_text(json.dumps(
+        {"options": {"encounters": True}, "episodes": [{"file": "b", "state": "s"}]}))
+    rows = {r["file"]: r for r in episode_rows(tmp_path)}
+    assert rows["b"]["options"] == {"encounters": True}
+    assert rows["a"].get("options", {}) == {}
+
+
+def test_summary_leaves_out_episodes_the_true_buttons_cannot_replay():
+    from scripts.eval_idm import summarise
+
+    good = {"truth_replay_exact": True, "idm": {"segments_reproduced": 1.0, "frames": [300],
+                                                "same_path": 1.0, "same_end_tile": 1.0}}
+    bad = {"truth_replay_exact": False, "idm": {"segments_reproduced": 0.0, "frames": [3],
+                                                "same_path": 0.0, "same_end_tile": 0.0}}
+    summary = summarise([good, bad], ["idm"])
+    assert summary["idm"]["same_path"] == 1.0
+    assert summary["excluded_inexact"] == 1 and summary["truth_replay_exact"] is True

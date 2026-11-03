@@ -41,8 +41,12 @@ def episode_rows(synth: Path) -> list[dict]:
     """
     meta = synth / "collection.json"
     # Every other batch (power-on, bump-A, ...) writes collection_<tag>.json.
-    extra = [row for path in sorted(synth.glob("collection_*.json"))
-             for row in json.loads(path.read_text())["episodes"]]
+    extra = []
+    for path in sorted(synth.glob("collection_*.json")):
+        manifest = json.loads(path.read_text())
+        # Each batch's collection options (e.g. boosted encounters) ride
+        # along, so a replay can recreate them.
+        extra += [{**row, "options": manifest.get("options", {})} for row in manifest["episodes"]]
     if meta.exists():
         return json.loads(meta.read_text())["episodes"] + extra
     from scripts.collect_dreamer import start_states
@@ -68,7 +72,7 @@ def memmaps(synth: Path) -> list[dict]:
             with np.load(row["file"]) as data:
                 for key, path in paths.items():
                     np.save(path, data[key])
-        episodes.append({"state": row["state"], "stem": stem,
+        episodes.append({"state": row["state"], "stem": stem, "options": row.get("options", {}),
                          **{key: np.load(path, mmap_mode="r") for key, path in paths.items()}})
     return episodes
 

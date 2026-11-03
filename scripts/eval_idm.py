@@ -75,6 +75,22 @@ def _add(total: dict, part: dict) -> None:
                 acc[i] += v
 
 
+def summarise(rows: list[dict], names) -> dict:
+    """Mean closure numbers per candidate over the episodes whose true
+    buttons replay exactly; one that does not cannot score anything else
+    (excluded_inexact counts them)."""
+    exact = [r for r in rows if r["truth_replay_exact"]]
+    summary = {k: {"segments_reproduced": float(np.mean([r[k]["segments_reproduced"] for r in exact])),
+                   "median_frames_to_divergence": float(np.median(
+                       [f for r in exact for f in r[k]["frames"]])),
+                   "same_path": float(np.mean([r[k]["same_path"] for r in exact])),
+                   "same_end_tile": float(np.mean([r[k]["same_end_tile"] for r in exact]))}
+               for k in names}
+    summary["truth_replay_exact"] = bool(exact)
+    summary["excluded_inexact"] = len(rows) - len(exact)
+    return summary
+
+
 def tiles(sequence) -> list[tuple]:
     """Distinct consecutive (map, y, x): the path, with the timing removed."""
     out = []
@@ -85,7 +101,7 @@ def tiles(sequence) -> list[tuple]:
 
 
 def closure(env, clean, masks, candidates: dict[str, np.ndarray], colours,
-            truth_tiles=None) -> dict:
+            truth_tiles=None, on_frame=None) -> dict:
     """Per candidate and SEGMENT-frame segment: frames until the first pixel
     difference (strict), and whether the replay walks the same path of tiles
     and ends on the same tile as the recording (timing-free)."""
@@ -93,6 +109,10 @@ def closure(env, clean, masks, candidates: dict[str, np.ndarray], colours,
     pad = Pad(pyboy)
     snapshots = []
     exact = True
+    # `on_frame(env)` repeats what the collection did around every tick
+    # (synth_collect's encounter boost), or the true buttons cannot replay.
+    if on_frame:
+        on_frame(env)
     for t, mask in enumerate(masks):
         if t % SEGMENT == 0:
             buffer = io.BytesIO()
@@ -100,6 +120,8 @@ def closure(env, clean, masks, candidates: dict[str, np.ndarray], colours,
             snapshots.append((t, buffer.getvalue(), int(masks[t - 1]) if t else 0))
         pad.set(int(mask))
         pyboy.tick(1, True)
+        if on_frame:
+            on_frame(env)
         if t % 25 == 0 and not np.array_equal(
                 clean_index(np.asarray(pyboy.screen.ndarray[:, :, :3])[None], colours)[0], clean[t]):
             exact = False
@@ -118,6 +140,8 @@ def closure(env, clean, masks, candidates: dict[str, np.ndarray], colours,
             for t in range(start, stop):
                 pad.set(int(predicted[t]))
                 pyboy.tick(1, True)
+                if on_frame:
+                    on_frame(env)
                 walked.append((cur_map(env), *coords(env)))
                 if frames is None:
                     screen = clean_index(np.asarray(pyboy.screen.ndarray[:, :, :3])[None],
@@ -189,24 +213,28 @@ def main() -> None:
             _add(by_context, context_table(masks, candidates["idm"], np.asarray(episode["mattered"]),
                                            *situation))
         env = start_env(episode["state"])
+        # An episode collected with encounters boosted only replays with them.
+        boost = None
+        options = episode.get("options", {})
+        if options.get("encounters"):
+            from poke.symbols import load as load_symbols
+            from poke.synth import encounter_hook
+            # Manifests from before the `boost` option boosted on map changes.
+            boost = encounter_hook(load_symbols(), options.get("boost") or "map_change")
         try:
-            row = closure(env, clean, masks, candidates, colours, truth_tiles)
+            row = closure(env, clean, masks, candidates, colours, truth_tiles, on_frame=boost)
         finally:
             env.close()
         row["state"] = episode["state"]
         rows.append(row)
+        if not row["truth_replay_exact"]:
+            print(f"WARNING {episode['stem']}: the true buttons do not replay it; left out", flush=True)
         print(f"{Path(episode['state']).stem:28s} exact={row['truth_replay_exact']} "
               + "  ".join(f"{k}: px {row[k]['segments_reproduced']:.2f} "
                           f"path {row[k]['same_path']:.2f} end {row[k]['same_end_tile']:.2f}"
                           for k in candidates), flush=True)
-    summary = {k: {"segments_reproduced": float(np.mean([r[k]["segments_reproduced"] for r in rows])),
-                   "median_frames_to_divergence": float(np.median(
-                       [f for r in rows for f in r[k]["frames"]])),
-                   "same_path": float(np.mean([r[k]["same_path"] for r in rows])),
-                   "same_end_tile": float(np.mean([r[k]["same_end_tile"] for r in rows]))}
-               for k in ("idm", "idm_overlapping_dirs", "idm_held_only", "released",
-                         "truth_late_1")}
-    summary["truth_replay_exact"] = all(r["truth_replay_exact"] for r in rows)
+    summary = summarise(rows, ("idm", "idm_overlapping_dirs", "idm_held_only", "released",
+                               "truth_late_1"))
     if args.by_context:
         summary["by_context"] = by_context
         for where, buttons in sorted(by_context.items()):

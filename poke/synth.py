@@ -181,21 +181,41 @@ def observe_fields(env) -> dict:
 
 
 def boost_encounters(env, symbols) -> None:
-    """Wild encounters on every grass step: wGrassRate = 255. Each map load
-    resets it from the map header, so `play` re-applies it on map changes.
-    For synthetic training data only -- the game is otherwise untouched."""
-    env.pyboy.memory[symbols["wGrassRate"][1]] = 255
+    """Wild encounters on every grass step: wGrassRate = 255, written again
+    whenever the game has reset it. It reloads the rate on every map load --
+    after each warp, and after each battle without the map id changing,
+    which is why v4's battle batch, re-applying it only on map changes, got
+    about one boosted battle per episode. For synthetic training data only."""
+    addr = symbols["wGrassRate"][1]
+    if env.pyboy.memory[addr] != 255:
+        env.pyboy.memory[addr] = 255
+
+
+def encounter_hook(symbols, mode: str = "every_frame"):
+    """An `on_frame` hook boosting encounters the way a batch was collected:
+    "every_frame" (written back whenever the game resets it) or
+    "map_change" (only when the map id changes -- v4's battle batch, whose
+    manifest predates the `boost` option; replays must match it)."""
+    if mode == "every_frame":
+        return lambda env: boost_encounters(env, symbols)
+    last = {"map": object()}
+
+    def on_map_change(env):
+        here = cur_map(env) or 0
+        if here != last["map"]:
+            boost_encounters(env, symbols)
+            last["map"] = here
+    return on_map_change
 
 
 def play(env, frames: int, rng: np.random.Generator, sample_every: int = 20, policy=None,
-         on_map_change=None):
+         on_frame=None):
     """Drive `frames` frames. Returns (rgb, masks, labels, blobs).
 
     rgb[t] is the screen after frame t, masks[t] the buttons held during it.
     blobs holds a save state from just before frame t for every sampled t
     (one in `sample_every`, at a random phase), for `mattered`.
-    `on_map_change(env)` runs before the first tick and after every frame
-    that lands on a different map.
+    `on_frame(env)` runs before the first tick and after every tick.
     """
     pyboy = env.pyboy
     pad = Pad(pyboy)
@@ -206,10 +226,8 @@ def play(env, frames: int, rng: np.random.Generator, sample_every: int = 20, pol
     labels.update(in_battles=np.empty(frames, bool), dialog_opens=np.empty(frames, bool))
     blobs: dict[int, bytes] = {}
     phase = int(rng.integers(0, sample_every))
-    last_map = None
-    if on_map_change:
-        on_map_change(env)
-        last_map = observe_fields(env)["map_ids"]
+    if on_frame:
+        on_frame(env)
     for t in range(frames):
         if t % sample_every == phase:
             buffer = io.BytesIO()
@@ -223,9 +241,8 @@ def play(env, frames: int, rng: np.random.Generator, sample_every: int = 20, pol
         fields = observe_fields(env)
         for key in labels:
             labels[key][t] = fields[key]
-        if on_map_change and fields["map_ids"] != last_map:
-            on_map_change(env)
-            last_map = fields["map_ids"]
+        if on_frame:
+            on_frame(env)
     pad.reset()
     return rgb, masks, labels, blobs
 

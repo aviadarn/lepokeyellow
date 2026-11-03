@@ -15,8 +15,10 @@ the labels explain.
     `buttons_repaired` in --truth) more than --min-precision allows.
 
 Writes results/label_consistency_<name>.json; with --apply also
-`buttons_ruled`, `rule_changed` and `rule_event` (frames that are a step
-start or a `▼` answer) into the labels file. Screen events are cached.
+`buttons_ruled`, `rule_changed`, `rule_event` (frames that are a step start
+or a `▼` answer) and `rule_unexplained` (those of them the model's own
+labels failed, before any rule) into the labels file. Screen events are
+cached.
 
   uv run python -m scripts.check_labels --name v3 --apply
 """
@@ -31,8 +33,8 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from poke.label_rules import (answers, enforce_text, prompt_visible, scroll, step_starts,
-                              text_agreement, text_change, walking_agreement)
+from poke.label_rules import (_answered, _held_before, answers, enforce_text, prompt_visible,
+                              scroll, step_starts, text_agreement, text_change, walking_agreement)
 from scripts.label_video import frames_for
 
 #: An inserted tap is right if the verified labels press A or B this close.
@@ -94,6 +96,11 @@ def main() -> None:
     parser.add_argument("--cache", default="data/longplay/screen_events.npz")
     parser.add_argument("--limit", type=int, default=None, help="only the first N frames")
     args = parser.parse_args()
+    if args.apply and args.limit is not None:
+        # A limited run would write --limit-long arrays over the full ones.
+        parser.error("--apply writes the whole video's labels; it cannot be combined with --limit")
+    if args.limit is not None:
+        args.name += f"_first{args.limit}"
 
     started = time.time()
     with h5py.File(args.video) as video:
@@ -128,6 +135,12 @@ def main() -> None:
     bad_cum = np.r_[0, np.cumsum(bad)]
     spans = np.array([(s, e) for s, e in spans if bad_cum[e + 1] == bad_cum[s]], np.int64).reshape(-1, 2)
 
+    # Events the model's own labels fail, judged before any rule changes them.
+    unexplained = np.zeros(n, bool)
+    for t, bit in starts:
+        unexplained[t] = not _held_before(masks, int(t), int(bit))
+    for s, e in spans:
+        unexplained[e] = not _answered(masks, int(s), int(e))
     ruled, changed = enforce_text(masks, spans, onset_a)
     precision, checked = verified_precision(masks, ruled, spans, truth, verified)
     apply_text = precision is None or precision >= args.min_precision
@@ -137,7 +150,7 @@ def main() -> None:
     report = {
         "name": args.name, "labels": args.labels, "frames": int(n),
         "steps": int(len(starts)), "walking_agreement": round(walking_agreement(masks, starts), 4),
-        "answers": int(len(spans)),
+        "answers": int(len(spans)), "unexplained": int(unexplained.sum()),
         "text_agreement_before": round(text_agreement(masks, spans), 4),
         "text_agreement_after": round(text_agreement(ruled, spans), 4),
         "text_taps_added": int(len(np.flatnonzero(((ruled >> 4) & 1) & ~((masks >> 4) & 1) &
@@ -156,7 +169,7 @@ def main() -> None:
         event[spans[:, 1]] = True
         with h5py.File(args.labels, "a") as labels:
             for key, value in (("buttons_ruled", ruled.astype(np.uint8)), ("rule_changed", changed),
-                               ("rule_event", event)):
+                               ("rule_event", event), ("rule_unexplained", unexplained)):
                 if key in labels:
                     del labels[key]
                 labels[key] = value
