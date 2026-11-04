@@ -240,7 +240,7 @@ class Replayer:
 
     def __init__(self, pyboy, snapper: Snapper, video: np.ndarray, masks: np.ndarray,
                  offset: int, slack: int = 2, patience: int = 3):
-        self.pyboy, self.video, self.masks = pyboy, video, masks
+        self.pyboy, self.video, self.masks, self.snapper = pyboy, video, masks, snapper
         self.lut = emulator_lut(snapper)
         self.classes = text_classes(snapper.colours)
         self.pad = Pad(pyboy)

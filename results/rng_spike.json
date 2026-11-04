@@ -1,0 +1,26 @@
+{
+ "question": "Does writing the game's random bytes (hRandomAdd 0xFFD3, hRandomSub 0xFFD4) where the replay and the video diverge make them agree again?",
+ "first_npc_divergence": {
+  "video_frame": 9403,
+  "what": "Pallet Town NPCs (the girl, the man by the fence) on the same tiles in both, facing or posed differently; the judge passes it (a sprite is ~1 % of the screen)",
+  "evidence": "of 4,036 replayed frames 9,000-13,040, 697 under share 0.995, 263 of those mostly inside sprite boxes"
+ },
+ "sweep_at_9380": {
+  "values": 65536,
+  "horizon": 60,
+  "workers": 4,
+  "seconds_strict": 62,
+  "matching_at_share_0.995": 0,
+  "seconds_scored": 772,
+  "distinct_scores": 1,
+  "finding": "every one of the 65,536 values gives the same 60 frames: the NPCs' behaviour there was decided before 9,380, so a resync where the screens part comes too late"
+ },
+ "tile_animation_at_13048": {
+  "bytes": {
+   "hMovingBGTilesCounter1": "0xFFD8 (cycles 0-20)",
+   "wMovingBGTilesCounter2": "0xD084 (0-7)"
+  },
+  "finding": "the flower and water animation runs out of phase (the emulators disagreed on a few lag frames); writing the two counters at 13,000 (e.g. 0, 1) keeps the replay in sync to 14,000 where unchanged it loses sync at 13,048; no button can"
+ },
+ "decision": "Part 2 is a resync of hidden state, not of the random bytes alone: a configurable set of bytes (tile-animation counters first, proven; random bytes; NPC sprite state), searched where the state first parts, which a sprite-aware comparison must find, since the screens part later. No timer-phase search is called for yet."
+}

@@ -237,6 +237,19 @@ mistakes the three for one another.
 **Success.** Passes the opening's first random events: Pallet NPC moves, the
 first wild encounter, the rival battle at about 4:30.
 
+**Spike result (2026-11-04, `results/rng_spike.json`).**
+- **Random bytes alone don't work.** The first NPC divergence shows at
+  9,403. Writing the random bytes at 9,380 changes nothing: all 65,536
+  values give identical frames for 60 frames. The NPCs decided earlier.
+- **Tile-animation counters do.** The run's first hard stop (13,048) is the
+  tile-animation phase, `0xFFD8` and `0xD084`. Writing them keeps sync.
+- **Decision:** Part 2 resyncs a configurable set of hidden-state bytes.
+  - Tile-animation counters first, since they are proven.
+  - Then the random bytes and NPC sprite state, searched where the state
+    first parts. A sprite-aware comparison must find that point, because
+    the screens part later.
+  - No timer-phase search is called for yet.
+
 ### Part 3: cuts — carry the run's own state across them (the user chose A)
 
 The user chose one chained run through the whole video over independent
