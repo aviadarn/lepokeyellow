@@ -79,23 +79,31 @@ From power-on, v3's labels with no hand edits are now verified frame by
 frame, every letter and cursor included, to video frame 13,048 (3 min 37 s).
 That covers the intro, the title, OPTION, Oak's speech, both naming screens,
 the bedroom and its PC, the TV, the girl in Pallet Town, Oak stopping the
-player in the grass, and the walk to his lab. It took 30 sets of edits; a
-stuck point took 19 CPU-seconds at the median and 401 at the 90th percentile
-(`results/repair_poweron_generic.json`).
+player in the grass, and the walk to his lab. One unattended run of the
+current code found it, with 32 sets of edits in 90 minutes; a fresh replay of
+the result agrees (`results/repair_poweron_generic.json`). Of the stuck
+points it solved, the median took 24 CPU-seconds and the 90th percentile 329.
 
 There the flower and water tiles animate out of phase: the two emulators
 disagree on a few lag frames earlier, and the animation runs on a frame
-counter (`0xFFD8`, `0xD084`). No button explains that. Writing the counters
-keeps the replay in sync, which is a state write and the next step's job.
+counter (`0xFFD8`, `0xD084`). The search found no edit within its
+30-minute budget for that point and stopped. Writing the counters keeps the
+replay in sync, which is a state write and the next step's job.
 The random numbers part too: from 2:36 Pallet Town's NPCs stand on the same
 tiles but face other ways, which the judge forgives (a sprite is ~1 % of the
-screen). Writing the random bytes where that shows changes nothing, because
-every one of the 65,536 values plays the same 60 frames. The NPCs decided
-earlier, so a resync has to find where the state parts, not the screen
-(`results/rng_spike.json`).
+screen). Writing the random bytes where that shows (at the one point tried,
+9,380) changes nothing, because every one of the 65,536 values plays the
+same 60 frames. The NPCs decided earlier, so a resync has to find where the
+state parts, not the screen (`results/rng_spike.json`).
 
-Verified means the emulator reproduces the screens, not that each key is the
-one the player pressed. The options menu, for one, is matched by presses the
+Verified means the emulator reproduces the screens under the judge, which
+forgives three things:
+- a run of up to 19 frames out of sync (20 in a row is a loss);
+- text up to 12 frames early or late, tile by tile;
+- the first 150 frames, the boot screens of the two emulators, which are
+  played but not judged.
+
+Nor does it mean that each key is the one the player pressed. The options menu, for one, is matched by presses the
 player probably did not make. Nor can it tell apart buttons with the same
 effect (A or START on the title screen).
 
@@ -135,8 +143,8 @@ labels repair with a third of the edits, but it missed three gates narrowly
 (bedroom replay 841 against 843, synthetic same-path 0.592 against the 0.60
 bar, ▼ answers 95.0 % against 95.3 %) and is no better at A in text boxes
 (4 of 12 against 5 of 12). So v3 with the text rule labels the unverified
-frames, and v4's verified opening is kept: a replay in sync proves those
-frames whichever model proposed them (`results/longplay_v4_gates.json`).
+frames (`results/longplay_v4_gates.json`). The verified opening once came
+from v4's labels; the generic repair now starts from v3's own.
 
 ## Outputs and how far each step is checked
 
@@ -189,7 +197,7 @@ uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt
 uv run python -m scripts.label_video --checkpoint checkpoints/idm_v3/last.pt
 uv run python -m scripts.check_labels --name v3 --apply
 uv run python -m scripts.repair_labels --name poweron_generic --frames 18000 \
-    --only-if-better                      # from v3's labels; stops at 13,048
+    --only-if-better --stuck-budget 1800  # from v3's labels; stops at 13,048 (~90 min)
 uv run python -m scripts.sync_opening --buttons buttons_repaired
 uv run python -m scripts.export_video
 

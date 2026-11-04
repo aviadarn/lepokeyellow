@@ -1,5 +1,5 @@
 {
- "question": "Does writing the game's random bytes (hRandomAdd 0xFFD3, hRandomSub 0xFFD4) where the replay and the video diverge make them agree again?",
+ "question": "Does writing the game's random bytes (hRandomAdd 0xFFD3, hRandomSub 0xFFD4) where the replay and the video diverge make them agree again? Tested at one write point (9,380), 23 frames before the first NPC divergence shows.",
  "first_npc_divergence": {
   "video_frame": 9403,
   "what": "Pallet Town NPCs (the girl, the man by the fence) on the same tiles in both, facing or posed differently; the judge passes it (a sprite is ~1 % of the screen)",
@@ -20,7 +20,7 @@
    "hMovingBGTilesCounter1": "0xFFD8 (cycles 0-20)",
    "wMovingBGTilesCounter2": "0xD084 (0-7)"
   },
-  "finding": "the flower and water animation runs out of phase (the emulators disagreed on a few lag frames); writing the two counters at 13,000 (e.g. 0, 1) keeps the replay in sync to 14,000 where unchanged it loses sync at 13,048; no button can"
+  "finding": "the flower and water animation runs out of phase (the emulators disagreed on a few lag frames); writing the two counters at 13,000 (e.g. 0, 1) keeps the replay in sync to 14,000 where unchanged it loses sync at 13,048; the button search found no edit before it was stopped"
  },
- "decision": "Part 2 is a resync of hidden state, not of the random bytes alone: a configurable set of bytes (tile-animation counters first, proven; random bytes; NPC sprite state), searched where the state first parts, which a sprite-aware comparison must find, since the screens part later. No timer-phase search is called for yet."
+ "decision": "Part 2 resyncs hidden state, not only the random bytes: at the one point tested they changed nothing: a configurable set of bytes (tile-animation counters first, proven; random bytes; NPC sprite state), searched where the state first parts, which a sprite-aware comparison must find, since the screens part later. No timer-phase search is called for yet."
 }

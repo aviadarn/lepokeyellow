@@ -238,11 +238,13 @@ mistakes the three for one another.
 first wild encounter, the rival battle at about 4:30.
 
 **Spike result (2026-11-04, `results/rng_spike.json`).**
-- **Random bytes alone don't work.** The first NPC divergence shows at
-  9,403. Writing the random bytes at 9,380 changes nothing: all 65,536
+- **Random bytes alone didn't work where tried.** The first NPC divergence
+  shows at 9,403. Writing the random bytes at 9,380 (the one point tested)
+  changes nothing: all 65,536
   values give identical frames for 60 frames. The NPCs decided earlier.
 - **Tile-animation counters do.** The run's first hard stop (13,048) is the
-  tile-animation phase, `0xFFD8` and `0xD084`. Writing them keeps sync.
+  tile-animation phase, `0xFFD8` and `0xD084`. Writing them keeps sync; the
+  button search found nothing there before it was stopped.
 - **Decision:** Part 2 resyncs a configurable set of hidden-state bytes.
   - Tile-animation counters first, since they are proven.
   - Then the random bytes and NPC sprite state, searched where the state

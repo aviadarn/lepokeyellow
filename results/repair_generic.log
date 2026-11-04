@@ -56,3 +56,50 @@ end a 12831->12827               sync 12859 -> 13048  (17s, 17 cpu-s, 371115 fra
 2026-11-04 11:41:27 exit 0
 2026-11-04 11:41:29 stopped by hand at 13048: flower/water tile animation out of phase (hMovingBGTilesCounter1 0xFFD8, wMovingBGTilesCounter2 0xD084); writing them at 13000 keeps sync to 14000; no button can — labels written from this log's edits, fresh replay loses first at 13048
 2026-11-04 11:41:31 watchdog generic: pipeline gone, exiting
+2026-11-04 12:46:10 ===== unattended run of c14f532 from power-on =====
+2026-11-04 12:46:10 unattended run of HEAD from power-on, v3 labels, stuck budget 1800 CPU-s
+2026-11-04 12:46:10 watchdog generic: group 50142, swap baseline 4052M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7124M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_ruled
+labels as decoded: in sync until video frame 1818
+drop a 1785-1790                 sync 1818 -> 3082  (2s, 2 cpu-s, 5847 frames played)
+2026-11-04 12:46:24 watchdog generic: group 50142, swap baseline 4052M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7124M
+add a 3042                       sync 3082 -> 3270  (16s, 16 cpu-s, 55631 frames played)
+add a 3258x60                    sync 3270 -> 3348  (8s, 8 cpu-s, 76630 frames played)
+start left 3344->3360            sync 3348 -> 3402  (14s, 14 cpu-s, 96097 frames played)
+swap left->a 3397-3408           sync 3402 -> 3438  (18s, 18 cpu-s, 117561 frames played)
+swap up->a 3411-3421 + add a 3444x60 + add down 3447x20 sync 3438 -> 3487  (307s, 306 cpu-s, 495810 frames played)
+start a 3258->3256 + add down 3498 sync 3487 -> 3542  (170s, 170 cpu-s, 723213 frames played)
+end up 3536->3568                sync 3542 -> 3574  (19s, 19 cpu-s, 740711 frames played)
+add a 3552x60                    sync 3574 -> 3693  (18s, 18 cpu-s, 759560 frames played)
+add a 3660x60                    sync 3693 -> 5035  (4s, 4 cpu-s, 763578 frames played)
+add right 5022 + add right 5028 + add right 5040 sync 5035 -> 5068  (332s, 331 cpu-s, 1305568 frames played)
+add right 5052 + add right 5082 + add right 5076 sync 5068 -> 5104  (332s, 331 cpu-s, 1785668 frames played)
+add right 5010 + add down 5112   sync 5104 -> 5151  (239s, 238 cpu-s, 2059540 frames played)
+add left 5148 + add left 5154 + add left 5160 sync 5151 -> 5187  (400s, 399 cpu-s, 2493701 frames played)
+add left 5184 + add up 5190      sync 5187 -> 5219  (197s, 196 cpu-s, 2706323 frames played)
+add a 5202x60 + add left 5208    sync 5219 -> 5249  (176s, 175 cpu-s, 2896369 frames played)
+split a 5202-5262@5211           sync 5249 -> 6787  (14s, 14 cpu-s, 2909400 frames played)
+end a 6522->6778                 sync 6787 -> 7554  (1s, 1 cpu-s, 2911322 frames played)
+add a 7500                       sync 7554 -> 7696  (26s, 26 cpu-s, 2951887 frames played)
+end a 7673->7737 + add down 7710 sync 7696 -> 7735  (186s, 186 cpu-s, 3219723 frames played)
+add down 7721 + add a 7740       sync 7735 -> 8097  (146s, 146 cpu-s, 3483307 frames played)
+add a 8094x60 + drop left 8114-8124 sync 8097 -> 8127  (56s, 56 cpu-s, 3666029 frames played)
+split a 8094-8154@8120           sync 8127 -> 8514  (4s, 4 cpu-s, 3676297 frames played)
+add left 8484 + drop a 8496-8501 sync 8514 -> 8833  (140s, 139 cpu-s, 3947309 frames played)
+add a 8805x20                    sync 8833 -> 9008  (18s, 18 cpu-s, 3985873 frames played)
+end a 8825->8823                 sync 9008 -> 9116  (28s, 28 cpu-s, 4014322 frames played)
+add a 9113 + add a 9138 + start right 9120->9116 sync 9116 -> 9417  (546s, 545 cpu-s, 4508730 frames played)
+add a 9132                       sync 9417 -> 11238  (22s, 22 cpu-s, 4527003 frames played)
+drop a 11099-11104 + add a 11095 sync 11238 -> 11667  (89s, 89 cpu-s, 4803753 frames played)
+start a 11534->11278             sync 11667 -> 12337  (2s, 2 cpu-s, 4806303 frames played)
+end a 12326->12390               sync 12337 -> 12859  (12s, 12 cpu-s, 4833945 frames played)
+end a 12831->12827               sync 12859 -> 13048  (15s, 15 cpu-s, 4872044 frames played)
+  nothing within 300 frames: widening to 600
+  nothing within 600 frames: widening to 1200
+  nothing within 1200 frames: widening to 2400
+stuck at video frame 13048: over its 1800 CPU-s budget
+fresh replay of the result: in sync until 13048 (search: 13048)
+verified video frames 0-13048 with 32 edits (1118 frames changed) in 5373s
+2026-11-04 14:15:44 exit 0
+2026-11-04 14:15:46 watchdog generic: pipeline gone, exiting

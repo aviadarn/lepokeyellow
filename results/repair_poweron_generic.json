@@ -2,107 +2,203 @@
  "name": "poweron_generic",
  "start": 0,
  "verified_until": 13048,
+ "search_reach": 13048,
  "limit": 18000,
- "started_from": "v3 buttons_ruled (labels.h5), v3 held_p / onset_p as the prior; no hand edits",
  "edits": [
   {
-   "edit": "drop a 1785-1790"
+   "edit": "drop a 1785-1790",
+   "at": 1785,
+   "lost_before": 1818,
+   "prior": -4.129
   },
   {
-   "edit": "add a 3060x60"
+   "edit": "add a 3042",
+   "at": 3042,
+   "lost_before": 3082,
+   "prior": -7.494
   },
   {
-   "edit": "add a 3258x60"
+   "edit": "add a 3258x60",
+   "at": 3258,
+   "lost_before": 3270,
+   "prior": 34.894
   },
   {
-   "edit": "start left 3344->3352"
+   "edit": "start left 3344->3360",
+   "at": 3344,
+   "lost_before": 3348,
+   "prior": -4.17
   },
   {
-   "edit": "swap left->a 3397-3408"
+   "edit": "swap left->a 3397-3408",
+   "at": 3397,
+   "lost_before": 3402,
+   "prior": 4.018
   },
   {
-   "edit": "swap up->a 3411-3421 + add a 3444x60 + add down 3447x20"
+   "edit": "swap up->a 3411-3421 + add a 3444x60 + add down 3447x20",
+   "at": 3411,
+   "lost_before": 3438,
+   "prior": 63.334
   },
   {
-   "edit": "end down 3476->3478 + add down 3469"
+   "edit": "start a 3258->3256 + add down 3498",
+   "at": 3256,
+   "lost_before": 3487,
+   "prior": 0.344
   },
   {
-   "edit": "end up 3536->3568"
+   "edit": "end up 3536->3568",
+   "at": 3536,
+   "lost_before": 3542,
+   "prior": 22.343
   },
   {
-   "edit": "add a 3558x60"
+   "edit": "add a 3552x60",
+   "at": 3552,
+   "lost_before": 3574,
+   "prior": 45.66
   },
   {
-   "edit": "add a 3660x60"
+   "edit": "add a 3660x60",
+   "at": 3660,
+   "lost_before": 3693,
+   "prior": 36.073
   },
   {
-   "edit": "add right 5010 + add right 5046 + add right 5016"
+   "edit": "add right 5022 + add right 5028 + add right 5040",
+   "at": 5022,
+   "lost_before": 5035,
+   "prior": -28.375
   },
   {
-   "edit": "add right 5052 + add right 5040 + add right 5080"
+   "edit": "add right 5052 + add right 5082 + add right 5076",
+   "at": 5052,
+   "lost_before": 5068,
+   "prior": -26.999
   },
   {
-   "edit": "add right 5028 + add down 5112"
+   "edit": "add right 5010 + add down 5112",
+   "at": 5010,
+   "lost_before": 5104,
+   "prior": -6.712
   },
   {
-   "edit": "add left 5154 + add left 5160 + add left 5178"
+   "edit": "add left 5148 + add left 5154 + add left 5160",
+   "at": 5148,
+   "lost_before": 5151,
+   "prior": -19.781
   },
   {
-   "edit": "add up 5190 + add left 5196"
+   "edit": "add left 5184 + add up 5190",
+   "at": 5184,
+   "lost_before": 5187,
+   "prior": -17.805
   },
   {
-   "edit": "add a 5202x60 + add left 5208"
+   "edit": "add a 5202x60 + add left 5208",
+   "at": 5202,
+   "lost_before": 5219,
+   "prior": 22.66
   },
   {
-   "edit": "split a 5202-5262@5211"
+   "edit": "split a 5202-5262@5211",
+   "at": 5209,
+   "lost_before": 5249,
+   "prior": -1.082
   },
   {
-   "edit": "end a 6522->6778"
+   "edit": "end a 6522->6778",
+   "at": 6522,
+   "lost_before": 6787,
+   "prior": 164.022
   },
   {
-   "edit": "add a 7500"
+   "edit": "add a 7500",
+   "at": 7500,
+   "lost_before": 7554,
+   "prior": -15.609
   },
   {
-   "edit": "end a 7673->7737 + add down 7704"
+   "edit": "end a 7673->7737 + add down 7710",
+   "at": 7673,
+   "lost_before": 7696,
+   "prior": 56.755
   },
   {
-   "edit": "add down 7710 + add a 7740x20"
+   "edit": "add down 7721 + add a 7740",
+   "at": 7721,
+   "lost_before": 7735,
+   "prior": -9.821
   },
   {
-   "edit": "end left 8096->8095 + drop left 8114-8124"
+   "edit": "add a 8094x60 + drop left 8114-8124",
+   "at": 8094,
+   "lost_before": 8097,
+   "prior": 27.964
   },
   {
-   "edit": "add left 8484"
+   "edit": "split a 8094-8154@8120",
+   "at": 8118,
+   "lost_before": 8127,
+   "prior": -3.971
   },
   {
-   "edit": "add a 8808x20"
+   "edit": "add left 8484 + drop a 8496-8501",
+   "at": 8484,
+   "lost_before": 8514,
+   "prior": -33.2
   },
   {
-   "edit": "end a 8828->8824 + end down 9115->9114"
+   "edit": "add a 8805x20",
+   "at": 8805,
+   "lost_before": 8833,
+   "prior": 15.681
   },
   {
-   "edit": "add a 9144 + add right 9114"
+   "edit": "end a 8825->8823",
+   "at": 8823,
+   "lost_before": 9008,
+   "prior": -0.947
   },
   {
-   "edit": "end a 9337->9336"
+   "edit": "add a 9113 + add a 9138 + start right 9120->9116",
+   "at": 9113,
+   "lost_before": 9116,
+   "prior": -16.329
   },
   {
-   "edit": "drop a 11099-11104"
+   "edit": "add a 9132",
+   "at": 9132,
+   "lost_before": 9417,
+   "prior": -9.406
   },
   {
-   "edit": "end a 12326->12390"
+   "edit": "drop a 11099-11104 + add a 11095",
+   "at": 11095,
+   "lost_before": 11238,
+   "prior": 3.503
   },
   {
-   "edit": "end a 12831->12827"
+   "edit": "start a 11534->11278",
+   "at": 11278,
+   "lost_before": 11667,
+   "prior": 74.136
+  },
+  {
+   "edit": "end a 12326->12390",
+   "at": 12326,
+   "lost_before": 12337,
+   "prior": 64.335
+  },
+  {
+   "edit": "end a 12831->12827",
+   "at": 12827,
+   "lost_before": 12859,
+   "prior": -3.966
   }
  ],
- "frames_changed": 885,
- "cpu_seconds_per_stuck_point": {
-  "median": 19.0,
-  "p90": 401.0,
-  "max": 1728.0,
-  "n": 31
- },
- "sessions": "session 1 reached 9,143 and was stopped (its beam ended on rounds that gain nothing); session 2 started from session 1's own 25 edits with the cost-ranked beam (fresh replay of them: in sync to 9,143)",
- "stopped": "by hand at 13,048 (3:37): the flower and water tile animation runs out of phase (hMovingBGTilesCounter1 0xFFD8, wMovingBGTilesCounter2 0xD084); writing them at 13,000 keeps the replay in sync to 14,000, no button can. Labels written from the log's edits; a fresh replay loses sync first at 13,048."
+ "frames_changed": 1118,
+ "anchor_state": null,
+ "seconds": 5373
 }
