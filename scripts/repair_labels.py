@@ -53,6 +53,9 @@ MARGIN = 30
 SNAPSHOT_EVERY = 20
 REJOIN = 120        # frames after an edit to look for the recorded path again
 REJOIN_EVERY = 4    # ... every this many frames: a state digest costs 0.2 ms
+COST_SPAN = 40      # frames before a loss over which sets that lose there are compared
+COST_EPS = 0.005    # a closer match than this counts as getting nearer the video
+NEUTRAL = 2         # rounds a beam may go on getting nearer without getting further
 
 
 def latest(snapshots: list[tuple[int, tuple]], frame: int):
@@ -75,20 +78,35 @@ class Search:
         # a candidate whose state equals it again will play exactly as it
         # did, so its reach is the path's.
         self.keys: dict[int, bytes] = {}
+        # ... and how far each of its frames was from the video (1 - share).
+        self.base_cost: dict[int, float] = {}
+        self.last_cost = 0.0
 
     def _next(self) -> int:
         return self.rep.e + self.rep.offset
 
     def play(self, snapshot: tuple, masks: np.ndarray, stop_at: int, record: bool = False,
-             rejoin_after: int | None = None, rejoin_reach: int | None = None) -> int:
+             rejoin_after: int | None = None, rejoin_reach: int | None = None,
+             cost_from: int | None = None) -> int:
         """Video frame where sync is lost (first of `run` frames out of
         sync), or `stop_at`. With `rejoin_after`, once past that frame and
         before `rejoin_reach`, a state equal to the recorded path's returns
-        `rejoin_reach` at once (checked for REJOIN frames)."""
+        `rejoin_reach` at once (checked for REJOIN frames). With `cost_from`,
+        `last_cost` is how far the frames from there on were from the video,
+        the recorded path's figures standing in for frames not replayed."""
         self.rep.load(snapshot)
         self.rep.masks = masks
         keyed = hasattr(self.rep, "state_key")
         bad, first_bad = 0, None
+        cost, started = 0.0, False
+
+        def done(v_end: int, rejoined_at: int | None = None) -> int:
+            total = cost
+            if rejoined_at is not None:
+                total += sum(c for u, c in self.base_cost.items() if u > rejoined_at)
+            self.last_cost = total
+            return v_end
+
         while True:
             if record and self._next() % SNAPSHOT_EVERY == 0 and self._next() > self.snapshots[-1][0]:
                 self.snapshots.append((self._next(), self.rep.save()))
@@ -100,18 +118,25 @@ class Search:
                 continue
             v, share, text = out
             if v >= stop_at:
-                return stop_at
-            if record and keyed:
-                self.keys[v] = self.rep.state_key()
+                return done(stop_at)
+            if cost_from is not None and v >= cost_from:
+                if not started and v > cost_from:
+                    cost += sum(self.base_cost.get(u, 0.0) for u in range(cost_from, v))
+                started = True
+                cost += 1.0 - share
+            if record:
+                self.base_cost[v] = 1.0 - share
+                if keyed:
+                    self.keys[v] = self.rep.state_key()
             elif (rejoin_after is not None and keyed and rejoin_after < v < rejoin_reach
                   and v - rejoin_after <= REJOIN and (v - rejoin_after) % REJOIN_EVERY == 0
                   and self.keys.get(v) == self.rep.state_key()):
-                return rejoin_reach
+                return done(rejoin_reach, v)
             if not in_sync(share, text) and v >= self.judge_from:
                 bad += 1
                 first_bad = v if first_bad is None else first_bad
                 if bad >= self.run:
-                    return first_bad
+                    return done(first_bad)
             else:
                 bad, first_bad = 0, None
 
@@ -121,6 +146,7 @@ class Search:
         self.snapshots = [s for s in self.snapshots if s[0] <= frame] or self.snapshots[:1]
         start = self.snapshots[-1][0]
         self.keys = {v: k for v, k in self.keys.items() if v < start}
+        self.base_cost = {v: c for v, c in self.base_cost.items() if v < start}
         return self.play(self.snapshots[-1][1], masks, self.limit, record=True)
 
     def reach(self, masks: np.ndarray, first: int, lost: int, cap: int,
@@ -131,7 +157,7 @@ class Search:
         later release) a fix. Given `last`, its last edited frame, an edit
         the game shrugs off stops where it rejoins the recorded path."""
         return self.play(latest(self.snapshots, min(first, lost))[1], masks, cap,
-                         rejoin_after=last, rejoin_reach=lost)
+                         rejoin_after=last, rejoin_reach=lost, cost_from=lost - COST_SPAN)
 
 
 def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
@@ -143,13 +169,18 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
     `cap` edits (`screen`), and keeps the `width` that reach furthest (then
     the likelier, then the shorter). A set reaching HORIZON frames past
     `lost` is taken at once, and so is a round's best once it beats `lost`
-    by MARGIN; rounds go on only while the gain is smaller. When a round
-    gains nothing the search ends. `exclude` names
+    by MARGIN; rounds go on only while the gain is smaller. Sets that lose
+    sync at the same frame are ranked by how near the video their frames
+    stay before it, and a round that gets no further but nearer may go on
+    (NEUTRAL times): some fixes need an edit that alone gains nothing. `exclude` names
     sets already tried, `avoid` a reach to skip (an undone set's: in effect
     the same set)."""
     stop = min(limit, lost + HORIZON)
-    frontier = [Candidate("", masks=masks, first=lost, prior=0.0, reach=lost)]
+    root = Candidate("", masks=masks, first=lost, prior=0.0, reach=lost)
+    root.cost = sum(c for u, c in search.base_cost.items() if u >= lost - COST_SPAN)
+    frontier = [root]
     best, seen = None, set()
+    nearest, neutral = root.cost, 0
     for _ in range(depth):
         children = []
         for member in frontier:
@@ -170,6 +201,7 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
                 differ = np.flatnonzero(edited != masks)
                 last = int(differ[-1]) if differ.size else None
                 child.reach = search.reach(edited, first, lost, stop, last)
+                child.cost = search.last_cost
                 if child.reach == avoid:
                     continue
                 if child.reach >= stop:
@@ -177,10 +209,19 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
                 children.append(child)
         if not children:
             break
-        children.sort(key=lambda c: (-c.reach, -c.prior, c.what.count(" + ")))
-        if best is not None and children[0].reach <= best.reach:
+        children.sort(key=lambda c: (-c.reach, c.cost, -c.prior, c.what.count(" + ")))
+        top = children[0]
+        if best is None or top.reach > best.reach:
+            best, neutral = top, 0
+        elif top.reach == best.reach and top.cost < nearest - COST_EPS and neutral < NEUTRAL:
+            # No further, but nearer the video: an edit that only enables the
+            # next one (a RIGHT held into the girl must stop before her A
+            # can open the text).
+            neutral += 1
+        else:
             break
-        best, frontier = children[0], children[:width]
+        nearest = min(nearest, top.cost)
+        frontier = children[:width]
         if best.reach >= lost + MARGIN:
             # Enough to take: more rounds only cost time, and the repair
             # goes on from the new loss of sync anyway.

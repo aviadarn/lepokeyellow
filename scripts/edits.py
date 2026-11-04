@@ -37,6 +37,7 @@ class Candidate:
                  prior: float = 0.0, reach: int = -1, *, base: np.ndarray | None = None,
                  ops: tuple = ()):
         self.what, self.first, self.prior, self.reach = what, first, prior, reach
+        self.cost = 0.0
         self._masks, self.base, self.ops = masks, base, ops
 
     @property

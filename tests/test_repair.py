@@ -285,3 +285,51 @@ def test_beam_takes_a_set_as_soon_as_it_beats_the_loss_by_the_margin():
     lost = search.base(decoded, 0)
     found = beam(search, decoded, _held(n), np.zeros((n, 8), np.float32), lost, n)
     assert found.what == "add a 300" and found.reach == 824
+
+
+class _EnablingEdit:
+    """2:32 as an 'emulator': the A that opens the girl's text works only
+    once RIGHT is no longer held (the player stopped bumping into her). With
+    RIGHT held the frames before 9,143 are a little off (the bump); from
+    9,143 the video's text box is missing either way, unless both are fixed."""
+
+    def __init__(self):
+        self.e, self.offset, self.masks = 0, 0, None
+
+    def save(self):
+        return self.e
+
+    def load(self, snapshot):
+        self.e = snapshot
+
+    def step(self):
+        v = self.e
+        self.e += 1
+        m = self.masks
+        bumping = bool((m[9126:9140] & (1 << BUTTONS.index("right"))).any())
+        pressed = bool((m[9136:9146] & A).any()) and not (m[9130:9136] & A).any()
+        talking = pressed and not bumping      # a new A press, not one held from before
+        if v < 9100 or talking:
+            return v, 1.0, 0
+        if v < 9143:
+            return v, 0.985 if bumping else 0.995, 0
+        return v, 0.5, None
+
+
+def test_beam_finds_a_fix_that_needs_an_edit_which_alone_gains_nothing():
+    # Cutting RIGHT to a tap does not move the loss, but it brings the
+    # frames before it closer to the video: the beam must keep it and add
+    # the A in the next round.
+    from scripts.repair_labels import MARGIN, Search, beam
+
+    n = 10_000
+    decoded = np.zeros(n, np.int64)
+    decoded[9120:9277] = 1 << BUTTONS.index("right")
+    onset = np.zeros((n, 8), np.float32)
+    onset[9140, BUTTONS.index("a")] = 0.3
+    search = Search(_EnablingEdit(), 0, n)
+    lost = search.base(decoded, 0)
+    assert lost == 9143
+    found = beam(search, decoded, _held(n), onset, lost, n)
+    assert found is not None and found.reach >= lost + MARGIN
+    assert "right" in found.what and "add a" in found.what
