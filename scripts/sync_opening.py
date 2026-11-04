@@ -244,6 +244,21 @@ def emulator_lut(snapper: Snapper) -> np.ndarray:
     return snapper.table[(corrected[:, 0] << 10) | (corrected[:, 1] << 5) | corrected[:, 2]].astype(np.uint8)
 
 
+def writes_from_rows(rows: np.ndarray) -> dict:
+    """State writes as stored ((M, 3): video frame, address, value) -> the
+    Replayer's {video frame: ((address, value), ...)}."""
+    out: dict[int, tuple] = {}
+    for frame, address, value in np.asarray(rows, np.int64).reshape(-1, 3):
+        out[int(frame)] = out.get(int(frame), ()) + ((int(address), int(value)),)
+    return out
+
+
+def rows_from_writes(writes: dict) -> np.ndarray:
+    rows = [(frame, address, value) for frame, pairs in sorted(writes.items())
+            for address, value in pairs]
+    return np.array(rows, np.int32).reshape(-1, 3)
+
+
 class Replayer:
     """Labelled buttons pressed into the emulator a frame at a time and
     compared with the video, tracking the frame offset (see `replay`).
@@ -260,6 +275,10 @@ class Replayer:
         self.pad = Pad(pyboy)
         self.slack, self.patience = slack, patience
         self.e, self.offset, self.streak, self.pending = 0, offset, 0, 0
+        # Hidden state the video's emulator had and PyBoy did not (tile
+        # animation counters, random bytes), written just before the tick
+        # that draws that video frame: {video frame: ((address, value), ...)}.
+        self.writes: dict[int, tuple] = {}
 
     def frame(self) -> np.ndarray:
         q = np.asarray(self.pyboy.screen.ndarray[:, :, :3]).astype(np.int32) >> 3
@@ -271,6 +290,8 @@ class Replayer:
         None when that frame has no video neighbours to compare with."""
         v = self.e + self.offset
         self.pad.set(int(self.masks[v]) if 0 <= v < len(self.masks) else 0)
+        for address, value in self.writes.get(v, ()):
+            self.pyboy.memory[address] = value
         self.pyboy.tick(1, True)
         self.e += 1
         if not self.slack <= v < len(self.video) - self.slack:
@@ -318,7 +339,7 @@ class Replayer:
 
 
 def replay(h5, labels, snapper, offset: int, frames: int, slack: int = 2,
-           patience: int = 3, pyboy=None):
+           patience: int = 3, pyboy=None, writes: dict | None = None):
     """Replay labelled buttons from power-on, tracking the frame offset.
 
     The intro showed the offset is not fixed: with no input at all, 8 % of
@@ -342,6 +363,7 @@ def replay(h5, labels, snapper, offset: int, frames: int, slack: int = 2,
     if 0 < offset < len(masks):
         masks = release_carried(masks, offset)
     replayer = Replayer(pyboy, snapper, video, masks, offset, slack, patience)
+    replayer.writes = writes or {}
     shares, offsets, seen, texts = [], [], [], []
     for _ in range(frames):
         before = replayer.offset
@@ -397,9 +419,13 @@ def main() -> None:
                 print(f"anchor: {args.anchor_state} matches video frame {anchor} "
                       f"({share:.4f})", flush=True)
             with h5py.File(args.labels) as labels:
+                writes = (writes_from_rows(labels["state_writes"][:])
+                          if "state_writes" in labels else {})
                 labels = {"buttons": labels[args.buttons][:]}
                 shares, offsets, seen, texts = replay(h5, labels, snapper, offset, args.frames,
-                                                      pyboy=env.pyboy if env else None)
+                                                      pyboy=env.pyboy if env else None,
+                                                      writes=writes)
+            report["state_writes"] = int(sum(len(p) for p in writes.values()))
             if env:
                 env.close()
             synced = (shares >= SYNC_SHARE) & (texts < TEXT_LIMIT)
