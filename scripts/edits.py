@@ -38,6 +38,7 @@ class Candidate:
                  ops: tuple = ()):
         self.what, self.first, self.prior, self.reach = what, first, prior, reach
         self.cost = 0.0
+        self.writes: dict | None = None    # state writes it brings, all of them (resync)
         self._masks, self.base, self.ops = masks, base, ops
 
     @property

@@ -34,6 +34,7 @@ to results/repair_<name>.json.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import time
 from pathlib import Path
@@ -56,6 +57,11 @@ REJOIN_EVERY = 4    # ... every this many frames: a state digest costs 0.2 ms
 COST_SPAN = 40      # frames before a loss over which sets that lose there are compared
 COST_EPS = 0.005    # a closer match than this counts as getting nearer the video
 NEUTRAL = 2         # rounds a beam may go on getting nearer without getting further
+# Hidden state a button cannot reach, tried in this order where no edit helps:
+TILE_ANIMATION = ((0xFFD8, range(21)), (0xD084, range(8)))   # flowers and water (13,048)
+RANDOM = ((0xFFD3, range(256)), (0xFFD4, range(256)))         # hRandomAdd, hRandomSub
+RESYNC_LEAD = 40    # frames before the loss a write goes in
+IN_PROCESS = 1000   # tiers this small are searched here, larger ones on workers
 
 
 def latest(snapshots: list[tuple[int, tuple]], frame: int):
@@ -70,6 +76,9 @@ class Search:
         self.rep, self.limit, self.run = replayer, limit, run
         # CPU time, and the time a stuck point's search must end by (None: no limit).
         self.clock, self.deadline = clock, None
+        # State writes committed so far, and those of the furthest labels.
+        self.writes: dict[int, tuple] = {}
+        self.best_writes: dict[int, tuple] = {}
         # Frames before this are played but not judged: from power-on, the
         # boot screens of PyBoy and the capture emulator differ for ~50
         # frames whatever is pressed.
@@ -89,7 +98,7 @@ class Search:
 
     def play(self, snapshot: tuple, masks: np.ndarray, stop_at: int, record: bool = False,
              rejoin_after: int | None = None, rejoin_reach: int | None = None,
-             cost_from: int | None = None) -> int:
+             cost_from: int | None = None, writes: dict | None = None) -> int:
         """Video frame where sync is lost (first of `run` frames out of
         sync), or `stop_at`. With `rejoin_after`, once past that frame and
         before `rejoin_reach`, a state equal to the recorded path's returns
@@ -98,6 +107,7 @@ class Search:
         the recorded path's figures standing in for frames not replayed."""
         self.rep.load(snapshot)
         self.rep.masks = masks
+        self.rep.writes = self.writes if writes is None else writes
         keyed = hasattr(self.rep, "state_key")
         bad, first_bad = 0, None
         cost, started = 0.0, False
@@ -155,14 +165,15 @@ class Search:
         return self.deadline is not None and self.clock() > self.deadline
 
     def reach(self, masks: np.ndarray, first: int, lost: int, cap: int,
-              last: int | None = None) -> int:
+              last: int | None = None, writes: dict | None = None) -> int:
         """Where `masks` lose sync, played from the last snapshot at or before
         both its first edited frame and `lost`: starting inside the lost
         frames would skip them, and call an edit that cannot touch them (a
         later release) a fix. Given `last`, its last edited frame, an edit
         the game shrugs off stops where it rejoins the recorded path."""
         return self.play(latest(self.snapshots, min(first, lost))[1], masks, cap,
-                         rejoin_after=last, rejoin_reach=lost, cost_from=lost - COST_SPAN)
+                         rejoin_after=last, rejoin_reach=lost, cost_from=lost - COST_SPAN,
+                         writes=writes)
 
 
 def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
@@ -236,10 +247,60 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
     return best if best is not None and best.reach >= lost + MARGIN else None
 
 
+def _with(writes: dict, frame: int, pairs) -> dict:
+    out = dict(writes)
+    out[frame] = out.get(frame, ()) + tuple(pairs)
+    return out
+
+
+def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
+           exclude: frozenset = frozenset(), avoid: int | None = None, workers: int = 4):
+    """A write of hidden state, RESYNC_LEAD frames before `lost`, that plays
+    MARGIN frames past it, or None: for each tier ((address, values), ...)
+    in turn, every combination is tried, the furthest-reaching kept (ties:
+    the smallest change from the values the emulator has there)."""
+    at = max(lost - RESYNC_LEAD, search.judge_from, 0)
+    snapshot = latest(search.snapshots, at)
+    cap = min(search.limit, lost + HORIZON)
+    search.rep.load(snapshot[1])
+    memory = getattr(search.rep, "pyboy", search.rep).memory
+    for tier in tiers:
+        addresses = [a for a, _ in tier]
+        now = [int(memory[a]) for a in addresses]
+        combos = list(itertools.product(*[list(values) for _, values in tier]))
+        if len(combos) <= IN_PROCESS:
+            ranked = []
+            for combo in combos:
+                if search.out_of_time():
+                    break
+                ranked.append((search.reach(masks, at, lost, cap, last=at,
+                                            writes=_with(search.writes, at, zip(addresses, combo))),
+                               combo))
+        else:
+            from scripts.rng_sync import find_state
+
+            ranked = find_state(search.rep, snapshot[1], cap, tier, workers, search.writes, at,
+                                search.judge_from, search.run)
+        best = None
+        for reach, combo in ranked:
+            what = "write " + " ".join(f"{a:04X}={v}" for a, v in zip(addresses, combo)) + f" @{at}"
+            if what in exclude or reach == avoid:
+                continue
+            key = (-reach, sum(abs(v - c) for v, c in zip(combo, now)))
+            if best is None or key < best[0]:
+                best = (key, reach, combo, what)
+        if best and best[1] >= lost + MARGIN:
+            _, reach, combo, what = best
+            found = Candidate(what, masks=masks, first=at, prior=0.0, reach=reach)
+            found.writes = _with(search.writes, at, zip(addresses, combo))
+            return found
+    return None
+
+
 def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
            lost: int, limit: int, max_edits: int, max_backtracks: int, width: int = 4,
            depth: int = 12, window: int = 300, max_window: int = 2400, cap: int = 400,
-           stuck_budget: float | None = None):
+           stuck_budget: float | None = None, tiers=(), workers: int = 4):
     """Greedy repair with backtracking: (masks, video frame sync is lost at, edits).
 
     Each step takes the best set of edits at the current loss of sync
@@ -257,14 +318,18 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
         while True:
             found = beam(search, m, held_p, onset_p, at, limit, width, depth, w, cap,
                          exclude, avoid)
-            if found is not None or w >= max_window or search.out_of_time():
+            if found is not None or search.out_of_time():
                 return found
+            if w >= max_window:
+                return resync(search, m, at, limit, tiers, exclude, avoid, workers) if tiers else None
             w = min(2 * w, max_window)
             print(f"  nothing within {w // 2} frames: widening to {w}", flush=True)
 
-    # stack entries: (masks before the edit, sync lost before it, edit, tried edits)
-    stack: list[tuple[np.ndarray, int, Candidate, set]] = []
+    # stack entries: (masks before the edit, sync lost before it, edit, tried
+    # edits, state writes before it)
+    stack: list[tuple[np.ndarray, int, Candidate, set, dict]] = []
     best = (masks, lost, [])
+    search.best_writes = dict(search.writes)
     backtracks = 0
     while lost < limit and len(stack) < max_edits:
         t, cpu = time.time(), time.process_time()
@@ -276,7 +341,7 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
             undone_first = lost
             while (stack and winner is None and backtracks < max_backtracks
                    and not search.out_of_time()):
-                masks, lost, undone, tried = stack.pop()
+                masks, lost, undone, tried, search.writes = stack.pop()
                 undone_first = min(undone_first, undone.first)
                 tried.add(undone.what)
                 backtracks += 1
@@ -292,8 +357,10 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
             first = min(winner.first, undone_first, lost)
         else:
             first = min(winner.first, lost)
-        stack.append((masks, lost, winner, tried))
+        stack.append((masks, lost, winner, tried, dict(search.writes)))
         masks = winner.masks
+        if winner.writes is not None:
+            search.writes = winner.writes
         new_lost = search.base(masks, first)
         # CPU seconds as well: at nice 19 on battery, wall-clock time is
         # mostly time the job was not run.
@@ -302,7 +369,8 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
         lost = new_lost
         if lost > best[1]:
             best = (masks, lost, [{"edit": e.what, "at": e.first, "lost_before": lb,
-                                   "prior": round(e.prior, 3)} for _, lb, e, _ in stack])
+                                   "prior": round(e.prior, 3)} for _, lb, e, _, _ in stack])
+            search.best_writes = dict(search.writes)
     return best
 
 

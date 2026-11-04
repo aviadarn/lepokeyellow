@@ -15,6 +15,7 @@ stricter share as well as the text check.
 from __future__ import annotations
 
 import io
+import itertools
 import os
 from multiprocessing import get_context
 
@@ -23,7 +24,7 @@ from pyboy import PyBoy
 
 from poke.env import SRAM_BYTES
 from poke.video import Snapper
-from scripts.sync_opening import ROM, TEXT_LIMIT, TEXT_SLACK, Replayer
+from scripts.sync_opening import ROM, TEXT_LIMIT, TEXT_SLACK, Replayer, in_sync
 
 RANDOM_ADD = 0xFFD3
 RANDOM_SUB = 0xFFD4
@@ -77,3 +78,63 @@ def find_rng(replayer: Replayer, snapshot: tuple, horizon: int, values=None,
     with get_context("spawn").Pool(len(jobs)) as pool:
         found = [v for part in pool.map(_matching, jobs) for v in part]
     return sorted(found)
+
+
+def _reaches(job) -> list[tuple[int, tuple]]:
+    (blob, tracker, video, masks, colours, slack, patience, writes, at, addresses, combos,
+     stop, judge_from, run, first) = job
+    os.nice(19)
+    pyboy = PyBoy(ROM, window="null", ram_file=io.BytesIO(bytes(SRAM_BYTES)))
+    replayer = Replayer(pyboy, Snapper(colours), video, masks, tracker[1], slack, patience)
+    out = []
+    for combo in combos:
+        replayer.load((blob, tracker))
+        replayer.writes = dict(writes)
+        replayer.writes[at] = replayer.writes.get(at, ()) + tuple(zip(addresses, combo))
+        bad, first_bad, reach = 0, None, stop
+        while True:
+            step = replayer.step()
+            if step is None:
+                if replayer.e + replayer.offset >= stop:
+                    break
+                continue
+            v, share, text = step
+            if v >= stop:
+                break
+            if not in_sync(share, text) and v >= judge_from:
+                bad += 1
+                first_bad = v if first_bad is None else first_bad
+                if bad >= run:
+                    reach = first_bad
+                    break
+            else:
+                bad, first_bad = 0, None
+        out.append((reach + first, tuple(int(x) for x in combo)))
+    pyboy.stop(save=False)
+    return out
+
+
+def find_state(replayer: Replayer, snapshot: tuple, cap: int, registers, workers: int = 4,
+               writes: dict | None = None, at: int | None = None, judge_from: int = 0,
+               run: int = 20) -> list[tuple[int, tuple]]:
+    """Every combination of `registers` ((address, values), ...) written at
+    video frame `at` (default: the snapshot's), ranked by how far it plays in
+    sync (first of `run` frames out of sync, or `cap`): [(reach, values)],
+    furthest first. `writes` are the state writes already made. Split over
+    `workers` processes at nice 19, each with its own emulator."""
+    blob, (e, offset, streak, pending, held) = snapshot
+    at = e + offset if at is None else at
+    first = max(e + offset - replayer.slack - TEXT_SLACK, 0)
+    last = cap + replayer.slack + TEXT_SLACK + 1
+    video, masks = replayer.video[first:last], replayer.masks[first:last]
+    tracker = (e, offset - first, streak, pending, held)
+    shifted = {f - first: pairs for f, pairs in (writes or {}).items() if first <= f < last}
+    addresses = tuple(a for a, _ in registers)
+    combos = list(itertools.product(*[list(values) for _, values in registers]))
+    chunks = [combos[i::workers] for i in range(workers)]
+    jobs = [(blob, tracker, video, masks, replayer.snapper.colours, replayer.slack,
+             replayer.patience, shifted, at - first, addresses, chunk, cap - first,
+             judge_from - first, run, first) for chunk in chunks if chunk]
+    with get_context("spawn").Pool(len(jobs)) as pool:
+        ranked = [x for part in pool.map(_reaches, jobs) for x in part]
+    return sorted(ranked, key=lambda r: (-r[0], r[1]))

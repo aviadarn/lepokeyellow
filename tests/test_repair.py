@@ -373,3 +373,60 @@ def test_a_stuck_point_over_its_budget_ends_the_run():
                                 search.base(decoded, 0), n, max_edits=5, max_backtracks=3,
                                 stuck_budget=100)
     assert lost == 320 and not edits and len(plays) < 150
+
+
+class _HiddenWall:
+    """An 'emulator' with one hidden byte: out of sync from 300 unless 0xFFD8
+    holds 7 by then (the tile-animation wall at 13,048), and, with `second`,
+    out of sync from 500 whatever is done."""
+
+    def __init__(self, second=False):
+        self.e, self.offset, self.masks, self.writes = 0, 0, None, {}
+        self.memory, self.second = {0xFFD8: 0, 0xD084: 0}, second
+
+    def save(self):
+        return self.e, dict(self.memory)
+
+    def load(self, snapshot):
+        self.e, memory = snapshot
+        self.memory = dict(memory)
+
+    def step(self):
+        from scripts.sync_opening import TEXT_LIMIT
+
+        v = self.e
+        for address, value in self.writes.get(v, ()):
+            self.memory[address] = value
+        self.e += 1
+        stuck = (v >= 300 and self.memory[0xFFD8] != 7) or (self.second and v >= 500)
+        return v, 1.0, TEXT_LIMIT if stuck else 0
+
+
+def test_resync_finds_the_write_that_passes_a_wall():
+    from scripts.repair_labels import TILE_ANIMATION, Search, repair
+
+    n = 1000
+    search = Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0}), n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    assert lost == 300
+    out, lost, edits = repair(search, masks, _held(n), np.zeros((n, 8), np.float32), lost, n,
+                              max_edits=5, max_backtracks=2, max_window=300,
+                              tiers=(TILE_ANIMATION,))
+    assert lost == n and edits[-1]["edit"].startswith("write FFD8=7")
+    assert any((0xFFD8, 7) in pairs for pairs in search.best_writes.values())
+
+
+def test_backtracking_removes_a_committed_write():
+    from scripts.repair_labels import TILE_ANIMATION, Search, repair
+
+    n = 1000
+    search = Search(_HiddenWall(second=True), (0, {0xFFD8: 0, 0xD084: 0}), n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    _, lost, _ = repair(search, masks, _held(n), np.zeros((n, 8), np.float32), lost, n,
+                        max_edits=5, max_backtracks=1, max_window=300,
+                        tiers=(TILE_ANIMATION,))
+    assert lost == 500                                   # the write's reach is kept as best
+    assert search.writes == {}                           # ... but undone on the stack
+    assert any((0xFFD8, 7) in pairs for pairs in search.best_writes.values())
