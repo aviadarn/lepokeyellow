@@ -46,7 +46,8 @@ from poke.synth import BUTTONS
 from poke.video import Snapper
 from scripts.edits import Candidate, _peaks, _set, candidates, runs, screen  # noqa: F401
 from scripts.sync_opening import (Replayer, align, anchored, boot, find_anchor, in_sync,
-                                  release_carried, video_frames)
+                                  release_carried, rows_from_writes, video_frames,
+                                  writes_from_rows)
 
 RUN = 20
 HORIZON = 600
@@ -375,13 +376,14 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
 
 
 def fresh_reach(make_replayer, masks: np.ndarray, first: int, limit: int, judge_from: int,
-                run: int = RUN) -> int:
+                run: int = RUN, writes: dict | None = None) -> int:
     """Where a new emulator (`make_replayer()`), replaying `masks` from the
     anchor under the search's own rule, first loses sync. The search's
     chain of save states is bookkeeping, and PyBoy's save states have lost
     state before (the input latch): what is written as verified is this."""
     replayer = make_replayer()
     search = Search(replayer, replayer.save(), limit, run, judge_from)
+    search.writes = dict(writes or {})
     return search.play(replayer.save(), masks, limit)
 
 
@@ -396,20 +398,36 @@ def should_write(labels, first: int, lost: int) -> bool:
 
 
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
-                 name: str, edits: int) -> None:
-    """Store a run's buttons over everything it replayed, [first, limit), and
-    mark [first, lost) verified -- and only that: a rerun under a stricter
-    check must not inherit an earlier run's further reach."""
+                 name: str, edits: int, writes: dict | None = None) -> None:
+    """Store a run's buttons and state writes over everything it replayed,
+    [first, limit), and mark what it verified -- and only that: a rerun under
+    a stricter check must not inherit an earlier run's further reach.
+    Frames before the run's first write are `verified` (buttons alone);
+    from it to `lost`, `verified_resync` (buttons given the writes)."""
+    n = len(labels["buttons"])
     if "buttons_repaired" not in labels:
         labels["buttons_repaired"] = labels[key][:]
-        labels["verified"] = np.zeros(len(labels["buttons"]), bool)
+    for flag in ("verified", "verified_resync"):
+        if flag not in labels:
+            labels[flag] = np.zeros(n, bool)
     labels["buttons_repaired"][first:limit] = masks[first:limit].astype(np.uint8)
-    verified = labels["verified"][:]
+    mine = {f: p for f, p in (writes or {}).items() if first <= f < limit}
+    split = min(min(mine, default=lost), lost)
+    verified, resync = labels["verified"][:], labels["verified_resync"][:]
     verified[first:limit] = False
-    verified[first:lost] = True
-    labels["verified"][:] = verified
+    resync[first:limit] = False
+    verified[first:split] = True
+    resync[split:lost] = True
+    labels["verified"][:], labels["verified_resync"][:] = verified, resync
+    kept = labels["state_writes"][:] if "state_writes" in labels else np.zeros((0, 3), np.int32)
+    kept = kept[(kept[:, 0] < first) | (kept[:, 0] >= limit)]
+    rows = np.concatenate([kept, rows_from_writes(mine)]) if len(mine) else kept
+    rows = rows[np.argsort(rows[:, 0], kind="stable")]
+    if "state_writes" in labels:
+        del labels["state_writes"]
+    labels["state_writes"] = rows.astype(np.int32)
     labels["verified"].attrs[f"repair_{name}"] = json.dumps(
-        {"start": first, "until": lost, "edits": edits})
+        {"start": first, "until": lost, "edits": edits, "first_write": split if mine else None})
 
 
 def main() -> None:
@@ -433,6 +451,8 @@ def main() -> None:
                         help="frames before the loss of sync that edits may touch")
     parser.add_argument("--max-window", type=int, default=2400)
     parser.add_argument("--cap", type=int, default=400, help="edits tried per member per round")
+    parser.add_argument("--resync", default="tile,random",
+                        help="hidden-state tiers to try where no edit helps: tile, random, or none")
     parser.add_argument("--stuck-budget", type=float, default=None,
                         help="CPU seconds a stuck point may take before the run stops there")
     parser.add_argument("--only-if-better", action="store_true",
@@ -447,7 +467,11 @@ def main() -> None:
         key = args.buttons if args.buttons != "auto" else (
             "buttons_ruled" if "buttons_ruled" in labels else "buttons")
         masks = labels[key][:].astype(np.int64)
-        print(f"starting from {key}", flush=True)
+        # Labels this repair wrote before carry the state writes they need.
+        start_writes = (writes_from_rows(labels["state_writes"][:])
+                        if key == "buttons_repaired" and "state_writes" in labels else {})
+        print(f"starting from {key}" + (f" with {len(start_writes)} state writes"
+                                         if start_writes else ""), flush=True)
         onset_p = labels["onset_p"][:].astype(np.float32)
         held_p = labels["held_p"][:].astype(np.float32)
         env = None
@@ -471,11 +495,15 @@ def main() -> None:
     replayer = Replayer(pyboy, snapper, video, masks, offset)
     search = Search(replayer, replayer.save(), limit,
                     judge_from=first_frame + (0 if args.anchor_state else args.settle))
+    search.writes = dict(start_writes)
     lost = search.base(masks, first_frame)
     print(f"labels as decoded: in sync until video frame {lost}", flush=True)
+    tiers = tuple({"tile": TILE_ANIMATION, "random": RANDOM}[t]
+                  for t in args.resync.split(",") if t in ("tile", "random"))
     masks, lost, edits = repair(search, masks, held_p, onset_p, lost, limit, args.max_edits,
                                 args.max_backtracks, args.width, args.depth, args.window,
-                                args.max_window, args.cap, args.stuck_budget)
+                                args.max_window, args.cap, args.stuck_budget, tiers)
+    writes = search.best_writes
     if env:
         env.close()
     else:
@@ -492,14 +520,15 @@ def main() -> None:
         return Replayer(fresh_envs[-1], snapper, video, masks, offset)
 
     searched = int(lost)
-    lost = min(searched, fresh_reach(new_replayer, masks, first_frame, limit, judge_from))
+    lost = min(searched, fresh_reach(new_replayer, masks, first_frame, limit, judge_from,
+                                     writes=writes))
     for made in fresh_envs:
         made.close() if args.anchor_state else made.stop(save=False)
     print(f"fresh replay of the result: in sync until {lost} (search: {searched})", flush=True)
 
     changed = int((masks != original).sum())
     report = {"name": args.name, "start": first_frame, "verified_until": int(lost),
-              "search_reach": searched,
+              "search_reach": searched, "state_writes": rows_from_writes(writes).tolist(),
               "limit": limit, "edits": edits, "frames_changed": changed,
               "anchor_state": args.anchor_state, "seconds": round(time.time() - started)}
     print(f"verified video frames {first_frame}-{lost} with {len(edits)} edits "
@@ -511,7 +540,7 @@ def main() -> None:
                 print("not written: the labels file already verifies further", flush=True)
             else:
                 write_repair(labels, key, masks, first_frame, int(lost), limit, args.name,
-                             len(edits))
+                             len(edits), writes)
 
 
 if __name__ == "__main__":

@@ -430,3 +430,52 @@ def test_backtracking_removes_a_committed_write():
     assert lost == 500                                   # the write's reach is kept as best
     assert search.writes == {}                           # ... but undone on the stack
     assert any((0xFFD8, 7) in pairs for pairs in search.best_writes.values())
+
+
+def _labels_file(path, n=1000):
+    import h5py
+
+    with h5py.File(path, "w") as f:
+        f["buttons"] = np.zeros(n, np.uint8)
+        f["buttons_ruled"] = np.zeros(n, np.uint8)
+        f["buttons_repaired"] = np.zeros(n, np.uint8)
+        f["verified"] = np.zeros(n, bool)
+        f["verified_resync"] = np.r_[np.zeros(200, bool), np.ones(100, bool), np.zeros(n - 300, bool)]
+        f["state_writes"] = np.array([[250, 0xFFD8, 3], [950, 0xD084, 1]], np.int32)
+
+
+def test_write_repair_splits_verified_at_the_first_write(tmp_path):
+    import h5py
+
+    from scripts.repair_labels import write_repair
+
+    _labels_file(tmp_path / "l.h5")
+    with h5py.File(tmp_path / "l.h5", "a") as f:
+        write_repair(f, "buttons_ruled", np.zeros(1000, np.int64), 0, 800, 900, "r", 2,
+                     writes={500: ((0xFFD8, 7),)})
+        assert f["verified"][:500].all() and not f["verified"][500:].any()
+        assert f["verified_resync"][500:800].all() and not f["verified_resync"][:500].any()
+        assert not f["verified_resync"][800:].any()
+        # the run's stretch [0, 900) holds only its own write; the one at 950 stays
+        assert f["state_writes"][:].tolist() == [[500, 0xFFD8, 7], [950, 0xD084, 1]]
+
+
+def test_a_run_without_writes_clears_old_writes_in_its_stretch(tmp_path):
+    import h5py
+
+    from scripts.repair_labels import write_repair
+
+    _labels_file(tmp_path / "l.h5")
+    with h5py.File(tmp_path / "l.h5", "a") as f:
+        write_repair(f, "buttons_ruled", np.zeros(1000, np.int64), 0, 600, 900, "r", 0)
+        assert f["verified"][:600].all() and not f["verified_resync"][:].any()
+        assert f["state_writes"][:].tolist() == [[950, 0xD084, 1]]
+
+
+def test_fresh_reach_applies_the_writes():
+    from scripts.repair_labels import fresh_reach
+
+    masks = np.zeros(1000, np.int64)
+    assert fresh_reach(_HiddenWall, masks, 0, 1000, judge_from=0) == 300
+    assert fresh_reach(_HiddenWall, masks, 0, 1000, judge_from=0,
+                       writes={260: ((0xFFD8, 7),)}) == 1000

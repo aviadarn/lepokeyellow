@@ -24,8 +24,10 @@ frame is unreadable (labels state 255); no step spans a split.
        rewards are 0;
      * extra: `frame_index` (video frame of obs), `segment_ids`,
        `held_masks` (N, 24) u1 -- the per-frame labels the action was
-       chosen from, nothing thrown away -- `action_confidence`, and
-       `verified` (every frame of the step replay-verified).
+       chosen from, nothing thrown away -- `action_confidence`,
+       `verified` (every frame of the step replay-verified, buttons alone)
+       and `verified_mode` (0 unchecked, 1 verified, 2 verified given
+       recorded state writes: scripts/repair_labels.py resyncs).
 2. lepokeyellow SCHEMA 3 (data/longplay/longplay_schema3.h5) through
    poke.writer.EpisodeWriter: 60-frame steps, grey frames, one action of
    noop/up/down/left/right/a/b chosen the same way (START/SELECT -> noop).
@@ -124,30 +126,52 @@ def label_arrays(labels):
     held_p = labels["held_p"][:].astype(np.float32)
     n = len(held_p)
     verified = labels["verified"][:] if "verified" in labels else np.zeros(n, bool)
+    # Buttons verified given recorded state writes are checked as well.
+    checked = verified | (labels["verified_resync"][:] if "verified_resync" in labels
+                          else np.zeros(n, bool))
     key = "buttons_ruled" if "buttons_ruled" in labels else "buttons"
     if key in labels:
         masks = labels[key][:].astype(np.int64)
         if "buttons_repaired" in labels:
-            masks[verified] = labels["buttons_repaired"][:][verified]
+            masks[checked] = labels["buttons_repaired"][:][checked]
         held = ((masks[:, None] >> np.arange(8)) & 1).astype(bool)
     else:
         held = held_p > 0.5
-    held_p[verified] = held[verified]
+    held_p[checked] = held[checked]
     changed = labels["rule_changed"][:] if "rule_changed" in labels else np.zeros(n, bool)
     events = labels["rule_event"][:] if "rule_event" in labels else np.zeros(n, bool)
     unexplained = labels["rule_unexplained"][:] if "rule_unexplained" in labels else np.zeros(n, bool)
     return held, held_p, verified, changed, events, unexplained
 
 
+def verified_modes(labels) -> np.ndarray:
+    """(N,) int8 per frame: 0 unchecked, 1 verified (buttons alone), 2
+    verified given recorded state writes (`verified_resync`)."""
+    n = len(labels["held_p"])
+    modes = np.zeros(n, np.int8)
+    if "verified" in labels:
+        modes[labels["verified"][:]] = 1
+    if "verified_resync" in labels:
+        modes[labels["verified_resync"][:]] = 2
+    return modes
+
+
+def _step_mode(modes: np.ndarray) -> int:
+    """A step's mode: 0 if any frame is unchecked, else 2 if any needed state
+    writes, else 1."""
+    return 0 if (modes == 0).any() else int(modes.max())
+
+
 def export_dreamer(video, labels, bounds, out: Path) -> dict:
     refs = video["frame_ref"][:]
     colours = video["colours"][:]
     held, held_p, verified, changed, events, unexplained = label_arrays(labels)
+    modes = verified_modes(labels)
     out.mkdir(parents=True, exist_ok=True)
     rows: dict[str, list] = {k: [] for k in ("obs", "actions", "episode_starts", "frame_index",
                                                "segment_ids", "held_masks", "action_confidence",
-                                               "verified", "rule_events", "rule_fixed",
-                                               "rule_unexplained")}
+                                               "verified", "verified_mode", "rule_events",
+                                               "rule_fixed", "rule_unexplained")}
     written, select_dropped, steps = [], 0, 0
 
     def flush(final=False):
@@ -172,6 +196,7 @@ def export_dreamer(video, labels, bounds, out: Path) -> dict:
                 "held_masks": np.stack(rows["held_masks"][:take]).astype(np.uint8),
                 "action_confidence": np.array(rows["action_confidence"][:take], np.float16),
                 "verified": np.array(rows["verified"][:take], bool),
+                "verified_mode": np.array(rows["verified_mode"][:take], np.uint8),
                 "rule_events": np.array(rows["rule_events"][:take], np.uint8),
                 "rule_fixed": np.array(rows["rule_fixed"][:take], np.uint8),
                 "rule_unexplained": np.array(rows["rule_unexplained"][:take], np.uint8),
@@ -207,6 +232,7 @@ def export_dreamer(video, labels, bounds, out: Path) -> dict:
             rows["held_masks"].append((block * bits).sum(1))
             rows["action_confidence"].append(confidence)
             rows["verified"].append(bool(verified[s:s + STEP].all()))
+            rows["verified_mode"].append(_step_mode(modes[s:s + STEP]))
             rows["rule_events"].append(int(events[s:s + STEP].sum()))
             rows["rule_fixed"].append(int(changed[s:s + STEP].sum()))
             rows["rule_unexplained"].append(int(unexplained[s:s + STEP].sum()))
@@ -214,7 +240,9 @@ def export_dreamer(video, labels, bounds, out: Path) -> dict:
         flush()
     flush(final=True)
     return {"steps": steps, "chunks": len(written), "select_only_steps_as_pass": select_dropped,
-            "verified_steps": int(sum(int(np.load(w)["verified"].sum()) for w in written))}
+            "verified_steps": int(sum(int(np.load(w)["verified"].sum()) for w in written)),
+            "resync_verified_steps": int(sum(int((np.load(w)["verified_mode"] == 2).sum())
+                                             for w in written))}
 
 
 def export_schema3(video, labels, bounds, path: Path) -> dict:
@@ -224,7 +252,9 @@ def export_schema3(video, labels, bounds, path: Path) -> dict:
     refs = video["frame_ref"][:]
     grey = greys(video["colours"][:])
     held, held_p, verified, changed, events, unexplained = label_arrays(labels)
+    modes = verified_modes(labels)
     confidence, checked, rule_events, rule_fixed, rule_unexplained = [], [], [], [], []
+    step_modes = []
     with EpisodeWriter(path, rom="pokeyellow.gbc", state="pokeyellow.gbc", act_frames=60,
                        seed=0, game="yellow", task="longplay_video") as writer:
         for start, stop in bounds:
@@ -240,6 +270,7 @@ def export_schema3(video, labels, bounds, path: Path) -> dict:
                 writer.add_step(frame, to_multihot(action), party_count=255)
                 confidence.append(conf)
                 checked.append(bool(verified[s:s + 60].all()))
+                step_modes.append(_step_mode(modes[s:s + 60]))
                 rule_events.append(int(events[s:s + 60].sum()))
                 rule_fixed.append(int(changed[s:s + 60].sum()))
                 rule_unexplained.append(int(unexplained[s:s + 60].sum()))
@@ -247,13 +278,15 @@ def export_schema3(video, labels, bounds, path: Path) -> dict:
     with h5py.File(path, "a") as h5:
         h5["action_confidence"] = np.array(confidence, np.float16)
         h5["verified"] = np.array(checked, bool)
+        h5["verified_mode"] = np.array(step_modes, np.uint8)
         h5["rule_events"] = np.array(rule_events, np.uint8)
         h5["rule_fixed"] = np.array(rule_fixed, np.uint8)
         h5["rule_unexplained"] = np.array(rule_unexplained, np.uint8)
         h5.attrs["source"] = "video:aqr_YgqF2vM, IDM labels"
         h5.attrs["note"] = ("60-frame steps cut from human play, not env steps; party_counts "
                             "255 = unknown; location -1; state_sha1 is a placeholder")
-    return {"steps": len(confidence), "verified_steps": int(sum(checked))}
+    return {"steps": len(confidence), "verified_steps": int(sum(checked)),
+            "resync_verified_steps": int(sum(m == 2 for m in step_modes))}
 
 
 def main() -> None:

@@ -118,3 +118,25 @@ def test_export_carries_rule_counts(tmp_path):
         assert d["rule_fixed"][:2].tolist() == [0, 5]
         assert d["rule_events"].sum() == 3 and d["rule_fixed"].sum() == 5
         assert d["rule_unexplained"][:2].tolist() == [0, 1]
+
+
+def test_export_marks_steps_verified_with_writes(tmp_path):
+    import h5py
+
+    import scripts.export_video as export
+
+    n = 96
+    with h5py.File(tmp_path / "v.h5", "w") as h5:
+        h5["frame_ref"] = np.arange(n, dtype=np.int32)
+        h5["colours"] = np.zeros((42, 3), np.uint8)
+        h5["uframes"] = np.zeros((n, 144, 160), np.uint8)
+        h5["held_p"] = np.zeros((n, 8), np.float16)
+        h5["buttons"] = np.zeros(n, np.uint8)
+        h5["buttons_repaired"] = np.zeros(n, np.uint8)
+        h5["verified"] = np.r_[np.ones(24, bool), np.zeros(n - 24, bool)]
+        h5["verified_resync"] = np.r_[np.zeros(24, bool), np.ones(24, bool), np.zeros(n - 48, bool)]
+        export.export_dreamer(h5, h5, [(0, n)], tmp_path / "out")
+    with np.load(tmp_path / "out" / "transitions_0001.npz") as d:
+        assert d["verified_mode"][:3].tolist() == [1, 2, 0]
+        assert d["verified"][:3].tolist() == [True, False, False]   # buttons only
+        assert (d["action_confidence"][1] == 1.0)                    # checked either way
