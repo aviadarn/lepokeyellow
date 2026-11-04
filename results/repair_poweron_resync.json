@@ -1,0 +1,96 @@
+{
+ "name": "poweron_resync",
+ "start": 0,
+ "verified_until": 20281,
+ "search_reach": 20281,
+ "state_writes": [
+  [
+   13008,
+   65496,
+   11
+  ],
+  [
+   13008,
+   53380,
+   2
+  ]
+ ],
+ "limit": 24000,
+ "edits": [
+  {
+   "edit": "write FFD8=11 D084=2 @13008",
+   "at": 13008,
+   "lost_before": 13048,
+   "prior": 0.0
+  },
+  {
+   "edit": "end right 14697->14695",
+   "at": 14695,
+   "lost_before": 14697,
+   "prior": -2.211
+  },
+  {
+   "edit": "add a 14730",
+   "at": 14730,
+   "lost_before": 14964,
+   "prior": -6.75
+  },
+  {
+   "edit": "add b 15726",
+   "at": 15726,
+   "lost_before": 15748,
+   "prior": -1.19
+  },
+  {
+   "edit": "add b 16440",
+   "at": 16440,
+   "lost_before": 16456,
+   "prior": -7.28
+  },
+  {
+   "edit": "end down 16530->16529",
+   "at": 16529,
+   "lost_before": 16531,
+   "prior": -0.999
+  },
+  {
+   "edit": "add a 15936x60",
+   "at": 15936,
+   "lost_before": 18114,
+   "prior": 54.674
+  },
+  {
+   "edit": "start a 18719->18721 + start a 18690->18691",
+   "at": 18690,
+   "lost_before": 18924,
+   "prior": -6.725
+  },
+  {
+   "edit": "add a 19086x20",
+   "at": 19084,
+   "lost_before": 19084,
+   "prior": 21.729
+  },
+  {
+   "edit": "start a 19464->19208",
+   "at": 19208,
+   "lost_before": 19610,
+   "prior": 334.268
+  },
+  {
+   "edit": "start a 19637->19633",
+   "at": 19633,
+   "lost_before": 19644,
+   "prior": 8.162
+  },
+  {
+   "edit": "start a 19958->19954",
+   "at": 19954,
+   "lost_before": 19964,
+   "prior": 6.788
+  }
+ ],
+ "frames_changed": 345,
+ "anchor_state": null,
+ "seconds": 3964
+}

@@ -86,9 +86,24 @@ points it solved, the median took 24 CPU-seconds and the 90th percentile 329.
 
 There the flower and water tiles animate out of phase: the two emulators
 disagree on a few lag frames earlier, and the animation runs on a frame
-counter (`0xFFD8`, `0xD084`). The search found no edit within its
-30-minute budget for that point and stopped. Writing the counters keeps the
-replay in sync, which is a state write and the next step's job.
+counter (`0xFFD8`, `0xD084`). No button reaches that, so where no edit
+helps the repair now writes hidden state. It tries the tile counters (168
+values) before widening its window, and the random bytes (65,536, on 4
+workers) after. A write is recorded with the labels (`state_writes`), every
+replay applies it, and the frames after it are `verified_resync`, never
+`verified`.
+
+From the code's own verified labels, one more unattended run wrote the tile
+counters at 13,008 (`0xD084` = 2) and went on, through Oak's lab, the
+choice of Pikachu, and the rival battle against Eevee. The battle's damage
+matched to the hit point. It reached video frame 20,281 (5 min 38 s): 12
+more edits in 66 minutes, confirmed by a fresh replay and by `sync_opening`
+with the writes (`results/repair_poweron_resync.json`,
+`results/sync_opening_resync.json`). It stops at "PIKACHU grew to level 6!":
+the video shows DEFENSE 9, the emulator 10. Pikachu's DVs, its hidden
+stats, were rolled when Oak caught it at 3:15, and nothing on screen showed
+them until now. The next tier to add is the party's DV bytes (`0xD185`).
+
 The random numbers part too: from 2:36 Pallet Town's NPCs stand on the same
 tiles but face other ways, which the judge forgives (a sprite is ~1 % of the
 screen). Writing the random bytes where that shows (at the one point tried,
@@ -158,7 +173,8 @@ Every exported step says how far it is checked:
 
 | field | meaning | PokeDreamer steps |
 |---|---|---|
-| `verified` | replayed in the emulator frame by frame | 491 |
+| `verified` | replayed in the emulator frame by frame, buttons alone | 490 |
+| `verified_mode` | 2: verified given recorded state writes (`verified_resync`) | 303 steps |
 | `rule_events` | steps and ▼ answers the screen shows inside it | > 0 on 10,234 (16.6 %) |
 | `rule_unexplained` | of those events, the ones the model's own labels failed | > 0 on 447 (241 steps not held, 227 ▼ waits with no press) |
 | `rule_fixed` | frames the text rule changed (a fix can land in the step before its answer) | 1,128 frames |
@@ -198,6 +214,8 @@ uv run python -m scripts.label_video --checkpoint checkpoints/idm_v3/last.pt
 uv run python -m scripts.check_labels --name v3 --apply
 uv run python -m scripts.repair_labels --name poweron_generic --frames 18000 \
     --only-if-better --stuck-budget 1800  # from v3's labels; stops at 13,048 (~90 min)
+uv run python -m scripts.repair_labels --name poweron_resync --buttons buttons_repaired \
+    --frames 24000 --only-if-better --stuck-budget 1800  # writes at 13,008; stops at 20,281 (~66 min)
 uv run python -m scripts.sync_opening --buttons buttons_repaired
 uv run python -m scripts.export_video
 

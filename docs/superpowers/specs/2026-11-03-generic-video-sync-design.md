@@ -252,6 +252,14 @@ first wild encounter, the rival battle at about 4:30.
     the screens part later.
   - No timer-phase search is called for yet.
 
+**Part 2 status (2026-11-04).** Built: state writes are recorded with the
+labels and applied by every replay, and the repair tries the tile tier before
+widening and the random tier after it. From the verified labels it wrote
+the tile counters at 13,008 and reached 20,281 (5:38), through Oak's lab and
+the rival battle, whose damage matched. The stop is Pikachu's DVs (DEFENSE 9
+in the video, 10 in the emulator at its first level-up), rolled when Oak
+caught it at 3:15. Next tier: the party's DV bytes (`0xD185`).
+
 ### Part 3: cuts — carry the run's own state across them (the user chose A)
 
 The user chose one chained run through the whole video over independent

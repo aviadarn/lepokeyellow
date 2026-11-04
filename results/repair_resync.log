@@ -1,0 +1,26 @@
+2026-11-04 14:51:50 ===== resync run of d1b9ee7 from power-on, buttons_repaired, 24000 frames =====
+2026-11-04 14:51:50 watchdog resync: group 23506, swap baseline 4004M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7076M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_repaired
+labels as decoded: in sync until video frame 13048
+write FFD8=11 D084=2 @13008      sync 13048 -> 14697  (158s, 158 cpu-s, 477389 frames played)
+end right 14697->14695           sync 14697 -> 14964  (15s, 15 cpu-s, 510587 frames played)
+add a 14730                      sync 14964 -> 15748  (6s, 6 cpu-s, 521226 frames played)
+add b 15726                      sync 15748 -> 16456  (11s, 11 cpu-s, 540298 frames played)
+add b 16440                      sync 16456 -> 16531  (16s, 16 cpu-s, 573469 frames played)
+end down 16530->16529            sync 16531 -> 18114  (9s, 9 cpu-s, 590449 frames played)
+  nothing within 300 frames: widening to 600
+  nothing within 600 frames: widening to 1200
+  nothing within 1200 frames: widening to 2400
+add a 15936x60                   sync 18114 -> 18924  (1425s, 1415 cpu-s, 2607728 frames played)
+start a 18719->18721 + start a 18690->18691 sync 18924 -> 19084  (375s, 372 cpu-s, 2995779 frames played)
+add a 19086x20                   sync 19084 -> 19610  (30s, 29 cpu-s, 3018248 frames played)
+start a 19464->19208             sync 19610 -> 19644  (22s, 22 cpu-s, 3046162 frames played)
+start a 19637->19633             sync 19644 -> 19964  (19s, 19 cpu-s, 3064868 frames played)
+start a 19958->19954             sync 19964 -> 20281  (42s, 41 cpu-s, 3088944 frames played)
+  nothing within 300 frames: widening to 600
+stuck at video frame 20281: over its 1800 CPU-s budget
+fresh replay of the result: in sync until 20281 (search: 20281)
+verified video frames 0-20281 with 12 edits (345 frames changed) in 3964s
+2026-11-04 15:57:55 exit 0
+2026-11-04 15:57:56 watchdog resync: pipeline gone, exiting
