@@ -12,24 +12,17 @@ first place no small edit explains: a random event the two emulators roll
 differently, an edit cut, or a mistake further back than the search looks.
 
 Search, at each loss of sync (first of RUN frames in a row out of sync: under
-SYNC_SHARE, or text that differs, scripts/sync_opening.in_sync):
-  * near: every press starting in the NEAR frames before it -- removed, its
-    start moved by 1-2 frames, its end by 1-64, a whole tap by 3-12 -- and A / B / START taps (and
-    A / B holds of 20 or 60 frames: held A or B speeds up text) added where
-    the onset head peaks or on a 6-frame grid;
-    every direction press swapped for another, and direction taps added in
-    the DIR_NEAR frames before it (menu cursors: the naming screen's LEFT
-    read as RIGHT, and the small moves after it missed altogether);
-  * far, only if near finds nothing: removing any tap up to FAR frames back
-    (a wrong tap can sit unnoticed: the intro's false A at 1,785 shows only
-    when the title screen comes up early);
-  * chained, only if neither finds anything: up to CHAIN_DEPTH near edits at
-    once, each at the loss the one before reaches, from the CHAIN_WIDTH firsts
-    that got furthest (presses closer together than MARGIN: typing a name, a
-    tap every ~12 frames, gains 9-12 frames per tap).
-Candidates are tried in order of how plausible the model finds them; the
-first to play HORIZON frames past the old loss wins, else the one that got
-furthest, if it beat the old loss by MARGIN.
+SYNC_SHARE, or text that differs, scripts/sync_opening.in_sync): a beam over
+sets of edits from one grammar for every button (scripts/edits.py -- add,
+drop, move a start or end by up to 256 frames, set a length, split, swap
+for another button), tried in the order the IDM finds most plausible. Each
+member of the beam expands at its own loss of sync, so small gains add up:
+typing a name is a tap every ~12 frames, and each one alone buys under
+MARGIN. A set is taken when it plays HORIZON frames past the old loss, or,
+after the rounds stop gaining, the furthest one if it beat the old loss by
+MARGIN. Where nothing helps, the window doubles (a wrong tap can sit unseen:
+the intro's false A at 1,785 shows ~1,500 frames on), then backtracking
+undoes recent sets. Nothing in it knows about walking, menus or text.
 
 Writes `buttons_repaired` and `verified` into the labels file, and the edits
 to results/repair_<name>.json.
@@ -50,105 +43,16 @@ import numpy as np
 
 from poke.synth import BUTTONS
 from poke.video import Snapper
-from scripts.edits import Candidate, _peaks, _set, runs  # noqa: F401 (re-exported)
-from scripts.label_video import TAP_FRAMES
+from scripts.edits import Candidate, _peaks, _set, candidates, runs, screen  # noqa: F401
 from scripts.sync_opening import (Replayer, align, anchored, boot, find_anchor, in_sync,
                                   release_carried, video_frames)
 
 RUN = 20
-NEAR = 150
-FAR = 1500
 HORIZON = 600
 MARGIN = 30
 SNAPSHOT_EVERY = 20
-TAPS = ("a", "b", "start")
-DIRECTIONS = ("up", "down", "left", "right")
-DIR_NEAR = 30
-CHAIN_WIDTH = 3
-CHAIN_DEPTH = 3
-GRID = 6
-HOLDS = (TAP_FRAMES, 20, 60)
-
-
-def near_candidates(masks: np.ndarray, onset_p: np.ndarray, lost: int,
-                    near: int = NEAR) -> list[Candidate]:
-    lo, hi = lost - near, lost + 5
-    out = []
-    for k, name in enumerate(BUTTONS):
-        for start, stop in runs(masks, k):
-            if not lo <= start < hi:
-                continue
-            p = float(onset_p[start, k])
-            out.append(Candidate(f"drop {name} {start}-{stop}", _set(masks, k, start, stop, False),
-                                 start, 1 - p))
-            for d in (-2, -1, 1, 2):
-                s = start + d
-                if s >= stop or s < 0:
-                    continue
-                edited = (_set(masks, k, s, start, True) if d < 0
-                          else _set(masks, k, start, s, False))
-                out.append(Candidate(f"move {name} press {start}->{s}", edited, min(s, start),
-                                     0.5 - 0.1 * abs(d)))
-            if name in TAPS and stop - start <= 8:
-                # A tap at the wrong moment: Gen 1 ignores a press while text
-                # is still printing, so a few frames early is no press at all.
-                for d in (-12, -9, -6, -3, 3, 6, 9, 12):
-                    moved = _set(_set(masks, k, start, stop, False), k, start + d, stop + d, True)
-                    out.append(Candidate(f"shift {name} {start}->{start + d}", moved,
-                                         min(start, start + d), 0.45 - 0.01 * abs(d)))
-            if name in DIRECTIONS:
-                for other in DIRECTIONS:
-                    if other == name:
-                        continue
-                    j = BUTTONS.index(other)
-                    out.append(Candidate(f"swap {name}->{other} {start}-{stop}",
-                                         _set(_set(masks, k, start, stop, False), j, start, stop, True),
-                                         start, float(onset_p[start, j])))
-            for d in (-8, -4, -2, -1, 1, 2, 4, 8, 16, 32, 64):
-                e = stop + d
-                if e <= start:
-                    continue
-                edited = (_set(masks, k, e, stop, False) if d < 0
-                          else _set(masks, k, stop, e, True))
-                out.append(Candidate(f"move {name} release {stop}->{e}", edited, min(e, stop),
-                                     0.4 - 0.02 * abs(d)))
-    for name in TAPS:
-        k = BUTTONS.index(name)
-        starts = set(_peaks(onset_p[:, k], lo, hi, 0.02, 12))
-        if name != "start":
-            starts |= set(range(max(lo, 0) - max(lo, 0) % GRID, hi, GRID))
-        for t in sorted(starts):
-            if not 0 <= t < len(masks) or masks[t] >> k & 1:
-                continue
-            # Taps, and for A / B holds: Gen 1 prints text faster while A or
-            # B is held, and players hold them through long speeches.
-            for length in (TAP_FRAMES,) if name == "start" else HOLDS:
-                out.append(Candidate(f"add {name} {t}" + ("" if length == TAP_FRAMES else f"x{length}"),
-                                     _set(masks, k, t, t + length, True), t,
-                                     float(onset_p[t, k]) * (1.0 if length == TAP_FRAMES else 0.8)))
-    first = lost - DIR_NEAR + (DIR_NEAR - lost) % GRID
-    for name in DIRECTIONS:
-        k = BUTTONS.index(name)
-        starts = set(_peaks(onset_p[:, k], lost - DIR_NEAR, hi, 0.02, 4))
-        for t in sorted(starts | set(range(first, hi, GRID))):
-            if not 0 <= t < len(masks) or masks[t] >> k & 1:
-                continue
-            out.append(Candidate(f"add {name} {t}", _set(masks, k, t, t + TAP_FRAMES, True), t,
-                                 float(onset_p[t, k])))
-    return out
-
-
-def far_candidates(masks: np.ndarray, onset_p: np.ndarray, lost: int,
-                   near: int = NEAR, far: int = FAR) -> list[Candidate]:
-    out = []
-    for name in TAPS + ("select",):
-        k = BUTTONS.index(name)
-        for start, stop in runs(masks, k):
-            if lost - far <= start < lost - near:
-                out.append(Candidate(f"drop {name} {start}-{stop}",
-                                     _set(masks, k, start, stop, False), start,
-                                     1 - float(onset_p[start, k])))
-    return out
+REJOIN = 120        # frames after an edit to look for the recorded path again
+REJOIN_EVERY = 4    # ... every this many frames: a state digest costs 0.2 ms
 
 
 def latest(snapshots: list[tuple[int, tuple]], frame: int):
@@ -167,15 +71,23 @@ class Search:
         self.judge_from = judge_from
         self.snapshots = [(self._next(), start)]
         self.played = 0
+        # The recorded path's state after each frame (`Replayer.state_key`):
+        # a candidate whose state equals it again will play exactly as it
+        # did, so its reach is the path's.
+        self.keys: dict[int, bytes] = {}
 
     def _next(self) -> int:
         return self.rep.e + self.rep.offset
 
-    def play(self, snapshot: tuple, masks: np.ndarray, stop_at: int, record: bool = False) -> int:
+    def play(self, snapshot: tuple, masks: np.ndarray, stop_at: int, record: bool = False,
+             rejoin_after: int | None = None, rejoin_reach: int | None = None) -> int:
         """Video frame where sync is lost (first of `run` frames out of
-        sync), or `stop_at`."""
+        sync), or `stop_at`. With `rejoin_after`, once past that frame and
+        before `rejoin_reach`, a state equal to the recorded path's returns
+        `rejoin_reach` at once (checked for REJOIN frames)."""
         self.rep.load(snapshot)
         self.rep.masks = masks
+        keyed = hasattr(self.rep, "state_key")
         bad, first_bad = 0, None
         while True:
             if record and self._next() % SNAPSHOT_EVERY == 0 and self._next() > self.snapshots[-1][0]:
@@ -189,6 +101,12 @@ class Search:
             v, share, text = out
             if v >= stop_at:
                 return stop_at
+            if record and keyed:
+                self.keys[v] = self.rep.state_key()
+            elif (rejoin_after is not None and keyed and rejoin_after < v < rejoin_reach
+                  and v - rejoin_after <= REJOIN and (v - rejoin_after) % REJOIN_EVERY == 0
+                  and self.keys.get(v) == self.rep.state_key()):
+                return rejoin_reach
             if not in_sync(share, text) and v >= self.judge_from:
                 bad += 1
                 first_bad = v if first_bad is None else first_bad
@@ -201,68 +119,103 @@ class Search:
         """Play the current labels from the last snapshot before `frame`,
         keeping snapshots on the way; drop the ones after it first."""
         self.snapshots = [s for s in self.snapshots if s[0] <= frame] or self.snapshots[:1]
+        start = self.snapshots[-1][0]
+        self.keys = {v: k for v, k in self.keys.items() if v < start}
         return self.play(self.snapshots[-1][1], masks, self.limit, record=True)
 
-    def best(self, candidates: list[Candidate], lost: int, exclude: frozenset = frozenset(),
-             avoid_reach: int | None = None) -> Candidate | None:
-        """The edit that plays furthest; `avoid_reach` skips edits that lose
-        sync exactly where an undone edit did (in effect the same edit: a B
-        tap one frame later)."""
-        cap = min(self.limit, lost + HORIZON)
-        winner = None
-        for c in sorted(candidates, key=lambda c: -c.prior):
-            if c.what in exclude:
-                continue
-            # From before the loss even when the edit is after it (a later
-            # release): starting at a snapshot inside the lost frames would
-            # skip them, and call an edit that cannot touch them a fix.
-            c.reach = self.play(latest(self.snapshots, min(c.first, lost))[1], c.masks, cap)
-            if c.reach == avoid_reach:
-                continue
-            if winner is None or c.reach > winner.reach:
-                winner = c
-            if c.reach >= cap:
-                break
-        return winner if winner and winner.reach >= lost + MARGIN else None
+    def reach(self, masks: np.ndarray, first: int, lost: int, cap: int,
+              last: int | None = None) -> int:
+        """Where `masks` lose sync, played from the last snapshot at or before
+        both its first edited frame and `lost`: starting inside the lost
+        frames would skip them, and call an edit that cannot touch them (a
+        later release) a fix. Given `last`, its last edited frame, an edit
+        the game shrugs off stops where it rejoins the recorded path."""
+        return self.play(latest(self.snapshots, min(first, lost))[1], masks, cap,
+                         rejoin_after=last, rejoin_reach=lost)
 
 
-def repair(search: Search, masks: np.ndarray, onset_p: np.ndarray, lost: int, limit: int,
-           max_edits: int, max_backtracks: int):
+def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
+         lost: int, limit: int, width: int = 4, depth: int = 12, window: int = 300,
+         cap: int = 400, exclude: frozenset = frozenset(), avoid: int | None = None):
+    """The set of edits that plays furthest past `lost`, or None.
+
+    Each round expands every member at its own loss of sync with the best
+    `cap` edits (`screen`), and keeps the `width` that reach furthest (then
+    the likelier, then the shorter). A set reaching HORIZON frames past
+    `lost` is taken at once, and so is a round's best once it beats `lost`
+    by MARGIN; rounds go on only while the gain is smaller. When a round
+    gains nothing the search ends. `exclude` names
+    sets already tried, `avoid` a reach to skip (an undone set's: in effect
+    the same set)."""
+    stop = min(limit, lost + HORIZON)
+    frontier = [Candidate("", masks=masks, first=lost, prior=0.0, reach=lost)]
+    best, seen = None, set()
+    for _ in range(depth):
+        children = []
+        for member in frontier:
+            base = member.masks
+            for c in screen(candidates(base, held_p, onset_p, member.reach, window), cap,
+                            lost=member.reach):
+                what = f"{member.what} + {c.what}" if member.what else c.what
+                if what in exclude:
+                    continue
+                edited = c.masks
+                key = hash(edited.tobytes())
+                if key in seen:
+                    continue
+                seen.add(key)
+                first = min(member.first, c.first)
+                child = Candidate(what, first=first, prior=member.prior + c.prior,
+                                  base=base, ops=c.ops)
+                differ = np.flatnonzero(edited != masks)
+                last = int(differ[-1]) if differ.size else None
+                child.reach = search.reach(edited, first, lost, stop, last)
+                if child.reach == avoid:
+                    continue
+                if child.reach >= stop:
+                    return child
+                children.append(child)
+        if not children:
+            break
+        children.sort(key=lambda c: (-c.reach, -c.prior, c.what.count(" + ")))
+        if best is not None and children[0].reach <= best.reach:
+            break
+        best, frontier = children[0], children[:width]
+        if best.reach >= lost + MARGIN:
+            # Enough to take: more rounds only cost time, and the repair
+            # goes on from the new loss of sync anyway.
+            return best
+    return best if best is not None and best.reach >= lost + MARGIN else None
+
+
+def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
+           lost: int, limit: int, max_edits: int, max_backtracks: int, width: int = 4,
+           depth: int = 12, window: int = 300, max_window: int = 2400, cap: int = 400):
     """Greedy repair with backtracking: (masks, video frame sync is lost at, edits).
 
-    Each step takes the best edit at the current loss of sync. When no edit
-    helps, the most recent edits are undone one at a time and the next-best
-    edit at that point is tried instead -- a weak early edit (a tap that buys
-    40 frames) can put the emulator on a wrong track that only shows later.
-    The furthest-reaching labels found are returned.
+    Each step takes the best set of edits at the current loss of sync
+    (`beam`), widening the window up to `max_window` when none helps. When
+    still none helps, the most recent sets are undone one at a time and the
+    next-best set at that point is tried instead -- a weak early fix can put
+    the emulator on a wrong track that only shows later. The
+    furthest-reaching labels found are returned.
     """
     def find(m, at, exclude, avoid=None):
-        near = near_candidates(m, onset_p, at)
-        found = search.best(near, at, exclude, avoid)
-        found = found or search.best(far_candidates(m, onset_p, at), at, exclude, avoid)
-        return found or chain(near, at, exclude, avoid)
-
-    def chain(near, at, exclude, avoid, depth=CHAIN_DEPTH, width=CHAIN_WIDTH):
-        # `best` left each edit's reach on it. The CHAIN_WIDTH furthest firsts
-        # each get a second edit; past two, only the furthest chain goes on.
-        firsts = sorted((c for c in near if c.reach > at), key=lambda c: -c.reach)
-        for p in firsts[:width]:
-            longer = [Candidate(f"{p.what} + {c.what}", c.masks, min(p.first, c.first),
-                                p.prior * c.prior)
-                      for c in near_candidates(p.masks, onset_p, p.reach)]
-            found = search.best(longer, at, exclude, avoid)
-            if not found and depth > 2:
-                found = chain(longer, at, exclude, avoid, depth - 1, 1)
-            if found:
+        w = window
+        while True:
+            found = beam(search, m, held_p, onset_p, at, limit, width, depth, w, cap,
+                         exclude, avoid)
+            if found is not None or w >= max_window:
                 return found
-        return None
+            w = min(2 * w, max_window)
+            print(f"  nothing within {w // 2} frames: widening to {w}", flush=True)
 
     # stack entries: (masks before the edit, sync lost before it, edit, tried edits)
     stack: list[tuple[np.ndarray, int, Candidate, set]] = []
     best = (masks, lost, [])
     backtracks = 0
     while lost < limit and len(stack) < max_edits:
-        t = time.time()
+        t, cpu = time.time(), time.process_time()
         winner = find(masks, lost, frozenset())
         tried: set = set()
         if winner is None:
@@ -278,8 +231,8 @@ def repair(search: Search, masks: np.ndarray, onset_p: np.ndarray, lost: int, li
                 print(f"  backtrack: undo {undone.what} -> "
                       f"{winner.what if winner else 'no alternative'}", flush=True)
             if winner is None:
-                print(f"stuck at video frame {best[1]}: no edit plays {MARGIN} frames longer",
-                      flush=True)
+                print(f"stuck at video frame {best[1]}: no set of edits plays {MARGIN} frames "
+                      f"longer", flush=True)
                 break
             first = min(winner.first, undone_first, lost)
         else:
@@ -287,13 +240,25 @@ def repair(search: Search, masks: np.ndarray, onset_p: np.ndarray, lost: int, li
         stack.append((masks, lost, winner, tried))
         masks = winner.masks
         new_lost = search.base(masks, first)
+        # CPU seconds as well: at nice 19 on battery, wall-clock time is
+        # mostly time the job was not run.
         print(f"{winner.what:32s} sync {lost} -> {new_lost}  ({time.time() - t:.0f}s, "
-              f"{search.played} frames played)", flush=True)
+              f"{time.process_time() - cpu:.0f} cpu-s, {search.played} frames played)", flush=True)
         lost = new_lost
         if lost > best[1]:
             best = (masks, lost, [{"edit": e.what, "at": e.first, "lost_before": lb,
                                    "prior": round(e.prior, 3)} for _, lb, e, _ in stack])
     return best
+
+
+def should_write(labels, first: int, lost: int) -> bool:
+    """False when the labels file already holds a verified reach from
+    `first` at least as long as `lost`: a weaker run must not overwrite it."""
+    if "verified" not in labels:
+        return True
+    held = labels["verified"][first:]
+    existing = first + (int(np.argmin(held)) if not held.all() else len(held))
+    return lost > existing
 
 
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
@@ -328,6 +293,14 @@ def main() -> None:
                         help="times to undo recent edits and try the next-best one when stuck")
     parser.add_argument("--settle", type=int, default=150,
                         help="video frames after the start that are not judged (boot screens)")
+    parser.add_argument("--width", type=int, default=4, help="beam width")
+    parser.add_argument("--depth", type=int, default=12, help="beam rounds")
+    parser.add_argument("--window", type=int, default=300,
+                        help="frames before the loss of sync that edits may touch")
+    parser.add_argument("--max-window", type=int, default=2400)
+    parser.add_argument("--cap", type=int, default=400, help="edits tried per member per round")
+    parser.add_argument("--only-if-better", action="store_true",
+                        help="write only if this run verifies further than the file already does")
     parser.add_argument("--name", default="poweron")
     parser.add_argument("--dry-run", action="store_true", help="do not write the labels file")
     args = parser.parse_args()
@@ -340,6 +313,7 @@ def main() -> None:
         masks = labels[key][:].astype(np.int64)
         print(f"starting from {key}", flush=True)
         onset_p = labels["onset_p"][:].astype(np.float32)
+        held_p = labels["held_p"][:].astype(np.float32)
         env = None
         if args.anchor_state:
             env = anchored(args.anchor_state)
@@ -355,14 +329,17 @@ def main() -> None:
             first_frame = 0
         limit = first_frame + args.frames
         video = video_frames(h5, 0, limit + 8)
+        # Only what the run replays: every candidate's masks are this long.
+        masks, onset_p, held_p = masks[:limit + 8], onset_p[:limit + 8], held_p[:limit + 8]
     original = masks.copy()
     replayer = Replayer(pyboy, snapper, video, masks, offset)
     search = Search(replayer, replayer.save(), limit,
                     judge_from=first_frame + (0 if args.anchor_state else args.settle))
     lost = search.base(masks, first_frame)
     print(f"labels as decoded: in sync until video frame {lost}", flush=True)
-    masks, lost, edits = repair(search, masks, onset_p, lost, limit, args.max_edits,
-                                args.max_backtracks)
+    masks, lost, edits = repair(search, masks, held_p, onset_p, lost, limit, args.max_edits,
+                                args.max_backtracks, args.width, args.depth, args.window,
+                                args.max_window, args.cap)
     if env:
         env.close()
     else:
@@ -377,7 +354,11 @@ def main() -> None:
     Path(f"results/repair_{args.name}.json").write_text(json.dumps(report, indent=1))
     if not args.dry_run:
         with h5py.File(args.labels, "a") as labels:
-            write_repair(labels, key, masks, first_frame, int(lost), limit, args.name, len(edits))
+            if args.only_if_better and not should_write(labels, first_frame, int(lost)):
+                print("not written: the labels file already verifies further", flush=True)
+            else:
+                write_repair(labels, key, masks, first_frame, int(lost), limit, args.name,
+                             len(edits))
 
 
 if __name__ == "__main__":

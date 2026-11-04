@@ -100,3 +100,15 @@ def test_screen_keeps_every_kind():
     assert {_kind_and_button(c.what) for c in kept} == before
     assert len(kept) <= max(96, 2 * len(before))
     assert LENGTHS[0] == TAP_FRAMES
+
+
+def test_screen_keeps_edits_near_the_loss_when_the_prior_says_nothing():
+    # A flat prior ranks nothing: closeness to the loss must, or a tap 20
+    # frames before it is crowded out by taps 300 frames before.
+    n = 1200
+    masks = np.zeros(n, np.int64)
+    held_p, onset_p = _probs(n)
+    cands = candidates(masks, held_p, onset_p, 320, 300)
+    kept = {c.what for c in screen(cands, 200, lost=320)}
+    assert "add a 300" in kept and "add down 318" in kept
+    assert "add a 24" not in kept

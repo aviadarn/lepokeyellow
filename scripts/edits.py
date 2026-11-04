@@ -170,15 +170,31 @@ def _group(c: Candidate) -> tuple[str, str]:
     return kind, rest.split(" ")[0].split("->")[0]
 
 
-def screen(cands: list[Candidate], cap: int) -> list[Candidate]:
-    """At most about `cap` candidates, best prior first: the top few of every
-    (kind, button) group -- the model can be confidently wrong, so no kind of
-    fix may be crowded out -- then the rest by prior."""
-    ranked = sorted(cands, key=lambda c: -c.prior)
-    per_group = max(2, cap // 48)
+BANDS = (30, 100, 300)    # frames before the loss: edits nearer it are likelier causes
+
+
+def _band(c: Candidate, lost: int | None) -> int:
+    if lost is None:
+        return 0
+    distance = max(lost - c.first, 0)
+    return next((i for i, edge in enumerate(BANDS) if distance <= edge), len(BANDS))
+
+
+def screen(cands: list[Candidate], cap: int, lost: int | None = None) -> list[Candidate]:
+    """At most about `cap` candidates. First the top few of every (kind,
+    button) group and, given `lost`, every distance band before it -- the
+    model can be confidently wrong, so no kind of fix may be crowded out,
+    and a flat prior must not push out the edits next to the loss. Then the
+    rest. Order: likelier first, then nearer the loss."""
+    def order(c):
+        return (-c.prior, abs(lost - c.first) if lost is not None else 0)
+
+    ranked = sorted(cands, key=order)
+    per_group = max(1, cap // (48 * (len(BANDS) + 1 if lost is not None else 1)))
+    per_group = max(per_group, 2 if lost is None else 1)
     kept, counts = [], {}
     for c in ranked:
-        g = _group(c)
+        g = _group(c) + (_band(c, lost),)
         if counts.get(g, 0) < per_group:
             counts[g] = counts.get(g, 0) + 1
             kept.append(c)
@@ -188,4 +204,4 @@ def screen(cands: list[Candidate], cap: int) -> list[Candidate]:
             break
         if id(c) not in chosen:
             kept.append(c)
-    return sorted(kept, key=lambda c: -c.prior)
+    return sorted(kept, key=order)

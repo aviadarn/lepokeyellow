@@ -2,7 +2,7 @@ import numpy as np
 
 from poke.synth import BUTTONS
 from scripts.label_video import TAP_FRAMES
-from scripts.repair_labels import far_candidates, latest, near_candidates, runs
+from scripts.repair_labels import latest, runs
 
 A, UP = 1 << BUTTONS.index("a"), 1 << BUTTONS.index("up")
 
@@ -13,41 +13,15 @@ def test_runs_find_every_held_stretch():
     assert runs(masks, BUTTONS.index("up")) == [(4, 6)]
 
 
-def test_near_edits_drop_move_and_add():
-    n = 400
-    masks = np.zeros(n, np.int64)
-    masks[300:305] = A          # a tap just before sync was lost at 320
-    masks[100:110] = UP         # far before: not touched by near edits
-    onset = np.zeros((n, 8), np.float32)
-    onset[290, BUTTONS.index("b")] = 0.4
-    found = {c.what: c for c in near_candidates(masks, onset, lost=320)}
-    drop = found["drop a 300-305"]
-    assert not drop.masks[300:305].any() and drop.first == 300
-    moved = found["move a press 300->302"]
-    assert (moved.masks[300:302] == 0).all() and (moved.masks[302:305] == A).all()
-    released = found["move a release 305->309"]
-    assert (released.masks[300:309] == A).all() and released.masks[309] == 0
-    add_b = found["add b 290"]
-    assert (add_b.masks[290:290 + TAP_FRAMES] >> BUTTONS.index("b") & 1).all()
-    assert add_b.prior == np.float32(0.4)
-    assert not any(c.what.startswith(("drop up", "move up")) for c in found.values())
-
-
-def test_far_edits_only_drop_taps_further_back():
-    n = 2000
-    masks = np.zeros(n, np.int64)
-    masks[200:205] = A          # the intro's kind of false tap, 1,400 frames back
-    masks[1000:1100] = UP       # a walk: never dropped from far away
-    onset = np.zeros((n, 8), np.float32)
-    whats = [c.what for c in far_candidates(masks, onset, lost=1600)]
-    assert whats == ["drop a 200-205"]
-
-
 def test_latest_snapshot_is_before_the_edit():
     snaps = [(0, "s0"), (20, "s20"), (40, "s40")]
     assert latest(snaps, 39)[1] == "s20"
     assert latest(snaps, 40)[1] == "s40"
     assert latest(snaps, -5)[1] == "s0"
+
+
+def _held(n):
+    return np.full((n, 8), 0.5, np.float32)
 
 
 class _FakeReplayer:
@@ -63,7 +37,7 @@ def _fake_search(truth, limit):
     from scripts.repair_labels import RUN, Search
 
     class Fake(Search):
-        def play(self, snapshot, masks, stop_at, record=False):
+        def play(self, snapshot, masks, stop_at, record=False, **_):
             diff = np.flatnonzero(masks[:stop_at] != truth[:stop_at])
             return int(min(diff[0] + RUN, stop_at)) if len(diff) else stop_at
 
@@ -82,31 +56,12 @@ def test_repair_adds_missed_taps_and_drops_false_ones():
     onset = np.zeros((n, 8), np.float32)
     onset[700, BUTTONS.index("a")] = 0.3   # the head's weak hint, off the 6-frame grid
     search = _fake_search(truth, n)
-    masks, lost, edits = repair(search, decoded, onset, search.base(decoded, 0), n,
+    masks, lost, edits = repair(search, decoded, _held(n), onset, search.base(decoded, 0), n,
                                 max_edits=10, max_backtracks=3)
     assert lost == n and np.array_equal(masks, truth)
-    assert [e["edit"] for e in edits] == ["add a 300", "drop a 500-505", "add a 700x60"]
 
 
-LEFT, RIGHT = 1 << BUTTONS.index("left"), 1 << BUTTONS.index("right")
-
-
-def test_near_edits_add_and_swap_directions():
-    # The naming screen: the model read the cursor's LEFT as RIGHT, and
-    # missed the small moves after it.
-    n = 400
-    masks = np.zeros(n, np.int64)
-    masks[300:303] = RIGHT
-    onset = np.zeros((n, 8), np.float32)
-    found = {c.what: c for c in near_candidates(masks, onset, lost=320)}
-    swap = found["swap right->left 300-303"]
-    assert (swap.masks[300:303] == LEFT).all() and swap.first == 300
-    up = found["add up 312"]
-    assert (up.masks[312:312 + TAP_FRAMES] == UP).all() and (up.masks[300:303] == RIGHT).all()
-    assert not any(w.startswith("add up") and int(w.split()[2]) < 320 - 30 for w in found)
-
-
-def test_repair_chains_two_edits_when_presses_are_closer_than_the_margin():
+def test_beam_finds_two_taps_closer_than_the_margin():
     from scripts.repair_labels import MARGIN, repair
 
     n = 1200
@@ -117,10 +72,9 @@ def test_repair_chains_two_edits_when_presses_are_closer_than_the_margin():
     onset = np.zeros((n, 8), np.float32)
     search = _fake_search(truth, n)
     decoded = np.zeros(n, np.int64)
-    masks, lost, edits = repair(search, decoded, onset, search.base(decoded, 0), n,
+    masks, lost, edits = repair(search, decoded, _held(n), onset, search.base(decoded, 0), n,
                                 max_edits=10, max_backtracks=3)
     assert lost == n and np.array_equal(masks, truth)
-    assert [e["edit"] for e in edits] == ["add a 300 + add a 318"]
 
 
 def test_a_rerun_clears_what_the_last_run_verified_past_its_own_reach(tmp_path):
@@ -172,7 +126,7 @@ def test_an_edit_after_the_loss_is_still_judged_from_the_loss():
     # An edit at 150 cannot fix frames 105-134; replaying it from the last
     # snapshot before 150 (120) would judge only 120-134, too short to be a
     # loss, and call it a fix.
-    from scripts.repair_labels import Candidate, Search
+    from scripts.repair_labels import Search
 
     search = Search(_FixedLoss(), 0, 1000)
     masks = np.zeros(1000, np.int64)
@@ -180,10 +134,32 @@ def test_an_edit_after_the_loss_is_still_judged_from_the_loss():
     assert lost == 105
     late = masks.copy()
     late[150:155] = A
-    assert search.best([Candidate("add a 150", late, 150, 1.0)], lost) is None
+    assert search.reach(late, 150, lost, 1000) == 105
 
 
-def test_repair_chains_three_edits_when_two_are_not_enough():
+def test_children_replay_from_before_the_original_loss():
+    # Review focus: every replay starts at or before the first frame where
+    # its buttons differ from the recorded path, however deep in the beam.
+    from scripts.repair_labels import Search, beam
+
+    search = Search(_FixedLoss(), 0, 1000)
+    masks = np.zeros(1000, np.int64)
+    lost = search.base(masks, 0)
+    played = []
+    inner = search.play
+
+    def watched(snapshot, edited, stop_at, record=False, **rejoin):
+        differ = np.flatnonzero(edited != masks)
+        played.append((snapshot, int(differ[0]) if differ.size else None))
+        return inner(snapshot, edited, stop_at, record, **rejoin)
+
+    search.play = watched
+    assert beam(search, masks, _held(1000), np.zeros((1000, 8), np.float32), lost, 1000,
+                depth=3) is None
+    assert played and all(first is None or snap <= first for snap, first in played)
+
+
+def test_beam_finds_three_taps_closer_than_the_margin():
     # Typing a name: a missed tap every 12 frames, so even two of them gain
     # less than MARGIN (measured on the naming screen: 12, 9, 12 frames each).
     from scripts.repair_labels import MARGIN, repair
@@ -195,7 +171,117 @@ def test_repair_chains_three_edits_when_two_are_not_enough():
     assert 2 * 12 < MARGIN
     search = _fake_search(truth, n)
     decoded = np.zeros(n, np.int64)
-    masks, lost, edits = repair(search, decoded, np.zeros((n, 8), np.float32),
+    masks, lost, edits = repair(search, decoded, _held(n), np.zeros((n, 8), np.float32),
                                 search.base(decoded, 0), n, max_edits=10, max_backtracks=3)
     assert lost == n and np.array_equal(masks, truth)
-    assert [e["edit"] for e in edits] == ["add a 300 + add a 312 + add a 324"]
+
+
+def test_beam_turns_a_long_hold_into_a_tap_and_adds_the_missed_a():
+    # 2:32 in the video: DOWN released too late, RIGHT read as a 157-frame
+    # hold where the player tapped it to turn, and the A that opens the
+    # girl's text missed altogether.
+    from scripts.repair_labels import repair
+
+    down, right = 1 << BUTTONS.index("down"), 1 << BUTTONS.index("right")
+    n = 10_000
+    truth = np.zeros(n, np.int64)
+    truth[9080:9107] = down
+    truth[9120:9120 + TAP_FRAMES] = right
+    truth[9140:9140 + TAP_FRAMES] = A
+    decoded = np.zeros(n, np.int64)
+    decoded[9080:9115] = down
+    decoded[9120:9277] = right
+    onset = np.zeros((n, 8), np.float32)
+    onset[9140, BUTTONS.index("a")] = 0.3
+    search = _fake_search(truth, n)
+    masks, lost, _ = repair(search, decoded, _held(n), onset, search.base(decoded, 0), n,
+                            max_edits=10, max_backtracks=3)
+    assert lost == n and np.array_equal(masks, truth)
+
+
+def test_a_false_press_far_back_is_found_by_widening_the_window():
+    # The intro's false A at 1,785 showed ~1,500 frames later.
+    from scripts.repair_labels import RUN, Search, repair
+
+    n = 2000
+    decoded = np.zeros(n, np.int64)
+    decoded[200:205] = A
+
+    class Late(Search):
+        def play(self, snapshot, masks, stop_at, record=False, **_):
+            return min(1700 + RUN, stop_at) if (masks[200:205] & A).any() else stop_at
+
+    search = Late(_FakeReplayer(), None, n)
+    masks, lost, _ = repair(search, decoded, _held(n), np.zeros((n, 8), np.float32),
+                            search.base(decoded, 0), n, max_edits=5, max_backtracks=1)
+    assert lost == n and not masks.any()
+
+
+def test_only_if_better_keeps_a_further_verified_reach(tmp_path):
+    import h5py
+
+    from scripts.repair_labels import should_write
+
+    with h5py.File(tmp_path / "labels.h5", "w") as f:
+        f["verified"] = np.r_[np.ones(9116, bool), np.zeros(4884, bool)]
+        assert not should_write(f, 0, 5000)
+        assert not should_write(f, 0, 9000)
+        assert should_write(f, 0, 9500)
+    with h5py.File(tmp_path / "empty.h5", "w") as f:
+        assert should_write(f, 0, 10)
+
+
+class _Converging:
+    """An 'emulator' whose state is the last 6 frames of buttons: an edit
+    the game ignores leaves no trace 6 frames after it ends. Out of sync
+    from 105 whatever is pressed."""
+
+    def __init__(self):
+        self.e, self.offset, self.masks, self.steps = 0, 0, None, 0
+
+    def save(self):
+        return self.e
+
+    def load(self, snapshot):
+        self.e = snapshot
+
+    def state_key(self):
+        return self.masks[max(self.e - 6, 0):self.e].tobytes()
+
+    def step(self):
+        from scripts.sync_opening import TEXT_LIMIT
+
+        v = self.e
+        self.e += 1
+        self.steps += 1
+        return v, 1.0, TEXT_LIMIT if v >= 105 else 0
+
+
+def test_an_edit_that_leaves_no_trace_stops_where_it_rejoins_the_path():
+    from scripts.repair_labels import Search
+
+    replayer = _Converging()
+    search = Search(replayer, 0, 1000)
+    masks = np.zeros(1000, np.int64)
+    lost = search.base(masks, 0)
+    assert lost == 105
+    ignored = masks.copy()
+    ignored[40:45] = A
+    replayer.steps = 0
+    assert search.reach(ignored, 40, lost, 700, last=44) == lost
+    assert replayer.steps < 30          # rejoined at 51, not replayed to 125
+
+
+def test_beam_takes_a_set_as_soon_as_it_beats_the_loss_by_the_margin():
+    # Rounds past that only cost time: the repair goes on from the new loss.
+    from scripts.repair_labels import beam
+
+    n = 2000
+    truth = np.zeros(n, np.int64)
+    truth[300:300 + TAP_FRAMES] = A
+    truth[804:804 + TAP_FRAMES] = A       # on the 6-frame grid: findable
+    search = _fake_search(truth, n)
+    decoded = np.zeros(n, np.int64)
+    lost = search.base(decoded, 0)
+    found = beam(search, decoded, _held(n), np.zeros((n, 8), np.float32), lost, n)
+    assert found.what == "add a 300" and found.reach == 824

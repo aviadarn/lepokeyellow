@@ -27,6 +27,7 @@ and what it got through, is the result.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -274,6 +275,18 @@ class Replayer:
         if scores[0] < SYNC_SHARE:
             return v, scores[0], None
         return v, scores[0], text_mismatch_near(frame, self.video, v, self.classes)
+
+    def state_key(self) -> bytes:
+        """A digest of what decides the frames to come: VRAM, WRAM, OAM,
+        HRAM, the held buttons and the offset tracker. Banked memory is seen
+        through its current bank only, so two equal keys are near-certain,
+        not proven, equal states -- a search may prune on it, a verdict may
+        not."""
+        m = self.pyboy.memory
+        tracker = bytes([self.offset & 0xFF, self.streak & 0xFF, self.pending & 0xFF, self.pad.held])
+        return hashlib.blake2b(bytes(m[0x8000:0xA000]) + bytes(m[0xC000:0xE000])
+                               + bytes(m[0xFE00:0xFEA0]) + bytes(m[0xFF80:0xFFFF]) + tracker,
+                               digest_size=16).digest()
 
     def save(self) -> tuple:
         buffer = io.BytesIO()
