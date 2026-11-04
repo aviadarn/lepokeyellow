@@ -45,8 +45,8 @@ import numpy as np
 from poke.synth import BUTTONS
 from poke.video import Snapper
 from scripts.edits import Candidate, _peaks, _set, candidates, runs, screen  # noqa: F401
-from scripts.sync_opening import (Replayer, VideoWindow, align, anchored, boot, find_anchor,
-                                  in_sync, release_carried, rows_from_writes,
+from scripts.sync_opening import (ROM, Replayer, VideoWindow, align, anchored, boot, find_anchor,
+                                  in_sync, release_carried, rows_from_writes, video_frames,
                                   writes_from_rows)
 
 RUN = 20
@@ -61,6 +61,8 @@ NEUTRAL = 2         # rounds a beam may go on getting nearer without getting fur
 # Hidden state a button cannot reach, tried in this order where no edit helps:
 TILE_ANIMATION = ((0xFFD8, range(21)), (0xD084, range(8)))   # flowers and water (13,048)
 RANDOM = ((0xFFD3, range(256)), (0xFFD4, range(256)))         # hRandomAdd, hRandomSub
+MENU_CURSOR = ((0xCC2D, range(7)),)   # wBattleAndStartSavedMenuItem: where START opens
+TIERS = {"tile": TILE_ANIMATION, "menu": MENU_CURSOR, "random": RANDOM}
 RESYNC_LEAD = 40    # frames before the loss a write goes in
 IN_PROCESS = 1000   # tiers this small are searched here, larger ones on workers
 
@@ -248,6 +250,17 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
     return best if best is not None and best.reach >= lost + MARGIN else None
 
 
+def parse_tiers(text: str) -> tuple:
+    """`--resync`: tier names, comma separated (tile, menu, random), or none."""
+    if text.strip() in ("", "none"):
+        return ()
+    names = [t.strip() for t in text.split(",")]
+    unknown = [t for t in names if t not in TIERS]
+    if unknown:
+        raise ValueError(f"unknown resync tier(s) {unknown}; known: {sorted(TIERS)}")
+    return tuple(TIERS[t] for t in names)
+
+
 def _with(writes: dict, frame: int, pairs) -> dict:
     out = dict(writes)
     out[frame] = out.get(frame, ()) + tuple(pairs)
@@ -357,9 +370,14 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
     best = (masks, lost, [])
     search.best_writes = dict(search.writes)
     backtracks = 0
+    budget_from = None       # the loss the running budget started at
     while lost < limit and len(stack) < max_edits:
         t, cpu = time.time(), time.process_time()
-        search.deadline = None if stuck_budget is None else search.clock() + stuck_budget
+        # A wall's budget is its own: it starts afresh only once the loss has
+        # moved MARGIN past where it last started -- not when backtracking
+        # commits an alternative that reaches the same wall.
+        if stuck_budget is not None and (budget_from is None or lost >= budget_from + MARGIN):
+            search.deadline, budget_from = search.clock() + stuck_budget, lost
         winner = find(masks, lost, frozenset())
         tried: set = set()
         if winner is None:
@@ -425,6 +443,40 @@ def should_write(labels, first: int, lost: int) -> bool:
     return lost > existing
 
 
+def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols,
+                         step: int = 4) -> dict:
+    """Set the party and the bag that the video's own screens show in
+    [first, first + frames): the first party menu read the same on two
+    frames `step` apart, and the first item list. A door's save state has
+    its own party and bag; the player's are on screen when they open them."""
+    from poke.party import set_bag, set_party
+    from poke.screen_text import font
+    from poke.screens import bag_screen, party_screen
+    from scripts.sync_opening import text_classes
+
+    glyphs, classes = font(rom, symbols), text_classes(h5["colours"][:])
+    out: dict = {}
+    previous = None
+    for start in range(first, first + frames, 2048):
+        block = video_frames(h5, start, min(2048, first + frames - start))
+        for i in range(0, len(block), step):
+            v = start + i
+            if "party" not in out:
+                party = party_screen(block[i], classes, glyphs)
+                if party and party == previous:
+                    out.update(party=party, party_frame=v,
+                               guessed=set_party(pyboy, rom, symbols, party))
+                previous = party
+            if "bag" not in out:
+                bag = bag_screen(block[i], classes, glyphs)
+                if bag:
+                    set_bag(pyboy, rom, symbols, bag)
+                    out.update(bag=bag, bag_frame=v)
+            if "party" in out and "bag" in out:
+                return out
+    return out
+
+
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
                  name: str, edits: int, writes: dict | None = None) -> None:
     """Store a run's buttons and state writes over everything it replayed,
@@ -483,7 +535,10 @@ def main() -> None:
     parser.add_argument("--max-window", type=int, default=2400)
     parser.add_argument("--cap", type=int, default=400, help="edits tried per member per round")
     parser.add_argument("--resync", default="tile,random",
-                        help="hidden-state tiers to try where no edit helps: tile, random, or none")
+                        help="hidden-state tiers to try where no edit helps: tile, menu, random, "
+                             "or none")
+    parser.add_argument("--rebuild", action="store_true",
+                        help="anchored runs: set the party and bag the window's own screens show")
     parser.add_argument("--stuck-budget", type=float, default=None,
                         help="CPU seconds a stuck point may take before the run stops there")
     parser.add_argument("--only-if-better", action="store_true",
@@ -514,6 +569,12 @@ def main() -> None:
             masks = release_carried(masks, offset)
             first_frame = offset
             print(f"anchor {args.anchor_state} = video frame {anchor} ({share:.4f})", flush=True)
+            if args.rebuild:
+                from poke.symbols import load as load_symbols
+
+                rebuilt = rebuild_from_screens(pyboy, h5, first_frame, args.frames,
+                                               Path(ROM).read_bytes(), load_symbols())
+                print(f"rebuilt from the window's screens: {json.dumps(rebuilt)}", flush=True)
         else:
             offset, _ = align(h5, snapper)
             pyboy = boot()
@@ -532,8 +593,7 @@ def main() -> None:
     search.writes = dict(start_writes)
     lost = search.base(masks, first_frame)
     print(f"labels as decoded: in sync until video frame {lost}", flush=True)
-    tiers = tuple({"tile": TILE_ANIMATION, "random": RANDOM}[t]
-                  for t in args.resync.split(",") if t in ("tile", "random"))
+    tiers = parse_tiers(args.resync)
     masks, lost, edits = repair(search, masks, held_p, onset_p, lost, limit, args.max_edits,
                                 args.max_backtracks, args.width, args.depth, args.window,
                                 args.max_window, args.cap, args.stuck_budget, tiers)
@@ -562,6 +622,7 @@ def main() -> None:
 
     changed = int((masks != original).sum())
     report = {"name": args.name, "start": first_frame, "verified_until": int(lost),
+              "rebuilt": rebuilt if args.anchor_state and args.rebuild else None,
               "search_reach": searched, "state_writes": rows_from_writes(writes).tolist(),
               "limit": limit, "edits": edits, "frames_changed": changed,
               "anchor_state": args.anchor_state, "seconds": round(time.time() - started)}

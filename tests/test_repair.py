@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from poke.synth import BUTTONS
 from scripts.label_video import TAP_FRAMES
@@ -554,3 +555,63 @@ def test_resync_searches_the_current_labels_within_its_budget():
     search.deadline, search.clock = 0.0, lambda: 1.0  # out of time
     resync(search, masks, lost, n, (big,), sweep=sweep)
     assert len(seen) == 1
+
+
+def test_a_wall_keeps_its_budget_through_backtracking():
+    # Window 3: alternative START taps all reach the same wall; each one
+    # used to start the wall's budget afresh.
+    import itertools
+
+    from scripts.repair_labels import Search, repair
+
+    n = 2000
+    ticks = itertools.count()
+
+    class SameWall(Search):
+        def play(self, snapshot, masks, stop_at, record=False, **_):
+            # Each tap reaches the wall a frame or two apart: an undone tap's
+            # reach never quite equals its alternative's.
+            self.last_cost = 0.0
+            taps = np.flatnonzero(masks[290:312] & A)
+            return min(500 + int(taps[0]) % 5 if len(taps) else 320, stop_at)
+
+    search = SameWall(_FakeReplayer(), None, n, clock=lambda: next(ticks))
+    decoded = np.zeros(n, np.int64)
+    repair(search, decoded, _held(n), np.zeros((n, 8), np.float32), search.base(decoded, 0), n,
+           max_edits=20, max_backtracks=8, max_window=300, stuck_budget=3000)
+    # One stuck search here is one narrow beam (no widening): the budget
+    # outlives it, so the backtracking runs -- and must still stop within
+    # one budget for the wall, not one per alternative that reaches it.
+    assert next(ticks) < 1.5 * 3000
+
+
+def test_resync_tiers_parse_from_their_names():
+    import pytest
+
+    from scripts.repair_labels import MENU_CURSOR, RANDOM, TILE_ANIMATION, parse_tiers
+
+    assert parse_tiers("tile,menu") == (TILE_ANIMATION, MENU_CURSOR)
+    assert parse_tiers("random") == (RANDOM,)
+    assert parse_tiers("none") == ()
+    with pytest.raises(ValueError):
+        parse_tiers("tiles")
+
+
+ROM_PATH, VIDEO_PATH = __import__("pathlib").Path("pokeyellow.gbc"), __import__("pathlib").Path("data/longplay/video.h5")
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_a_windows_screens_rebuild_its_party_and_bag():
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.symbols import load
+    from scripts.repair_labels import rebuild_from_screens
+
+    env = PokeEnv(str(ROM_PATH), "states/cgb/teleport/CeladonCity_w6.state", color=True)
+    env.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(env.pyboy, h5, 659260, 1800, ROM_PATH.read_bytes(), load())
+    assert [p["level"] for p in rebuilt["party"]] == [26, 27, 28, 26, 26, 25]
+    assert 659860 <= rebuilt["party_frame"] <= 659960
+    assert env.pyboy.memory[0xD162] == 6
