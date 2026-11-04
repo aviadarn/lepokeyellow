@@ -75,3 +75,21 @@ def test_find_state_ranks_values_by_reach():
     best = ranked[0][0]
     assert (5,) in [values for reach, values in ranked if reach == best]
     assert ranked[-1][0] < best
+
+
+def test_find_state_takes_no_chunk_past_its_deadline():
+    import time
+
+    from scripts.rng_sync import find_state
+    from scripts.sync_opening import Replayer
+
+    class Stub:
+        video, masks, slack, patience = np.zeros((10, 144, 160), np.uint8), np.zeros(10), 2, 3
+
+        class snapper:
+            colours = np.zeros((4, 3), np.uint8)
+
+    ranked = find_state(Stub(), (b"", (0, 0, 0, 0, 0)), cap=8,
+                        registers=((0xFFD3, range(256)),), workers=2, at=0,
+                        deadline=time.time() - 1)
+    assert ranked == []

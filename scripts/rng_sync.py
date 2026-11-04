@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import itertools
 import os
+import time
 from multiprocessing import get_context
 
 import numpy as np
@@ -116,12 +117,14 @@ def _reaches(job) -> list[tuple[int, tuple]]:
 
 def find_state(replayer: Replayer, snapshot: tuple, cap: int, registers, workers: int = 4,
                writes: dict | None = None, at: int | None = None, judge_from: int = 0,
-               run: int = 20) -> list[tuple[int, tuple]]:
+               run: int = 20, deadline: float | None = None) -> list[tuple[int, tuple]]:
     """Every combination of `registers` ((address, values), ...) written at
     video frame `at` (default: the snapshot's), ranked by how far it plays in
     sync (first of `run` frames out of sync, or `cap`): [(reach, values)],
     furthest first. `writes` are the state writes already made. Split over
-    `workers` processes at nice 19, each with its own emulator."""
+    `workers` processes at nice 19, each with its own emulator, in small
+    chunks; past `deadline` (wall clock) no more chunks are taken, and the
+    values tried so far are ranked."""
     blob, (e, offset, streak, pending, held) = snapshot
     at = e + offset if at is None else at
     first = max(e + offset - replayer.slack - TEXT_SLACK, 0)
@@ -131,10 +134,18 @@ def find_state(replayer: Replayer, snapshot: tuple, cap: int, registers, workers
     shifted = {f - first: pairs for f, pairs in (writes or {}).items() if first <= f < last}
     addresses = tuple(a for a, _ in registers)
     combos = list(itertools.product(*[list(values) for _, values in registers]))
-    chunks = [combos[i::workers] for i in range(workers)]
+    size = max(1, min(256, -(-len(combos) // workers)))
+    chunks = [combos[i:i + size] for i in range(0, len(combos), size)]
     jobs = [(blob, tracker, video, masks, replayer.snapper.colours, replayer.slack,
              replayer.patience, shifted, at - first, addresses, chunk, cap - first,
-             judge_from - first, run, first) for chunk in chunks if chunk]
-    with get_context("spawn").Pool(len(jobs)) as pool:
-        ranked = [x for part in pool.map(_reaches, jobs) for x in part]
+             judge_from - first, run, first) for chunk in chunks]
+    ranked: list[tuple[int, tuple]] = []
+    if deadline is not None and time.time() > deadline:
+        return ranked
+    with get_context("spawn").Pool(min(workers, len(jobs))) as pool:
+        for part in pool.imap_unordered(_reaches, jobs):
+            ranked.extend(part)
+            if deadline is not None and time.time() > deadline:
+                pool.terminate()
+                break
     return sorted(ranked, key=lambda r: (-r[0], r[1]))

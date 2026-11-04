@@ -255,7 +255,8 @@ def _with(writes: dict, frame: int, pairs) -> dict:
 
 
 def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
-           exclude: frozenset = frozenset(), avoid: int | None = None, workers: int = 4):
+           exclude: frozenset = frozenset(), avoid: int | None = None, workers: int = 4,
+           sweep=None):
     """A write of hidden state, RESYNC_LEAD frames before `lost`, that plays
     MARGIN frames past it, or None: for each tier ((address, values), ...)
     in turn, every combination is tried, the furthest-reaching kept (ties:
@@ -278,10 +279,21 @@ def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
                                             writes=_with(search.writes, at, zip(addresses, combo))),
                                combo))
         else:
-            from scripts.rng_sync import find_state
-
-            ranked = find_state(search.rep, snapshot[1], cap, tier, workers, search.writes, at,
-                                search.judge_from, search.run)
+            if search.out_of_time():
+                return None
+            if sweep is None:
+                from scripts.rng_sync import find_state as sweep
+            # The workers read the replayer's labels: the ones being repaired,
+            # not the last candidate played. Their CPU is not this process's,
+            # so the stuck budget left is turned into a wall-clock deadline.
+            search.rep.masks = masks
+            deadline = None
+            if search.deadline is not None:
+                deadline = time.time() + max(search.deadline - search.clock(), 0) / workers
+            ranked = sweep(search.rep, snapshot[1], cap, tier, workers, search.writes, at,
+                           search.judge_from, search.run, deadline=deadline)
+            if deadline is not None and time.time() > deadline:
+                search.deadline = search.clock() - 1      # the sweep spent the budget
         best = None
         for reach, combo in ranked:
             what = "write " + " ".join(f"{a:04X}={v}" for a, v in zip(addresses, combo)) + f" @{at}"
@@ -402,10 +414,13 @@ def fresh_reach(make_replayer, masks: np.ndarray, first: int, limit: int, judge_
 
 def should_write(labels, first: int, lost: int) -> bool:
     """False when the labels file already holds a verified reach from
-    `first` at least as long as `lost`: a weaker run must not overwrite it."""
+    `first` -- buttons alone or given state writes -- at least as long as
+    `lost`: a weaker run must not overwrite it."""
     if "verified" not in labels:
         return True
     held = labels["verified"][first:]
+    if "verified_resync" in labels:
+        held = held | labels["verified_resync"][first:]
     existing = first + (int(np.argmin(held)) if not held.all() else len(held))
     return lost > existing
 
@@ -413,8 +428,9 @@ def should_write(labels, first: int, lost: int) -> bool:
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
                  name: str, edits: int, writes: dict | None = None) -> None:
     """Store a run's buttons and state writes over everything it replayed,
-    [first, limit), and mark what it verified -- and only that: a rerun under
-    a stricter check must not inherit an earlier run's further reach.
+    [first, limit), and mark what it verified -- and only that: from `first`
+    on, older claims and writes are cleared, so a rerun under a stricter
+    check cannot inherit an earlier run's further reach.
     Frames before the run's first write are `verified` (buttons alone);
     from it to `lost`, `verified_resync` (buttons given the writes)."""
     n = len(labels["buttons"])
@@ -427,13 +443,15 @@ def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, lim
     mine = {f: p for f, p in (writes or {}).items() if first <= f < limit}
     split = min(min(mine, default=lost), lost)
     verified, resync = labels["verified"][:], labels["verified_resync"][:]
-    verified[first:limit] = False
-    resync[first:limit] = False
+    # The replay is chained: once this run's buttons differ from `first` on,
+    # nothing after it stays verified, whatever an older run reached there.
+    verified[first:] = False
+    resync[first:] = False
     verified[first:split] = True
     resync[split:lost] = True
     labels["verified"][:], labels["verified_resync"][:] = verified, resync
     kept = labels["state_writes"][:] if "state_writes" in labels else np.zeros((0, 3), np.int32)
-    kept = kept[(kept[:, 0] < first) | (kept[:, 0] >= limit)]
+    kept = kept[kept[:, 0] < first]
     rows = np.concatenate([kept, rows_from_writes(mine)]) if len(mine) else kept
     rows = rows[np.argsort(rows[:, 0], kind="stable")]
     if "state_writes" in labels:

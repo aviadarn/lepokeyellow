@@ -456,8 +456,8 @@ def test_write_repair_splits_verified_at_the_first_write(tmp_path):
         assert f["verified"][:500].all() and not f["verified"][500:].any()
         assert f["verified_resync"][500:800].all() and not f["verified_resync"][:500].any()
         assert not f["verified_resync"][800:].any()
-        # the run's stretch [0, 900) holds only its own write; the one at 950 stays
-        assert f["state_writes"][:].tolist() == [[500, 0xFFD8, 7], [950, 0xD084, 1]]
+        # from the run's start on, only its own write is left (the chain changed)
+        assert f["state_writes"][:].tolist() == [[500, 0xFFD8, 7]]
 
 
 def test_a_run_without_writes_clears_old_writes_in_its_stretch(tmp_path):
@@ -469,7 +469,7 @@ def test_a_run_without_writes_clears_old_writes_in_its_stretch(tmp_path):
     with h5py.File(tmp_path / "l.h5", "a") as f:
         write_repair(f, "buttons_ruled", np.zeros(1000, np.int64), 0, 600, 900, "r", 0)
         assert f["verified"][:600].all() and not f["verified_resync"][:].any()
-        assert f["state_writes"][:].tolist() == [[950, 0xD084, 1]]
+        assert f["state_writes"][:].tolist() == []
 
 
 def test_fresh_reach_applies_the_writes():
@@ -497,3 +497,60 @@ def test_a_cheap_resync_comes_before_widening_the_window():
                             max_edits=5, max_backtracks=1, max_window=2400,
                             stuck_budget=3000, tiers=(TILE_ANIMATION,))
     assert lost == n and edits[0]["edit"].startswith("write FFD8=7")
+
+
+def test_only_if_better_counts_resync_verified_frames(tmp_path):
+    import h5py
+
+    from scripts.repair_labels import should_write
+
+    with h5py.File(tmp_path / "l.h5", "w") as f:
+        f["verified"] = np.r_[np.ones(13008, bool), np.zeros(10000, bool)]
+        f["verified_resync"] = np.r_[np.zeros(13008, bool), np.ones(7273, bool),
+                                     np.zeros(23008 - 20281, bool)]
+        assert not should_write(f, 0, 13048)       # a buttons-only 13,048 is not better
+        assert should_write(f, 0, 21000)
+
+
+def test_a_run_clears_every_claim_after_its_start(tmp_path):
+    # The replay is chained: once a run changes buttons from `first`, nothing
+    # after it stays verified, whatever an older run reached.
+    import h5py
+
+    from scripts.repair_labels import write_repair
+
+    _labels_file(tmp_path / "l.h5", n=1000)
+    with h5py.File(tmp_path / "l.h5", "a") as f:
+        f["verified_resync"][:] = np.r_[np.zeros(700, bool), np.ones(300, bool)]
+        write_repair(f, "buttons_ruled", np.zeros(1000, np.int64), 0, 400, 600, "r", 0)
+        assert not f["verified_resync"][400:].any() and not f["verified"][400:].any()
+        assert f["state_writes"][:].tolist() == []
+
+
+def test_resync_searches_the_current_labels_within_its_budget():
+    # The large tier runs on workers: it must be given the labels being
+    # repaired (not the last candidate played), and not start when the
+    # stuck point is out of time.
+    from scripts.repair_labels import Search, resync
+
+    n = 1000
+    seen = []
+
+    def sweep(replayer, snapshot, cap, registers, workers, writes, at, judge_from, run,
+              deadline=None):
+        seen.append(replayer.masks.copy())
+        return []
+
+    start = (0, {0xFFD8: 0, 0xD084: 0, 0xFFD3: 0, 0xFFD4: 0})
+    search = Search(_HiddenWall(), start, n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    other = masks.copy()
+    other[50:55] = A
+    search.reach(other, 50, lost, n)                  # leaves another candidate's labels
+    big = ((0xFFD3, range(40)), (0xFFD4, range(40)))  # 1,600 values: a worker tier
+    resync(search, masks, lost, n, (big,), sweep=sweep)
+    assert len(seen) == 1 and np.array_equal(seen[0], masks)
+    search.deadline, search.clock = 0.0, lambda: 1.0  # out of time
+    resync(search, masks, lost, n, (big,), sweep=sweep)
+    assert len(seen) == 1

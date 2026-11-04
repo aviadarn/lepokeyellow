@@ -94,10 +94,10 @@ replay applies it, and the frames after it are `verified_resync`, never
 `verified`.
 
 From the code's own verified labels, one more unattended run wrote the tile
-counters at 13,008 (`0xD084` = 2) and went on, through Oak's lab, the
+counters at 13,008 (`0xFFD8` = 11, `0xD084` = 2) and went on, through Oak's lab, the
 choice of Pikachu, and the rival battle against Eevee. The battle's damage
-matched to the hit point. It reached video frame 20,281 (5 min 38 s): 12
-more edits in 66 minutes, confirmed by a fresh replay and by `sync_opening`
+matched to the hit point. It reached video frame 20,281 (5 min 38 s): 11
+more button edits and the one write in 66 minutes, confirmed by a fresh replay and by `sync_opening`
 with the writes (`results/repair_poweron_resync.json`,
 `results/sync_opening_resync.json`). It stops at "PIKACHU grew to level 6!":
 the video shows DEFENSE 9, the emulator 10. Pikachu's DVs, its hidden
