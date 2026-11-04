@@ -45,8 +45,8 @@ import numpy as np
 from poke.synth import BUTTONS
 from poke.video import Snapper
 from scripts.edits import Candidate, _peaks, _set, candidates, runs, screen  # noqa: F401
-from scripts.sync_opening import (Replayer, align, anchored, boot, find_anchor, in_sync,
-                                  release_carried, rows_from_writes, video_frames,
+from scripts.sync_opening import (Replayer, VideoWindow, align, anchored, boot, find_anchor,
+                                  in_sync, release_carried, rows_from_writes,
                                   writes_from_rows)
 
 RUN = 20
@@ -519,7 +519,10 @@ def main() -> None:
             pyboy = boot()
             first_frame = 0
         limit = first_frame + args.frames
-        video = video_frames(h5, 0, limit + 8)
+        # Only the frames this run judges (with room for the offset tracker
+        # and the text check's slack before the start).
+        start = max(first_frame - 64, 0)
+        video = VideoWindow(h5, start, limit + 8 - start)
         # Only what the run replays: every candidate's masks are this long.
         masks, onset_p, held_p = masks[:limit + 8], onset_p[:limit + 8], held_p[:limit + 8]
     original = masks.copy()

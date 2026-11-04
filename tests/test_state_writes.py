@@ -77,3 +77,20 @@ def test_a_write_before_the_snapshot_is_not_replayed():
     for _ in range(4):
         replayer.step()
     assert pyboy.memory.log == []
+
+
+def test_a_video_window_reads_only_its_frames_by_absolute_index():
+    import pytest
+
+    from scripts.sync_opening import VideoWindow, video_frames
+
+    refs = np.repeat(np.arange(50), 2).astype(np.int32)          # 100 frames, 50 unique
+    uframes = np.arange(50, dtype=np.uint8)[:, None, None] * np.ones((1, 144, 160), np.uint8)
+    h5 = {"frame_ref": refs, "uframes": uframes}
+    full = video_frames(h5, 0, 100)
+    window = VideoWindow(h5, 60, 30)
+    assert len(window) == 90
+    assert np.array_equal(window[75], full[75])
+    assert np.array_equal(window[62:70], full[62:70])
+    with pytest.raises(IndexError):
+        window[59]

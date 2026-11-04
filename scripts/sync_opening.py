@@ -67,6 +67,29 @@ def video_frames(h5, first: int, count: int) -> np.ndarray:
     return block[refs - refs.min()]
 
 
+class VideoWindow:
+    """Video frames [first, first + count), indexed by absolute video frame:
+    an anchored run hours into the video reads only its own frames (from 0
+    it would hold the whole prefix, ~30 GB at 6 h)."""
+
+    def __init__(self, h5, first: int, count: int):
+        self.first = first
+        self.frames = video_frames(h5, first, count)
+
+    def __len__(self) -> int:
+        return self.first + len(self.frames)
+
+    def __getitem__(self, v):
+        if isinstance(v, slice):
+            start, stop, _ = v.indices(len(self))
+            if start < self.first:
+                raise IndexError(f"video frame {start} is before the window ({self.first})")
+            return self.frames[start - self.first:stop - self.first]
+        if not self.first <= v < len(self):
+            raise IndexError(f"video frame {v} is outside the window")
+        return self.frames[v - self.first]
+
+
 def match(a: np.ndarray, b: np.ndarray) -> float:
     return float((a == b).mean())
 
