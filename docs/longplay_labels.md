@@ -41,40 +41,63 @@ swap explains them.
 
 `scripts/repair_labels.py` then lets the emulator correct the labels. It
 replays them from power-on, and where the screen stops matching the video it
-tries one small edit at a time — drop a press, move it, swap a direction for
-another, add an A / B / START or direction tap, or an A / B hold (held A or B
-speeds up text, and the model never learned that) — keeping the edit that
-plays in sync longest, with backtracking. Where presses come faster than one
-edit can prove (typing a name: a tap every ~12 frames), it chains up to three.
+searches for edits. Nothing in the search knows about walking, menus or
+text:
+- **One grammar for every button** (`scripts/edits.py`): add a press (a tap,
+  20 or 60 frames), drop one, move its start or its end by up to 256 frames
+  either way, set its length, split it, or turn it into another button. The
+  IDM's own probabilities rank the edits, and the ones nearest the loss of
+  sync come first when they say nothing.
+- **A beam over sets of edits.** Each member tries the edits at its own loss
+  of sync, so presses closer together than one edit can prove add up (typing
+  a name is a tap every ~12 frames).
+- **Edits that only make the next one possible.** Sets that lose sync at the
+  same frame are ranked by how near the video they stay before it, so these
+  survive. At 2:32 the RIGHT the labels hold into a girl must stop before
+  her A can open the text.
+- **A wider window when nothing helps**, up to 2,400 frames (the intro's
+  false A at 1,785 shows 1,500 frames on), then backtracking.
+- **Speed.** An edit the game shrugs off stops as soon as its state rejoins
+  the recorded path.
 
-In sync means two things. At least 98 % of the pixels match, and no 8×8
-patch of text differs: patches made only of the text box's paper and ink in
-both frames, so sprites, the title's Pikachu and wandering NPCs are left to
-the pixel share. The share alone had passed a player named K where the video
-says RED, and menu cursors in the wrong place — under 2 % of the screen — so
-the opening once reported verified to 8,097 frames had the name and three
-menus wrong (found by replaying five minutes from the labels alone). Text
-printed up to 12 frames early or late counts as timing, not content. On
-1.26 M frames of synthetic play replayed with the true buttons the text check
-never fired.
+In sync means two things.
+- **At least 98 % of the pixels match.**
+- **No 8×8 tile of text differs.** These are tiles made only of the text
+  box's paper and ink in both frames, so sprites, the title's Pikachu and
+  wandering NPCs are left to the pixel share. Each tile may match the video
+  up to 12 frames early or late, tile by tile. The game copies its tile map
+  to the screen a third at a time, and at 2:32 the capture emulator shows a
+  line of text in batches one letter apart from PyBoy's.
 
-From power-on the labels are now verified frame by frame, every letter and
-cursor included, through the intro, the title, OPTION, Oak's speech, both
-naming screens, the bedroom and its PC, downstairs past the TV and out of the
-door: to video frame 9,116 (2 min 32 s), with 22 edits to the old opening.
-There the player stops beside a girl in Pallet Town and talks to her. The
-labels hold DOWN a few frames too long (one step too many), hold RIGHT for
-157 frames where the player turned with a tap, and miss the A: three edits
-that each gain under MARGIN frames, and a hold shortened by more than the 8
-frames a release may move. Made by hand, they have the emulator talk to her
-too, with a text-speed difference still unexplained.
+The share alone had passed a player named K where the video says RED, and
+menu cursors in the wrong place: under 2 % of the screen. So the opening
+once reported verified to 8,097 frames had the name and three menus wrong
+(found by replaying five minutes from the labels alone). On 1.26 M frames of
+synthetic play replayed with the true buttons, the text check never fired.
+
+From power-on, v3's labels with no hand edits are now verified frame by
+frame, every letter and cursor included, to video frame 13,048 (3 min 37 s).
+That covers the intro, the title, OPTION, Oak's speech, both naming screens,
+the bedroom and its PC, the TV, the girl in Pallet Town, Oak stopping the
+player in the grass, and the walk to his lab. It took 30 sets of edits; a
+stuck point took 19 CPU-seconds at the median and 401 at the 90th percentile
+(`results/repair_poweron_generic.json`).
+
+There the flower and water tiles animate out of phase: the two emulators
+disagree on a few lag frames earlier, and the animation runs on a frame
+counter (`0xFFD8`, `0xD084`). No button explains that. Writing the counters
+keeps the replay in sync, which is a state write and the next step's job.
+The random numbers part too: from 2:36 Pallet Town's NPCs stand on the same
+tiles but face other ways, which the judge forgives (a sprite is ~1 % of the
+screen). Writing the random bytes where that shows changes nothing, because
+every one of the 65,536 values plays the same 60 frames. The NPCs decided
+earlier, so a resync has to find where the state parts, not the screen
+(`results/rng_spike.json`).
 
 Verified means the emulator reproduces the screens, not that each key is the
-one the player pressed: the options menu, for one, is matched with an extra
-LEFT and a RIGHT where the player probably tapped LEFT twice. Nor can it tell
-apart buttons with the same effect (A or START on the title screen), or go
-past the opening: verification needs an emulator state that matches the
-video, and edit cuts and the random number generator end that.
+one the player pressed. The options menu, for one, is matched by presses the
+player probably did not make. Nor can it tell apart buttons with the same
+effect (A or START on the title screen).
 
 ## Checking the whole game, not just the opening
 
@@ -127,7 +150,7 @@ Every exported step says how far it is checked:
 
 | field | meaning | PokeDreamer steps |
 |---|---|---|
-| `verified` | replayed in the emulator frame by frame | 331 |
+| `verified` | replayed in the emulator frame by frame | 491 |
 | `rule_events` | steps and ▼ answers the screen shows inside it | > 0 on 10,234 (16.6 %) |
 | `rule_unexplained` | of those events, the ones the model's own labels failed | > 0 on 447 (241 steps not held, 227 ▼ waits with no press) |
 | `rule_fixed` | frames the text rule changed (a fix can land in the step before its answer) | 1,128 frames |
@@ -165,9 +188,8 @@ uv run python -m scripts.eval_idm --checkpoint checkpoints/idm_v3/last.pt
 # Label the video, check it against the screen, repair the opening, export.
 uv run python -m scripts.label_video --checkpoint checkpoints/idm_v3/last.pt
 uv run python -m scripts.check_labels --name v3 --apply
-uv run python -m scripts.repair_labels --frames 14000
-uv run python -m scripts.repair_labels --buttons buttons_repaired --name poweron_strict \
-    --frames 20000 --max-backtracks 1     # the text check; stops at 9,116
+uv run python -m scripts.repair_labels --name poweron_generic --frames 18000 \
+    --only-if-better                      # from v3's labels; stops at 13,048
 uv run python -m scripts.sync_opening --buttons buttons_repaired
 uv run python -m scripts.export_video
 

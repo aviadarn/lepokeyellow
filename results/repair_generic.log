@@ -1,0 +1,58 @@
+2026-11-04 09:27:47 generic repair from power-on, v3 buttons_ruled, 18000 frames
+2026-11-04 09:27:47 watchdog generic: group 67408, swap baseline 4172M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7244M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_ruled
+labels as decoded: in sync until video frame 1818
+drop a 1785-1790                 sync 1818 -> 3082  (2s, 2 cpu-s, 5847 frames played)
+add a 3060x60                    sync 3082 -> 3270  (17s, 17 cpu-s, 55611 frames played)
+add a 3258x60                    sync 3270 -> 3348  (8s, 8 cpu-s, 76165 frames played)
+start left 3344->3352            sync 3348 -> 3402  (15s, 15 cpu-s, 96934 frames played)
+swap left->a 3397-3408           sync 3402 -> 3438  (19s, 19 cpu-s, 119595 frames played)
+swap up->a 3411-3421 + add a 3444x60 + add down 3447x20 sync 3438 -> 3487  (338s, 336 cpu-s, 523479 frames played)
+end down 3476->3478 + add down 3469 sync 3487 -> 3542  (180s, 179 cpu-s, 752336 frames played)
+end up 3536->3568                sync 3542 -> 3574  (19s, 19 cpu-s, 769802 frames played)
+add a 3558x60                    sync 3574 -> 3693  (17s, 17 cpu-s, 789009 frames played)
+add a 3660x60                    sync 3693 -> 5035  (4s, 4 cpu-s, 793194 frames played)
+add right 5010 + add right 5046 + add right 5016 sync 5035 -> 5068  (375s, 371 cpu-s, 1343592 frames played)
+add right 5052 + add right 5040 + add right 5080 sync 5068 -> 5104  (416s, 401 cpu-s, 1846550 frames played)
+add right 5028 + add down 5112   sync 5104 -> 5151  (263s, 257 cpu-s, 2120617 frames played)
+add left 5154 + add left 5160 + add left 5178 sync 5151 -> 5187  (482s, 474 cpu-s, 2548195 frames played)
+add up 5190 + add left 5196      sync 5187 -> 5219  (270s, 268 cpu-s, 2764059 frames played)
+  nothing within 300 frames: widening to 600
+add a 5202x60 + add left 5208    sync 5219 -> 5249  (682s, 668 cpu-s, 3330516 frames played)
+split a 5202-5262@5211           sync 5249 -> 6787  (18s, 18 cpu-s, 3343378 frames played)
+end a 6522->6778                 sync 6787 -> 7554  (2s, 2 cpu-s, 3345300 frames played)
+add a 7500                       sync 7554 -> 7696  (28s, 28 cpu-s, 3385865 frames played)
+end a 7673->7737 + add down 7704 sync 7696 -> 7735  (197s, 196 cpu-s, 3654450 frames played)
+add down 7710 + add a 7740x20    sync 7735 -> 8097  (158s, 158 cpu-s, 3915605 frames played)
+add a 8094x60 + swap left->up 8114-8124 sync 8097 -> 8127  (57s, 57 cpu-s, 4099946 frames played)
+  nothing within 300 frames: widening to 600
+  nothing within 600 frames: widening to 1200
+  nothing within 1200 frames: widening to 2400
+  nothing within 300 frames: widening to 600
+  backtrack: undo add a 8094x60 + swap left->up 8114-8124 -> end left 8096->8095 + drop left 8114-8124
+end left 8096->8095 + drop left 8114-8124 sync 8097 -> 8514  (1730s, 1728 cpu-s, 8817174 frames played)
+add left 8484                    sync 8514 -> 8833  (15s, 15 cpu-s, 8854586 frames played)
+add a 8808x20                    sync 8833 -> 9107  (18s, 18 cpu-s, 8891061 frames played)
+end a 8828->8824 + end down 9115->9114 sync 9107 -> 9143  (265s, 264 cpu-s, 9354825 frames played)
+  nothing within 300 frames: widening to 600
+  nothing within 600 frames: widening to 1200
+2026-11-04 11:11:42 exit 0
+2026-11-04 11:11:42 watchdog generic: pipeline gone, exiting
+2026-11-04 11:11:44 stopped by hand at 9143 (old beam: a stuck round ended the search; RIGHT must stop before the girl's A works) — resuming from these edits with cost-ranked neutral rounds
+2026-11-04 11:12:16 session 2: resume from session 1 edits (buttons_generic_resume), 18000 frames
+2026-11-04 11:12:16 watchdog generic: group 13891, swap baseline 4108M; pause < 25% free, resume >= 40%, stop after 10 min paused or swap > 7180M
+UserWarning: Using SDL2 binaries from pysdl2-dll 2.32.10
+starting from buttons_generic_resume
+labels as decoded: in sync until video frame 9143
+add a 9144 + add right 9114      sync 9143 -> 9596  (101s, 101 cpu-s, 263672 frames played)
+end a 9337->9336                 sync 9596 -> 11238  (4s, 4 cpu-s, 267711 frames played)
+drop a 11099-11104               sync 11238 -> 12337  (13s, 13 cpu-s, 301471 frames played)
+end a 12326->12390               sync 12337 -> 12859  (12s, 11 cpu-s, 329277 frames played)
+end a 12831->12827               sync 12859 -> 13048  (17s, 17 cpu-s, 371115 frames played)
+  nothing within 300 frames: widening to 600
+  nothing within 600 frames: widening to 1200
+  nothing within 1200 frames: widening to 2400
+2026-11-04 11:41:27 exit 0
+2026-11-04 11:41:29 stopped by hand at 13048: flower/water tile animation out of phase (hMovingBGTilesCounter1 0xFFD8, wMovingBGTilesCounter2 0xD084); writing them at 13000 keeps sync to 14000; no button can — labels written from this log's edits, fresh replay loses first at 13048
+2026-11-04 11:41:31 watchdog generic: pipeline gone, exiting

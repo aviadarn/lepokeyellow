@@ -1,0 +1,108 @@
+{
+ "name": "poweron_generic",
+ "start": 0,
+ "verified_until": 13048,
+ "limit": 18000,
+ "started_from": "v3 buttons_ruled (labels.h5), v3 held_p / onset_p as the prior; no hand edits",
+ "edits": [
+  {
+   "edit": "drop a 1785-1790"
+  },
+  {
+   "edit": "add a 3060x60"
+  },
+  {
+   "edit": "add a 3258x60"
+  },
+  {
+   "edit": "start left 3344->3352"
+  },
+  {
+   "edit": "swap left->a 3397-3408"
+  },
+  {
+   "edit": "swap up->a 3411-3421 + add a 3444x60 + add down 3447x20"
+  },
+  {
+   "edit": "end down 3476->3478 + add down 3469"
+  },
+  {
+   "edit": "end up 3536->3568"
+  },
+  {
+   "edit": "add a 3558x60"
+  },
+  {
+   "edit": "add a 3660x60"
+  },
+  {
+   "edit": "add right 5010 + add right 5046 + add right 5016"
+  },
+  {
+   "edit": "add right 5052 + add right 5040 + add right 5080"
+  },
+  {
+   "edit": "add right 5028 + add down 5112"
+  },
+  {
+   "edit": "add left 5154 + add left 5160 + add left 5178"
+  },
+  {
+   "edit": "add up 5190 + add left 5196"
+  },
+  {
+   "edit": "add a 5202x60 + add left 5208"
+  },
+  {
+   "edit": "split a 5202-5262@5211"
+  },
+  {
+   "edit": "end a 6522->6778"
+  },
+  {
+   "edit": "add a 7500"
+  },
+  {
+   "edit": "end a 7673->7737 + add down 7704"
+  },
+  {
+   "edit": "add down 7710 + add a 7740x20"
+  },
+  {
+   "edit": "end left 8096->8095 + drop left 8114-8124"
+  },
+  {
+   "edit": "add left 8484"
+  },
+  {
+   "edit": "add a 8808x20"
+  },
+  {
+   "edit": "end a 8828->8824 + end down 9115->9114"
+  },
+  {
+   "edit": "add a 9144 + add right 9114"
+  },
+  {
+   "edit": "end a 9337->9336"
+  },
+  {
+   "edit": "drop a 11099-11104"
+  },
+  {
+   "edit": "end a 12326->12390"
+  },
+  {
+   "edit": "end a 12831->12827"
+  }
+ ],
+ "frames_changed": 885,
+ "cpu_seconds_per_stuck_point": {
+  "median": 19.0,
+  "p90": 401.0,
+  "max": 1728.0,
+  "n": 31
+ },
+ "sessions": "session 1 reached 9,143 and was stopped (its beam ended on rounds that gain nothing); session 2 started from session 1's own 25 edits with the cost-ranked beam (fresh replay of them: in sync to 9,143)",
+ "stopped": "by hand at 13,048 (3:37): the flower and water tile animation runs out of phase (hMovingBGTilesCounter1 0xFFD8, wMovingBGTilesCounter2 0xD084); writing them at 13,000 keeps the replay in sync to 14,000, no button can. Labels written from the log's edits; a fresh replay loses sync first at 13,048."
+}

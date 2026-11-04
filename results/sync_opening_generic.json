@@ -1,0 +1,14 @@
+{
+ "offset": -67,
+ "intro_frames": 1913,
+ "intro_in_sync": 1757,
+ "intro_median_share": 0.9983072916666667,
+ "replayed": 17931,
+ "in_sync_share": 0.7805476548993363,
+ "pixel_share_only": 0.7890803636160839,
+ "text_mismatch_frames": 153,
+ "frames_before_lost": 14687,
+ "lost_at_video_frame": 14697,
+ "offset_moves": 33,
+ "final_offset": -58
+}
