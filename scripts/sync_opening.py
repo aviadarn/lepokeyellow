@@ -110,14 +110,22 @@ def text_mismatch(a: np.ndarray, b: np.ndarray, classes: np.ndarray) -> int:
     return int(_patch_sums(ca != cb)[judged].max())
 
 
+def tile_aligned(pyboy) -> bool:
+    """The background sits on the screen's 8x8 grid (SCX, SCY multiples of
+    8): text drawn into it is on the tiles `text_mismatch_near` compares."""
+    return pyboy.memory[0xFF43] % TEXT_PATCH == 0 and pyboy.memory[0xFF42] % TEXT_PATCH == 0
+
+
 def text_mismatch_near(frame: np.ndarray, video, v: int, classes: np.ndarray,
-                       slack: int = TEXT_SLACK) -> int:
+                       slack: int = TEXT_SLACK, tiled: bool = True) -> int:
     """`text_mismatch` against video frame v, or, when that is TEXT_LIMIT or
     more, tile by tile: each 8x8 tile of the screen's grid that is paper and
     ink takes the fewest differing pixels against that tile in any video
     frame within `slack` where it is paper and ink too, and the worst tile
     is returned (tiles, not sliding patches: a patch straddling two letters
-    printed in different batches matches no frame).
+    printed in different batches matches no frame). Only `tiled`: with the
+    screen scrolled off the grid a wrong letter splits across tiles, each
+    under the limit, so there it is the least whole-frame mismatch.
 
     Patch by patch because the game copies its tile map to the screen a
     third at a time: at 2:32 the capture emulator shows a line of text in
@@ -130,11 +138,17 @@ def text_mismatch_near(frame: np.ndarray, video, v: int, classes: np.ndarray,
     worst = text_mismatch(frame, video[v], classes)
     if worst < TEXT_LIMIT:
         return worst
+    order = sorted(range(max(v - slack, 0), min(v + slack + 1, len(video))),
+                   key=lambda u: (abs(u - v), u))
+    if not tiled:
+        for u in order:
+            worst = min(worst, text_mismatch(frame, video[u], classes))
+            if worst < TEXT_LIMIT:
+                break
+        return worst
     ce = classes[frame]
     mine = _tile_sums(ce == 2) == 0
     best = np.full(mine.shape, np.iinfo(np.int32).max, np.int64)
-    order = sorted(range(max(v - slack, 0), min(v + slack + 1, len(video))),
-                   key=lambda u: (abs(u - v), u))
     for u in order:
         cu = classes[video[u]]
         both = mine & (_tile_sums(cu == 2) == 0)
@@ -274,7 +288,8 @@ class Replayer:
             self.streak = 0
         if scores[0] < SYNC_SHARE:
             return v, scores[0], None
-        return v, scores[0], text_mismatch_near(frame, self.video, v, self.classes)
+        return v, scores[0], text_mismatch_near(frame, self.video, v, self.classes,
+                                                tiled=tile_aligned(self.pyboy))
 
     def state_key(self) -> bytes:
         """A digest of what decides the frames to come: VRAM, WRAM, OAM,

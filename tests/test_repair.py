@@ -333,3 +333,43 @@ def test_beam_finds_a_fix_that_needs_an_edit_which_alone_gains_nothing():
     found = beam(search, decoded, _held(n), onset, lost, n)
     assert found is not None and found.reach >= lost + MARGIN
     assert "right" in found.what and "add a" in found.what
+
+
+def test_verified_reach_comes_from_a_fresh_replay():
+    # The search's snapshot chain is bookkeeping: what is written as
+    # verified is where a new emulator, replaying the final labels from the
+    # anchor under the same rule, first loses sync.
+    from scripts.repair_labels import fresh_reach
+
+    made = []
+
+    def new_replayer():
+        made.append(_FixedLoss())
+        return made[-1]
+
+    masks = np.zeros(1000, np.int64)
+    assert fresh_reach(new_replayer, masks, 0, 1000, judge_from=0) == 105
+    assert len(made) == 1 and made[0].masks is masks
+
+
+def test_a_stuck_point_over_its_budget_ends_the_run():
+    # A wall no edit passes (the tile animation at 13,048) must stop the
+    # run on its own, not search for hours.
+    from scripts.repair_labels import Search, repair
+
+    n = 3000
+    plays = []
+
+    class Wall(Search):
+        def play(self, snapshot, masks, stop_at, record=False, **_):
+            plays.append(1)
+            self.last_cost = 0.0
+            return min(320, stop_at)
+
+    ticks = iter(range(10**6))
+    search = Wall(_FakeReplayer(), None, n, clock=lambda: next(ticks))
+    decoded = np.zeros(n, np.int64)
+    masks, lost, edits = repair(search, decoded, _held(n), np.zeros((n, 8), np.float32),
+                                search.base(decoded, 0), n, max_edits=5, max_backtracks=3,
+                                stuck_budget=100)
+    assert lost == 320 and not edits and len(plays) < 150

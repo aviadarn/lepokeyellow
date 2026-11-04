@@ -66,8 +66,10 @@ def latest(snapshots: list[tuple[int, tuple]], frame: int):
 
 class Search:
     def __init__(self, replayer: Replayer, start: tuple, limit: int, run: int = RUN,
-                 judge_from: int = 0):
+                 judge_from: int = 0, clock=time.process_time):
         self.rep, self.limit, self.run = replayer, limit, run
+        # CPU time, and the time a stuck point's search must end by (None: no limit).
+        self.clock, self.deadline = clock, None
         # Frames before this are played but not judged: from power-on, the
         # boot screens of PyBoy and the capture emulator differ for ~50
         # frames whatever is pressed.
@@ -149,6 +151,9 @@ class Search:
         self.base_cost = {v: c for v, c in self.base_cost.items() if v < start}
         return self.play(self.snapshots[-1][1], masks, self.limit, record=True)
 
+    def out_of_time(self) -> bool:
+        return self.deadline is not None and self.clock() > self.deadline
+
     def reach(self, masks: np.ndarray, first: int, lost: int, cap: int,
               last: int | None = None) -> int:
         """Where `masks` lose sync, played from the last snapshot at or before
@@ -187,6 +192,8 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
             base = member.masks
             for c in screen(candidates(base, held_p, onset_p, member.reach, window), cap,
                             lost=member.reach):
+                if search.out_of_time():
+                    break
                 what = f"{member.what} + {c.what}" if member.what else c.what
                 if what in exclude:
                     continue
@@ -207,7 +214,7 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
                 if child.reach >= stop:
                     return child
                 children.append(child)
-        if not children:
+        if not children or search.out_of_time():
             break
         children.sort(key=lambda c: (-c.reach, c.cost, -c.prior, c.what.count(" + ")))
         top = children[0]
@@ -231,7 +238,8 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
 
 def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
            lost: int, limit: int, max_edits: int, max_backtracks: int, width: int = 4,
-           depth: int = 12, window: int = 300, max_window: int = 2400, cap: int = 400):
+           depth: int = 12, window: int = 300, max_window: int = 2400, cap: int = 400,
+           stuck_budget: float | None = None):
     """Greedy repair with backtracking: (masks, video frame sync is lost at, edits).
 
     Each step takes the best set of edits at the current loss of sync
@@ -240,13 +248,16 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
     next-best set at that point is tried instead -- a weak early fix can put
     the emulator on a wrong track that only shows later. The
     furthest-reaching labels found are returned.
+    A stuck point that takes more than `stuck_budget` CPU seconds, searching
+    and backtracking, ends the run: a wall no edit passes (the tile
+    animation at 13,048) is a stop, not hours of search.
     """
     def find(m, at, exclude, avoid=None):
         w = window
         while True:
             found = beam(search, m, held_p, onset_p, at, limit, width, depth, w, cap,
                          exclude, avoid)
-            if found is not None or w >= max_window:
+            if found is not None or w >= max_window or search.out_of_time():
                 return found
             w = min(2 * w, max_window)
             print(f"  nothing within {w // 2} frames: widening to {w}", flush=True)
@@ -257,12 +268,14 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
     backtracks = 0
     while lost < limit and len(stack) < max_edits:
         t, cpu = time.time(), time.process_time()
+        search.deadline = None if stuck_budget is None else search.clock() + stuck_budget
         winner = find(masks, lost, frozenset())
         tried: set = set()
         if winner is None:
             # Undo edits until one has an untried alternative that helps.
             undone_first = lost
-            while stack and winner is None and backtracks < max_backtracks:
+            while (stack and winner is None and backtracks < max_backtracks
+                   and not search.out_of_time()):
                 masks, lost, undone, tried = stack.pop()
                 undone_first = min(undone_first, undone.first)
                 tried.add(undone.what)
@@ -272,8 +285,9 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
                 print(f"  backtrack: undo {undone.what} -> "
                       f"{winner.what if winner else 'no alternative'}", flush=True)
             if winner is None:
-                print(f"stuck at video frame {best[1]}: no set of edits plays {MARGIN} frames "
-                      f"longer", flush=True)
+                why = (f"over its {stuck_budget:.0f} CPU-s budget" if search.out_of_time()
+                       else f"no set of edits plays {MARGIN} frames longer")
+                print(f"stuck at video frame {best[1]}: {why}", flush=True)
                 break
             first = min(winner.first, undone_first, lost)
         else:
@@ -290,6 +304,17 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
             best = (masks, lost, [{"edit": e.what, "at": e.first, "lost_before": lb,
                                    "prior": round(e.prior, 3)} for _, lb, e, _ in stack])
     return best
+
+
+def fresh_reach(make_replayer, masks: np.ndarray, first: int, limit: int, judge_from: int,
+                run: int = RUN) -> int:
+    """Where a new emulator (`make_replayer()`), replaying `masks` from the
+    anchor under the search's own rule, first loses sync. The search's
+    chain of save states is bookkeeping, and PyBoy's save states have lost
+    state before (the input latch): what is written as verified is this."""
+    replayer = make_replayer()
+    search = Search(replayer, replayer.save(), limit, run, judge_from)
+    return search.play(replayer.save(), masks, limit)
 
 
 def should_write(labels, first: int, lost: int) -> bool:
@@ -340,6 +365,8 @@ def main() -> None:
                         help="frames before the loss of sync that edits may touch")
     parser.add_argument("--max-window", type=int, default=2400)
     parser.add_argument("--cap", type=int, default=400, help="edits tried per member per round")
+    parser.add_argument("--stuck-budget", type=float, default=None,
+                        help="CPU seconds a stuck point may take before the run stops there")
     parser.add_argument("--only-if-better", action="store_true",
                         help="write only if this run verifies further than the file already does")
     parser.add_argument("--name", default="poweron")
@@ -380,14 +407,31 @@ def main() -> None:
     print(f"labels as decoded: in sync until video frame {lost}", flush=True)
     masks, lost, edits = repair(search, masks, held_p, onset_p, lost, limit, args.max_edits,
                                 args.max_backtracks, args.width, args.depth, args.window,
-                                args.max_window, args.cap)
+                                args.max_window, args.cap, args.stuck_budget)
     if env:
         env.close()
     else:
         pyboy.stop(save=False)
 
+    judge_from = first_frame + (0 if args.anchor_state else args.settle)
+    fresh_envs = []
+
+    def new_replayer():
+        if args.anchor_state:
+            fresh_envs.append(anchored(args.anchor_state))
+            return Replayer(fresh_envs[-1].pyboy, snapper, video, masks, offset)
+        fresh_envs.append(boot())
+        return Replayer(fresh_envs[-1], snapper, video, masks, offset)
+
+    searched = int(lost)
+    lost = min(searched, fresh_reach(new_replayer, masks, first_frame, limit, judge_from))
+    for made in fresh_envs:
+        made.close() if args.anchor_state else made.stop(save=False)
+    print(f"fresh replay of the result: in sync until {lost} (search: {searched})", flush=True)
+
     changed = int((masks != original).sum())
     report = {"name": args.name, "start": first_frame, "verified_until": int(lost),
+              "search_reach": searched,
               "limit": limit, "edits": edits, "frames_changed": changed,
               "anchor_state": args.anchor_state, "seconds": round(time.time() - started)}
     print(f"verified video frames {first_frame}-{lost} with {len(edits)} edits "

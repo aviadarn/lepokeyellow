@@ -196,3 +196,27 @@ def test_text_is_not_judged_when_the_share_failed():
     v, share, text = replayer.step()
     assert share < SYNC_SHARE and text is None
     assert not in_sync(share, text) and not in_sync(0.99, None)
+
+
+def test_off_grid_text_gets_the_whole_frame_check_only():
+    # Text the screen has scrolled off the tile grid splits a wrong letter
+    # across tiles, each under the limit: tile-by-tile slack would pass it
+    # even with the video frame-for-frame the same.
+    classes = text_classes(COLOURS)
+    video = np.stack([screen(K, at=(121, 43))] * 30)
+    wrong = screen(R, at=(121, 43))
+    assert text_mismatch_near(wrong, video, 15, classes, tiled=False) >= TEXT_LIMIT
+
+
+def test_tiles_count_only_when_the_scroll_is_on_the_grid():
+    from scripts.sync_opening import tile_aligned
+
+    class Memory(dict):
+        pass
+
+    class Fake:
+        def __init__(self, scx, scy):
+            self.memory = Memory({0xFF43: scx, 0xFF42: scy})
+
+    assert tile_aligned(Fake(0, 0)) and tile_aligned(Fake(16, 8))
+    assert not tile_aligned(Fake(3, 0)) and not tile_aligned(Fake(0, 6))
