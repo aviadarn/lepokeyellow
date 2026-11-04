@@ -479,3 +479,21 @@ def test_fresh_reach_applies_the_writes():
     assert fresh_reach(_HiddenWall, masks, 0, 1000, judge_from=0) == 300
     assert fresh_reach(_HiddenWall, masks, 0, 1000, judge_from=0,
                        writes={260: ((0xFFD8, 7),)}) == 1000
+
+
+def test_a_cheap_resync_comes_before_widening_the_window():
+    # At 13,048 widening the window to 2,400 frames used the whole budget;
+    # the tile tier (168 values) must be tried first.
+    import itertools
+
+    from scripts.repair_labels import TILE_ANIMATION, Search, repair
+
+    n = 1000
+    ticks = itertools.count()
+    search = Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0}), n, clock=lambda: next(ticks))
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    _, lost, edits = repair(search, masks, _held(n), np.zeros((n, 8), np.float32), lost, n,
+                            max_edits=5, max_backtracks=1, max_window=2400,
+                            stuck_budget=3000, tiers=(TILE_ANIMATION,))
+    assert lost == n and edits[0]["edit"].startswith("write FFD8=7")

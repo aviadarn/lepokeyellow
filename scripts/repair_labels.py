@@ -314,15 +314,28 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
     and backtracking, ends the run: a wall no edit passes (the tile
     animation at 13,048) is a stop, not hours of search.
     """
+    def size(tier):
+        return int(np.prod([len(values) for _, values in tier]))
+
+    cheap = tuple(t for t in tiers if size(t) <= IN_PROCESS)
+    costly = tuple(t for t in tiers if size(t) > IN_PROCESS)
+
     def find(m, at, exclude, avoid=None):
+        # Cheapest first: the narrow beam, then a small resync (the tile tier
+        # is 168 replays; widening to 2,400 frames can take half an hour),
+        # then the wider beams, then a large resync.
         w = window
         while True:
             found = beam(search, m, held_p, onset_p, at, limit, width, depth, w, cap,
                          exclude, avoid)
             if found is not None or search.out_of_time():
                 return found
+            if w == window and cheap:
+                found = resync(search, m, at, limit, cheap, exclude, avoid, workers)
+                if found is not None or search.out_of_time():
+                    return found
             if w >= max_window:
-                return resync(search, m, at, limit, tiers, exclude, avoid, workers) if tiers else None
+                return resync(search, m, at, limit, costly, exclude, avoid, workers) if costly else None
             w = min(2 * w, max_window)
             print(f"  nothing within {w // 2} frames: widening to {w}", flush=True)
 
