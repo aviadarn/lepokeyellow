@@ -376,8 +376,14 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
         # found an edit.
         w = window
         while True:
+            # The narrow beam gets half of what is left while resyncs wait:
+            # in a battle's text it can take a whole budget by itself.
+            full = search.deadline
+            if w == window and tiers and full is not None:
+                search.deadline = search.clock() + (full - search.clock()) / 2
             found = beam(search, m, held_p, onset_p, at, limit, width, depth, w, cap,
                          exclude, avoid)
+            search.deadline = full
             if found is not None or search.out_of_time():
                 return found
             if w == window and tiers:

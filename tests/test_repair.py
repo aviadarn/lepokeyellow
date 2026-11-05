@@ -500,6 +500,26 @@ def test_a_cheap_resync_comes_before_widening_the_window():
     assert lost == n and edits[0]["edit"].startswith("write FFD8=7")
 
 
+def test_the_narrow_beam_leaves_the_resyncs_half_the_budget():
+    # Window 1's battle (Mt. Moon): the narrow beam used 860 of the wall's
+    # 900 CPU-s; the resyncs after it ran out, and the random tier never ran.
+    # Here the narrow beam takes about 2,000 ticks, and the tile tier reaches
+    # FFD8=7 at its 57th value.
+    import itertools
+
+    from scripts.repair_labels import TILE_ANIMATION, Search, repair
+
+    n = 1000
+    ticks = itertools.count()
+    search = Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0}), n, clock=lambda: next(ticks))
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    _, lost, edits = repair(search, masks, _held(n), np.zeros((n, 8), np.float32), lost, n,
+                            max_edits=5, max_backtracks=1, max_window=300,
+                            stuck_budget=2040, tiers=(TILE_ANIMATION,))
+    assert lost == n and edits[0]["edit"].startswith("write FFD8=7")
+
+
 def test_a_costly_resync_comes_before_widening_the_window(monkeypatch):
     # Window 1 (Mt. Moon): widening to 600 and 1,200 frames used the whole
     # budget, so the random tier (a minute's sweep on workers) never ran.
