@@ -582,10 +582,65 @@ def test_resync_searches_the_current_labels_within_its_budget():
     search.reach(other, 50, lost, n)                  # leaves another candidate's labels
     big = ((0xFFD3, range(40)), (0xFFD4, range(40)))  # 1,600 values: a worker tier
     resync(search, masks, lost, n, (big,), sweep=sweep)
-    assert len(seen) == 1 and np.array_equal(seen[0], masks)
+    assert seen and all(np.array_equal(m, masks) for m in seen)
+    calls = len(seen)
     search.deadline, search.clock = 0.0, lambda: 1.0  # out of time
     resync(search, masks, lost, n, (big,), sweep=sweep)
-    assert len(seen) == 1
+    assert len(seen) == calls
+
+
+def _register_sweep(reach_of, sizes):
+    """A sweep that scores each combination with `reach_of` and records how
+    many combinations each call was given."""
+    import itertools
+
+    def sweep(replayer, snapshot, cap, registers, workers, writes, at, judge_from, run,
+              deadline=None):
+        combos = list(itertools.product(*[list(values) for _, values in registers]))
+        sizes.append(len(combos))
+        return sorted(((min(reach_of(c), cap), c) for c in combos), key=lambda r: (-r[0], r[1]))
+    return sweep
+
+
+def test_a_large_tier_is_searched_one_register_at_a_time():
+    # Window 1 (Mt. Moon): hRandomAdd decides the encounter, then hRandomSub
+    # the species: 256 + 256 replays found what the 65,536 took 8 minutes for.
+    from scripts.repair_labels import RANDOM, Search, resync
+
+    n, sizes = 1000, []
+    search = Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0, 0xFFD3: 117, 0xFFD4: 111}), n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    found = resync(search, masks, lost, n, (RANDOM,), sweep=_register_sweep(
+        lambda c: lost + 600 if c == (119, 97) else lost + 140 if c[0] == 119 else lost, sizes))
+    assert found.what.startswith("write FFD3=119 FFD4=97")
+    assert sizes == [256, 256]
+
+
+def test_a_large_tier_falls_back_to_every_combination():
+    # Neither register alone plays further: only the pair does.
+    from scripts.repair_labels import RANDOM, Search, resync
+
+    n, sizes = 1000, []
+    search = Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0, 0xFFD3: 117, 0xFFD4: 111}), n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    found = resync(search, masks, lost, n, (RANDOM,), sweep=_register_sweep(
+        lambda c: lost + 600 if c == (3, 5) else lost, sizes))
+    assert found.what.startswith("write FFD3=3 FFD4=5")
+    assert sizes == [256, 256, 65536]
+
+
+def test_a_one_register_large_tier_is_swept_once():
+    from scripts.repair_labels import Search, resync
+
+    n, sizes = 1000, []
+    search = Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0, 0xC000: 0}), n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    assert resync(search, masks, lost, n, (((0xC000, range(2000)),),),
+                  sweep=_register_sweep(lambda c: lost, sizes)) is None
+    assert sizes == [2000]
 
 
 def test_a_wall_keeps_its_budget_through_backtracking():

@@ -305,8 +305,26 @@ def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
             deadline = None
             if search.deadline is not None:
                 deadline = time.time() + max(search.deadline - search.clock(), 0) / workers
-            ranked = sweep(search.rep, snapshot[1], cap, tier, workers, search.writes, at,
-                           search.judge_from, search.run, deadline=deadline)
+
+            def swept(registers):
+                return sweep(search.rep, snapshot[1], cap, registers, workers, search.writes,
+                             at, search.judge_from, search.run, deadline=deadline)
+
+            # One register at a time, the others at the best values so far
+            # (the random bytes: hRandomAdd decides an encounter, then
+            # hRandomSub its species); every combination only if that fails.
+            ranked, chosen = [], list(now)
+            for k, (_, values) in enumerate(tier):
+                part = swept(tuple((a, values if j == k else [chosen[j]])
+                                   for j, (a, _) in enumerate(tier)))
+                if not part:
+                    break
+                ranked += part
+                chosen = list(min(part, key=lambda r: (
+                    -r[0], sum(abs(v - c) for v, c in zip(r[1], now))))[1])
+            if (len(tier) > 1 and max((r for r, _ in ranked), default=lost) < lost + MARGIN
+                    and (deadline is None or time.time() < deadline)):
+                ranked += swept(tier)
             if deadline is not None and time.time() > deadline:
                 search.deadline = search.clock() - 1      # the sweep spent the budget
         print(f"  resync {' '.join(f'{a:04X}' for a in addresses)} @{at}: {len(ranked)} of "
