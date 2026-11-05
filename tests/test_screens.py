@@ -61,10 +61,10 @@ def test_a_drawn_party_submenu_names_its_mon_and_field_moves():
     font = _font()
     frame = _screen(font, {(10, 3): "IVYSAUR", (11, 0): "▷", (10, 12): "▶CUT",
                            (12, 13): "STATS", (14, 13): "SWITCH", (16, 13): "CANCEL"})
-    assert party_submenu(frame, CLASSES, font) == (5, ["CUT"])
-    no_moves = _screen(font, {(1, 0): "▷", (12, 13): "STATS", (14, 13): "SWITCH",
-                              (16, 13): "CANCEL"})
-    assert party_submenu(no_moves, CLASSES, font) == (0, [])
+    assert party_submenu(frame, CLASSES, font) == (5, "IVYSAUR", ["CUT"])
+    no_moves = _screen(font, {(0, 3): "PIKACHU", (1, 0): "▷", (12, 13): "STATS",
+                              (14, 13): "SWITCH", (16, 13): "CANCEL"})
+    assert party_submenu(no_moves, CLASSES, font) == (0, "PIKACHU", [])
     assert party_submenu(_screen(font, {(10, 3): "IVYSAUR"}), CLASSES, font) is None
 
 
@@ -95,4 +95,4 @@ def test_the_videos_party_and_bag_screens_parse():
     assert ("BICYCLE", 1) in bag_screen(viridian, classes, glyphs)
     assert bag_screen(bag_over_start, classes, glyphs) == [
         ("BICYCLE", 1), ("SUPER POTION", 1), ("GREAT BALL", 6), ("REVIVE", 11)]
-    assert party_submenu(submenu, classes, glyphs) == (5, ["CUT"])
+    assert party_submenu(submenu, classes, glyphs) == (5, "IVYSAUR", ["CUT"])

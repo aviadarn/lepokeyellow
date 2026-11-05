@@ -62,7 +62,8 @@ NEUTRAL = 2         # rounds a beam may go on getting nearer without getting fur
 TILE_ANIMATION = ((0xFFD8, range(21)), (0xD084, range(8)))   # flowers and water (13,048)
 RANDOM = ((0xFFD3, range(256)), (0xFFD4, range(256)))         # hRandomAdd, hRandomSub
 MENU_CURSOR = ((0xCC2D, range(7)),)   # wBattleAndStartSavedMenuItem: where START opens
-TIERS = {"tile": TILE_ANIMATION, "menu": MENU_CURSOR, "random": RANDOM}
+BADGES = ((0xD355, range(256)),)      # wObtainedBadges: a door's state has its own
+TIERS = {"tile": TILE_ANIMATION, "menu": MENU_CURSOR, "badges": BADGES, "random": RANDOM}
 RESYNC_LEAD = 40    # frames before the loss a write goes in
 IN_PROCESS = 1000   # tiers this small are searched here, larger ones on workers
 
@@ -251,7 +252,7 @@ def beam(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndar
 
 
 def parse_tiers(text: str) -> tuple:
-    """`--resync`: tier names, comma separated (tile, menu, random), or none."""
+    """`--resync`: tier names, comma separated (tile, menu, badges, random), or none."""
     if text.strip() in ("", "none"):
         return ()
     names = [t.strip() for t in text.split(",")]
@@ -473,10 +474,13 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                                guessed=set_party(pyboy, rom, symbols, party))
                 previous = party
             else:
-                # Slots as the party read above has them: a member's moves.
+                # The member by name: the player may have switched the party
+                # since the read above, whose slots the moves are kept by.
                 shown = party_submenu(block[i], classes, glyphs)
-                if shown and shown[0] < len(out["party"]):
-                    out.setdefault("field_moves", {}).setdefault(shown[0], shown[1])
+                named = [k for k, mon in enumerate(out["party"])
+                         if shown and shown[1] and mon["name"].startswith(shown[1])]
+                if len(named) == 1:
+                    out.setdefault("field_moves", {}).setdefault(named[0], shown[2])
             if "bag" not in out:
                 # Only names that are items: the START menu's OPTION is a list too.
                 bag = [(name, q) for name, q in bag_screen(block[i], classes, glyphs) or []
@@ -561,8 +565,8 @@ def main() -> None:
     parser.add_argument("--max-window", type=int, default=2400)
     parser.add_argument("--cap", type=int, default=400, help="edits tried per member per round")
     parser.add_argument("--resync", default="tile,random",
-                        help="hidden-state tiers to try where no edit helps: tile, menu, random, "
-                             "or none")
+                        help="hidden-state tiers to try where no edit helps: tile, menu, badges, "
+                             "random, or none")
     parser.add_argument("--rebuild", action="store_true",
                         help="anchored runs: set the party and bag the window's own screens show")
     parser.add_argument("--stuck-budget", type=float, default=None,

@@ -81,4 +81,4 @@ def test_written_field_moves_show_in_the_party_submenu():
     _press(env.pyboy, "a", 40)
     snapper = Snapper(np.load(COLOURS))
     frame = emulator_index(env.pyboy, snapper)
-    assert party_submenu(frame, text_classes(snapper.colours), font(rom, symbols)) == (1, ["CUT"])
+    assert party_submenu(frame, text_classes(snapper.colours), font(rom, symbols)) == (1, "IVYSAUR", ["CUT"])

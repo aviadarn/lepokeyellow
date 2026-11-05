@@ -623,6 +623,7 @@ def test_resync_tiers_parse_from_their_names():
 
     assert parse_tiers("tile,menu") == (TILE_ANIMATION, MENU_CURSOR)
     assert parse_tiers("random") == (RANDOM,)
+    assert parse_tiers("badges") == (((0xD355, range(256)),),)        # wObtainedBadges
     assert parse_tiers("none") == ()
     with pytest.raises(ValueError):
         parse_tiers("tiles")
@@ -650,6 +651,25 @@ def test_a_windows_screens_rebuild_its_party_and_bag():
     assert rebuilt["field_moves"] == {5: ["CUT"]}
     cut = 0x0F
     assert cut in [env.pyboy.memory[0xD16A + 5 * 44 + 8 + i] for i in range(4)]
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_field_moves_go_to_the_member_named_not_the_slot_after_a_switch():
+    # Celadon: the player later switches Ivysaur and Pidgeotto, whose
+    # submenus then show in slots 1 and 5. The moves belong to the members
+    # as the first party read has them.
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.symbols import load
+    from scripts.repair_labels import rebuild_from_screens
+
+    env = PokeEnv(str(ROM_PATH), "states/cgb/teleport/CeladonCity_w6.state", color=True)
+    env.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(env.pyboy, h5, 659260, 8400, ROM_PATH.read_bytes(), load())
+    assert rebuilt["party"][1]["name"] == "PIDGEOTTO" and rebuilt["party"][5]["name"] == "IVYSAUR"
+    assert rebuilt["field_moves"] == {5: ["CUT"], 1: ["FLY"]}
 
 
 @pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")

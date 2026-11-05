@@ -45,11 +45,13 @@ def party_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> 
     return party or None
 
 
-def party_submenu(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> tuple[int, list[str]] | None:
-    """(slot, field moves top to bottom) when the party menu's submenu is
-    open, else None. The submenu lists the selected member's field moves,
+def party_submenu(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray
+                  ) -> tuple[int, str, list[str]] | None:
+    """(slot, name, field moves top to bottom) when the party menu's submenu
+    is open, else None. The submenu lists the selected member's field moves,
     then STATS, SWITCH and CANCEL, on every other row; the party's cursor
-    marks the member in column 0 of its HP row (2 * slot + 1)."""
+    marks the member in column 0 of its HP row (2 * slot + 1). `name` is as
+    much of the member's name as the box leaves in sight."""
     rows = [read_row(frame, classes, glyphs, r) for r in range(18)]
     last = [(re.findall(r"[A-Z]+", row[9:]) or [""])[-1] for row in rows]
     stats = next((r for r in range(14) if last[r:r + 5:2] == list(SUBMENU)), None)
@@ -61,7 +63,8 @@ def party_submenu(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) ->
         if last[r] not in FIELD_MOVES:
             break
         moves.insert(0, last[r])
-    return (cursor - 1) // 2, moves
+    slot = (cursor - 1) // 2
+    return slot, re.match(r"[A-Z0-9♀♂.'\- ]*", rows[2 * slot][3:]).group().strip(), moves
 
 
 def bag_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> list[tuple[str, int]] | None:
