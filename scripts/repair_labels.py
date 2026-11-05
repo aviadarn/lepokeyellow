@@ -447,11 +447,12 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                          step: int = 4) -> dict:
     """Set the party and the bag that the video's own screens show in
     [first, first + frames): the first party menu read the same on two
-    frames `step` apart, and the first item list. A door's save state has
-    its own party and bag; the player's are on screen when they open them."""
-    from poke.party import items_by_name, set_bag, set_party
+    frames `step` apart, the field moves each member's submenu lists after
+    it, and the first item list. A door's save state has its own party and
+    bag; the player's are on screen when they open them."""
+    from poke.party import items_by_name, set_bag, set_field_moves, set_party
     from poke.screen_text import font
-    from poke.screens import bag_screen, party_screen
+    from poke.screens import bag_screen, party_screen, party_submenu
     from scripts.sync_opening import text_classes
 
     glyphs, classes = font(rom, symbols), text_classes(h5["colours"][:])
@@ -468,26 +469,35 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                     out.update(party=party, party_frame=v,
                                guessed=set_party(pyboy, rom, symbols, party))
                 previous = party
+            else:
+                # Slots as the party read above has them: a member's moves.
+                shown = party_submenu(block[i], classes, glyphs)
+                if shown and shown[0] < len(out["party"]):
+                    out.setdefault("field_moves", {}).setdefault(shown[0], shown[1])
             if "bag" not in out:
                 # Only names that are items: the START menu's OPTION is a list too.
-                bag = [name for name in bag_screen(block[i], classes, glyphs) or [] if name in items]
+                bag = [(name, q) for name, q in bag_screen(block[i], classes, glyphs) or []
+                       if name in items]
                 if bag:
                     set_bag(pyboy, rom, symbols, bag)
                     out.update(bag=bag, bag_frame=v)
-            if "party" in out and "bag" in out:
-                return out
+    for slot, moves in out.get("field_moves", {}).items():
+        set_field_moves(pyboy, rom, symbols, slot, moves)
     return out
 
 
 def apply_rebuilt(pyboy, rebuilt: dict, rom: bytes, symbols) -> None:
     """Write what `rebuild_from_screens` read into another emulator: the
-    fresh replay that confirms a window must start from the same state."""
-    from poke.party import set_bag, set_party
+    fresh replay that confirms a window must start from the same state.
+    Takes it as returned or read back from a report's JSON."""
+    from poke.party import set_bag, set_field_moves, set_party
 
     if rebuilt.get("party"):
         set_party(pyboy, rom, symbols, rebuilt["party"])
     if rebuilt.get("bag"):
-        set_bag(pyboy, rom, symbols, rebuilt["bag"])
+        set_bag(pyboy, rom, symbols, [tuple(item) for item in rebuilt["bag"]])
+    for slot, moves in rebuilt.get("field_moves", {}).items():
+        set_field_moves(pyboy, rom, symbols, int(slot), moves)
 
 
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,

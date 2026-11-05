@@ -615,6 +615,29 @@ def test_a_windows_screens_rebuild_its_party_and_bag():
     assert [p["level"] for p in rebuilt["party"]] == [26, 27, 28, 26, 26, 25]
     assert 659860 <= rebuilt["party_frame"] <= 659960
     assert env.pyboy.memory[0xD162] == 6
+    # Ivysaur's submenu (3:03:30) lists CUT: it knows it.
+    assert rebuilt["field_moves"] == {5: ["CUT"]}
+    cut = 0x0F
+    assert cut in [env.pyboy.memory[0xD16A + 5 * 44 + 8 + i] for i in range(4)]
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_a_bag_opened_over_the_start_menu_is_rebuilt_with_its_quantities():
+    # Viridian, 6:05:48: EXIT of the START menu shows below the bag's list.
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.symbols import load
+    from scripts.repair_labels import rebuild_from_screens
+
+    env = PokeEnv(str(ROM_PATH), "states/cgb/teleport/ViridianCity_w0.state", color=True)
+    env.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(env.pyboy, h5, 1315481, 200, ROM_PATH.read_bytes(), load())
+    assert [tuple(item) for item in rebuilt["bag"]] == [
+        ("BICYCLE", 1), ("SUPER POTION", 1), ("GREAT BALL", 6), ("REVIVE", 11)]
+    m = env.pyboy.memory
+    assert [m[0xD31D + 2 * i + 1] for i in range(4)] == [1, 1, 6, 11]
 
 
 @pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
@@ -652,4 +675,28 @@ def test_a_rebuild_can_be_applied_again_to_a_fresh_emulator():
     fresh.reset()
     apply_rebuilt(fresh.pyboy, rebuilt, rom, symbols)
     party = range(0xD162, 0xD2F7)               # count, species, structs, OT names, nicknames
+    assert [fresh.pyboy.memory[a] for a in party] == [first.pyboy.memory[a] for a in party]
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_a_rebuild_read_back_from_its_report_applies_its_field_moves():
+    # A report stores the rebuild as JSON: the slots of its field moves come back as text.
+    import json
+
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.symbols import load
+    from scripts.repair_labels import apply_rebuilt, rebuild_from_screens
+
+    rom, symbols = ROM_PATH.read_bytes(), load()
+    first = PokeEnv(str(ROM_PATH), "states/cgb/teleport/CeladonCity_w6.state", color=True)
+    first.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(first.pyboy, h5, 659860, 120, rom, symbols)
+    assert rebuilt["field_moves"] == {5: ["CUT"]}
+    fresh = PokeEnv(str(ROM_PATH), "states/cgb/teleport/CeladonCity_w6.state", color=True)
+    fresh.reset()
+    apply_rebuilt(fresh.pyboy, json.loads(json.dumps(rebuilt)), rom, symbols)
+    party = range(0xD162, 0xD2F7)
     assert [fresh.pyboy.memory[a] for a in party] == [first.pyboy.memory[a] for a in party]
