@@ -15,6 +15,7 @@ from poke.screen_text import read_row
 
 PROMPTS = ("Choose a POK", "Move POK", "Use item on", "which POK")
 STATUSES = ("PAR", "SLP", "PSN", "BRN", "FRZ")
+START_MENU = ("OPTION", "EXIT", "SAVE")       # a list with these is the START menu
 NAME = re.compile(r"^[A-Z][A-Z♀♂.'\- ]*$")
 
 
@@ -43,9 +44,13 @@ def party_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> 
 
 def bag_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> list[str] | None:
     """Item names listed in the bag's menu, top to bottom down to CANCEL,
-    or None when no list item reads. The list sits in a box on the right:
-    a cursor column, then the name."""
+    or None when no list item reads, or the list is the START menu (whose
+    POKéDEX is an item's name too). The list sits in a box on the right: a
+    cursor column, then the name."""
     names = []
+    rows = [read_row(frame, classes, glyphs, row) for row in range(0, 17)]
+    if any(word in " ".join(rows) for word in START_MENU):
+        return None
     for row in range(1, 13):
         text = read_row(frame, classes, glyphs, row)
         match = re.search(r"[▶▷ ]([A-Z][A-Z0-9é.'\- ]{2,})", text[4:19])
