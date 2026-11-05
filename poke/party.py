@@ -2,8 +2,9 @@
 
 A window of the longplay replayed from a door's save state carries that
 state's party and bag. What the video's own party menu and item list show --
-species or nickname, level, HP, status; the field moves a member's submenu
-lists; item names and quantities -- is written as shown.
+species or nickname, level, HP, status; the moves a battle's menu lists, or
+the field moves a member's submenu does, and PP shown; item names and
+quantities -- is written as shown.
 What no screen shows is guessed and returned, so a report can say which:
 DVs (8 each), stat experience (0), the four moves a species starts with,
 and the stats those give.
@@ -139,6 +140,20 @@ def set_field_moves(pyboy, rom: bytes, symbols, slot: int, names: list[str]) -> 
     moves = ([ids[n] for n in names] + rest + [0] * 4)[:4]
     for i, mv in enumerate(moves):
         m[at + 8 + i], m[at + 29 + i] = mv, _pp(rom, symbols, mv)
+
+
+def set_moves(pyboy, rom: bytes, symbols, slot: int, names: list[str],
+              pp: dict[int, int] | None = None) -> None:
+    """Give party member `slot` the moves a battle's menu listed, in order;
+    PP as shown for the moves in `pp` ({move index: PP left}), full for the
+    rest."""
+    m = pyboy.memory
+    ids = moves_by_name(rom, symbols)
+    at = symbols["wPartyMon1"][1] + slot * MON_BYTES
+    moves = ([ids[n] for n in names] + [0] * 4)[:4]
+    for i, mv in enumerate(moves):
+        m[at + 8 + i] = mv
+        m[at + 29 + i] = (pp or {}).get(i, _pp(rom, symbols, mv)) if mv else 0
 
 
 def set_bag(pyboy, rom: bytes, symbols, items: list[tuple[str, int]]) -> None:

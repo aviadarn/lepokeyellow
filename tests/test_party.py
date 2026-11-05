@@ -82,3 +82,21 @@ def test_written_field_moves_show_in_the_party_submenu():
     snapper = Snapper(np.load(COLOURS))
     frame = emulator_index(env.pyboy, snapper)
     assert party_submenu(frame, text_classes(snapper.colours), font(rom, symbols)) == (1, "IVYSAUR", ["CUT"])
+
+
+def test_written_moves_and_pp():
+    from poke.env import PokeEnv
+    from poke.party import moves_by_name, set_moves, set_party
+    from poke.symbols import load
+
+    rom, symbols = ROM.read_bytes(), load()
+    env = PokeEnv(str(ROM), str(STATE), color=True)
+    env.reset()
+    set_party(env.pyboy, rom, symbols,
+              [{"name": "PIKACHU", "level": 16, "hp": 40, "max_hp": 40, "status": None},
+               {"name": "NIDORAN♀", "level": 15, "hp": 46, "max_hp": 46, "status": None}])
+    set_moves(env.pyboy, rom, symbols, 1, ["SCRATCH", "TACKLE", "GROWL"], {0: 20})
+    ids, m = moves_by_name(rom, symbols), env.pyboy.memory
+    at = symbols["wPartyMon1"][1] + 44
+    assert [m[at + 8 + i] for i in range(4)] == [ids["SCRATCH"], ids["TACKLE"], ids["GROWL"], 0]
+    assert [m[at + 29 + i] for i in range(4)] == [20, 35, 40, 0]

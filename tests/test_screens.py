@@ -68,12 +68,22 @@ def test_a_drawn_party_submenu_names_its_mon_and_field_moves():
     assert party_submenu(_screen(font, {(10, 3): "IVYSAUR"}), CLASSES, font) is None
 
 
+def test_a_drawn_battle_move_menu_names_the_mon_its_moves_and_pp():
+    from poke.screens import battle_moves
+
+    font = _font()
+    frame = _screen(font, {(7, 10): "NIDORAN♀", (9, 1): "TYPE/", (11, 5): "35/35",
+                           (13, 5): "▶SCRATCH", (14, 6): "TACKLE", (15, 6): "-", (16, 6): "-"})
+    assert battle_moves(frame, CLASSES, font) == ("NIDORAN♀", ["SCRATCH", "TACKLE"], 0, 35, 35)
+    assert battle_moves(_screen(font, {(13, 5): "▶SCRATCH"}), CLASSES, font) is None
+
+
 @pytest.mark.skipif(not (ROM.exists() and VIDEO.exists()), reason="needs the ROM and the video")
 def test_the_videos_party_and_bag_screens_parse():
     import h5py
 
     from poke.screen_text import font
-    from poke.screens import bag_screen, party_screen, party_submenu
+    from poke.screens import bag_screen, battle_moves, party_screen, party_submenu
     from poke.symbols import load
     from scripts.sync_opening import text_classes, video_frames
 
@@ -85,6 +95,7 @@ def test_the_videos_party_and_bag_screens_parse():
         viridian = video_frames(h5, 1315620, 1)[0]
         bag_over_start = video_frames(h5, 1315600, 1)[0]
         submenu = video_frames(h5, 659922, 1)[0]
+        fight, fight_growl = video_frames(h5, 154720, 1)[0], video_frames(h5, 154800, 1)[0]
     party = party_screen(celadon, classes, glyphs)
     assert [p["level"] for p in party] == [26, 27, 28, 26, 26, 25]
     assert party[1]["name"] == "PIDGEOTTO" and party[1]["status"] == "PAR"
@@ -96,3 +107,6 @@ def test_the_videos_party_and_bag_screens_parse():
     assert bag_screen(bag_over_start, classes, glyphs) == [
         ("BICYCLE", 1), ("SUPER POTION", 1), ("GREAT BALL", 6), ("REVIVE", 11)]
     assert party_submenu(submenu, classes, glyphs) == (5, "IVYSAUR", ["CUT"])
+    moves = ["SCRATCH", "TACKLE", "GROWL", "DOUBLE KICK"]
+    assert battle_moves(fight, classes, glyphs) == ("NIDORAN♀", moves, 0, 35, 35)
+    assert battle_moves(fight_growl, classes, glyphs) == ("NIDORAN♀", moves, 2, 40, 40)

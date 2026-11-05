@@ -1,4 +1,5 @@
-"""Game state the screen shows: the party menu, its submenu, and the bag's item list.
+"""Game state the screen shows: the party menu, its submenu, a battle's move
+menu, and the bag's item list.
 
 Read with `poke.screen_text`, from a video frame or an emulator frame. A
 window of the longplay replayed from a door's save state has that state's
@@ -65,6 +66,29 @@ def party_submenu(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray
         moves.insert(0, last[r])
     slot = (cursor - 1) // 2
     return slot, re.match(r"[A-Z0-9♀♂.'\- ]*", rows[2 * slot][3:]).group().strip(), moves
+
+
+def battle_moves(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray
+                 ) -> tuple[str, list[str], int, int, int] | None:
+    """(the player's member's name, its moves top to bottom, the cursor's
+    move, its PP left, its PP max) when a battle's move menu is open, else
+    None. The moves fill four rows at the bottom (a dash for none), the
+    cursor in column 5; the selected move's type and PP are in the box above,
+    under the member's name."""
+    rows = [read_row(frame, classes, glyphs, r) for r in range(18)]
+    pp = re.search(r"(\d+)/\s*(\d+)", rows[11])
+    if "TYPE/" not in rows[9] or not pp:
+        return None
+    moves, cursor = [], None
+    for k, row in enumerate(rows[13:17]):
+        if row[5] in "▶▷":
+            cursor = k
+        name = row[6:19].strip()
+        if name and name != "-":
+            moves.append(name)
+    if cursor is None or cursor >= len(moves):
+        return None
+    return rows[7][10:].strip(), moves, cursor, int(pp.group(1)), int(pp.group(2))
 
 
 def bag_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> list[tuple[str, int]] | None:

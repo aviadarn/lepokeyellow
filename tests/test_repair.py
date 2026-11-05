@@ -728,6 +728,41 @@ def test_field_moves_go_to_the_member_named_not_the_slot_after_a_switch():
 
 
 @pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_a_battles_move_menu_rebuilds_that_members_moves():
+    # Mt. Moon, 0:43: Nidoran♀'s FIGHT menu lists SCRATCH, TACKLE, GROWL and
+    # DOUBLE KICK; the rebuild had given it its starting moves.
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.party import moves_by_name
+    from poke.symbols import load
+
+    from scripts.repair_labels import rebuild_from_screens
+
+    rom, symbols = ROM_PATH.read_bytes(), load()
+    env = PokeEnv(str(ROM_PATH), "states/cgb/teleport/MtMoon1F_w0.state", color=True)
+    env.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(env.pyboy, h5, 152796, 2100, rom, symbols)
+    assert rebuilt["party"][2]["name"] == "NIDORAN♀"
+    moves = ["SCRATCH", "TACKLE", "GROWL", "DOUBLE KICK"]
+    assert rebuilt["moves"] == {2: moves}
+    assert rebuilt["pp"][2][0] == 35 and rebuilt["pp"][2][2] == 40
+    ids, at = moves_by_name(rom, symbols), 0xD16A + 2 * 44
+    assert [env.pyboy.memory[at + 8 + i] for i in range(4)] == [ids[n] for n in moves]
+    # ... and the same again from a report's JSON, as a fresh replay or a viewer applies it.
+    import json
+
+    from scripts.repair_labels import apply_rebuilt
+
+    fresh = PokeEnv(str(ROM_PATH), "states/cgb/teleport/MtMoon1F_w0.state", color=True)
+    fresh.reset()
+    apply_rebuilt(fresh.pyboy, json.loads(json.dumps(rebuilt)), rom, symbols)
+    party = range(0xD162, 0xD2F7)
+    assert [fresh.pyboy.memory[a] for a in party] == [env.pyboy.memory[a] for a in party]
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
 def test_a_bag_opened_over_the_start_menu_is_rebuilt_with_its_quantities():
     # Viridian, 6:05:48: EXIT of the START menu shows below the bag's list.
     import h5py

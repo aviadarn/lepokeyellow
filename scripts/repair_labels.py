@@ -473,16 +473,24 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                          step: int = 4) -> dict:
     """Set the party and the bag that the video's own screens show in
     [first, first + frames): the first party menu read the same on two
-    frames `step` apart, the field moves each member's submenu lists after
-    it, and the first item list. A door's save state has its own party and
-    bag; the player's are on screen when they open them."""
-    from poke.party import items_by_name, set_bag, set_field_moves, set_party
+    frames `step` apart; after it, the moves a battle's menu lists for a
+    member (and the PP shown for each), or else the field moves its submenu
+    lists; and the first item list. A door's save state has its own party
+    and bag; the player's are on screen when they open them."""
+    from poke.party import items_by_name, moves_by_name, set_bag, set_field_moves, set_moves, set_party
     from poke.screen_text import font
-    from poke.screens import bag_screen, party_screen, party_submenu
+    from poke.screens import bag_screen, battle_moves, party_screen, party_submenu
     from scripts.sync_opening import text_classes
 
     glyphs, classes = font(rom, symbols), text_classes(h5["colours"][:])
-    items = items_by_name(rom, symbols)
+    items, move_ids = items_by_name(rom, symbols), moves_by_name(rom, symbols)
+
+    def member(name):
+        # The member by name: the player may have switched the party since
+        # the first read, whose slots everything is kept by.
+        named = [k for k, mon in enumerate(out["party"]) if name and mon["name"].startswith(name)]
+        return named[0] if len(named) == 1 else None
+
     out: dict = {}
     previous = None
     for start in range(first, first + frames, 2048):
@@ -496,13 +504,16 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                                guessed=set_party(pyboy, rom, symbols, party))
                 previous = party
             else:
-                # The member by name: the player may have switched the party
-                # since the read above, whose slots the moves are kept by.
                 shown = party_submenu(block[i], classes, glyphs)
-                named = [k for k, mon in enumerate(out["party"])
-                         if shown and shown[1] and mon["name"].startswith(shown[1])]
-                if len(named) == 1:
-                    out.setdefault("field_moves", {}).setdefault(named[0], shown[2])
+                slot = member(shown[1]) if shown else None
+                if slot is not None:
+                    out.setdefault("field_moves", {}).setdefault(slot, shown[2])
+                fight = battle_moves(block[i], classes, glyphs)
+                slot = member(fight[0]) if fight else None
+                if slot is not None and all(n in move_ids for n in fight[1]):
+                    out.setdefault("moves", {}).setdefault(slot, fight[1])
+                    if out["moves"][slot] == fight[1]:
+                        out.setdefault("pp", {}).setdefault(slot, {}).setdefault(fight[2], fight[3])
             if "bag" not in out:
                 # Only names that are items: the START menu's OPTION is a list too.
                 bag = [(name, q) for name, q in bag_screen(block[i], classes, glyphs) or []
@@ -512,6 +523,8 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                     out.update(bag=bag, bag_frame=v)
     for slot, moves in out.get("field_moves", {}).items():
         set_field_moves(pyboy, rom, symbols, slot, moves)
+    for slot, moves in out.get("moves", {}).items():
+        set_moves(pyboy, rom, symbols, slot, moves, out["pp"].get(slot))
     return out
 
 
@@ -519,7 +532,7 @@ def apply_rebuilt(pyboy, rebuilt: dict, rom: bytes, symbols) -> None:
     """Write what `rebuild_from_screens` read into another emulator: the
     fresh replay that confirms a window must start from the same state.
     Takes it as returned or read back from a report's JSON."""
-    from poke.party import set_bag, set_field_moves, set_party
+    from poke.party import set_bag, set_field_moves, set_moves, set_party
 
     if rebuilt.get("party"):
         set_party(pyboy, rom, symbols, rebuilt["party"])
@@ -527,6 +540,10 @@ def apply_rebuilt(pyboy, rebuilt: dict, rom: bytes, symbols) -> None:
         set_bag(pyboy, rom, symbols, [tuple(item) for item in rebuilt["bag"]])
     for slot, moves in rebuilt.get("field_moves", {}).items():
         set_field_moves(pyboy, rom, symbols, int(slot), moves)
+    pp = {int(slot): {int(i): left for i, left in shown.items()}
+          for slot, shown in rebuilt.get("pp", {}).items()}
+    for slot, moves in rebuilt.get("moves", {}).items():
+        set_moves(pyboy, rom, symbols, int(slot), moves, pp.get(int(slot)))
 
 
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
