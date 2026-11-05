@@ -631,3 +631,25 @@ def test_the_start_menu_is_not_taken_for_the_bag():
     with h5py.File(VIDEO_PATH) as h5:
         rebuilt = rebuild_from_screens(env.pyboy, h5, 153040, 40, ROM_PATH.read_bytes(), load())
     assert "bag" not in rebuilt
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_a_rebuild_can_be_applied_again_to_a_fresh_emulator():
+    # The fresh replay that confirms a window starts from a new emulator: it
+    # must carry the same rebuilt party, or it stops at the party screen.
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.symbols import load
+    from scripts.repair_labels import apply_rebuilt, rebuild_from_screens
+
+    rom, symbols = ROM_PATH.read_bytes(), load()
+    first = PokeEnv(str(ROM_PATH), "states/cgb/teleport/MtMoon1F_w0.state", color=True)
+    first.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(first.pyboy, h5, 152796, 600, rom, symbols)
+    fresh = PokeEnv(str(ROM_PATH), "states/cgb/teleport/MtMoon1F_w0.state", color=True)
+    fresh.reset()
+    apply_rebuilt(fresh.pyboy, rebuilt, rom, symbols)
+    party = range(0xD162, 0xD2F7)               # count, species, structs, OT names, nicknames
+    assert [fresh.pyboy.memory[a] for a in party] == [first.pyboy.memory[a] for a in party]

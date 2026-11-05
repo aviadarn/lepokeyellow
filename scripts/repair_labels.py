@@ -479,6 +479,17 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
     return out
 
 
+def apply_rebuilt(pyboy, rebuilt: dict, rom: bytes, symbols) -> None:
+    """Write what `rebuild_from_screens` read into another emulator: the
+    fresh replay that confirms a window must start from the same state."""
+    from poke.party import set_bag, set_party
+
+    if rebuilt.get("party"):
+        set_party(pyboy, rom, symbols, rebuilt["party"])
+    if rebuilt.get("bag"):
+        set_bag(pyboy, rom, symbols, rebuilt["bag"])
+
+
 def write_repair(labels, key: str, masks: np.ndarray, first: int, lost: int, limit: int,
                  name: str, edits: int, writes: dict | None = None) -> None:
     """Store a run's buttons and state writes over everything it replayed,
@@ -611,6 +622,11 @@ def main() -> None:
     def new_replayer():
         if args.anchor_state:
             fresh_envs.append(anchored(args.anchor_state))
+            if args.rebuild:
+                from poke.symbols import load as load_symbols
+
+                apply_rebuilt(fresh_envs[-1].pyboy, rebuilt, Path(ROM).read_bytes(),
+                              load_symbols())
             return Replayer(fresh_envs[-1].pyboy, snapper, video, masks, offset)
         fresh_envs.append(boot())
         return Replayer(fresh_envs[-1], snapper, video, masks, offset)

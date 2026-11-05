@@ -22,8 +22,9 @@ NAME = re.compile(r"^[A-Z][A-Z♀♂.'\- ]*$")
 def party_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> list[dict] | None:
     """[{name, level, hp, max_hp, status}] per member shown, top to bottom,
     or None when the frame is not the party menu (its prompt is missing or
-    no member reads). Each member is two tile rows: the name in columns
-    2-11, ":L" and the level in 12-15, a status in 17-19; then the HP."""
+    no member reads). Each member is two tile rows: its icon in columns 1-2,
+    the name in 3-12, ":L" and the level from 13, a status in 17-19; then
+    the HP."""
     prompt = " ".join(read_row(frame, classes, glyphs, r) for r in range(13, 17))
     if not any(p in prompt for p in PROMPTS):
         return None
@@ -31,8 +32,8 @@ def party_screen(frame: np.ndarray, classes: np.ndarray, glyphs: np.ndarray) -> 
     for slot in range(6):
         top = read_row(frame, classes, glyphs, 2 * slot)
         bottom = read_row(frame, classes, glyphs, 2 * slot + 1)
-        name = top[2:12].strip(" ?▶▷")
-        level = re.search(r"(\d+)", top[13:16])
+        name = top[3:13].strip(" ?▶▷")
+        level = re.search(r"(\d+)", top[13:17])
         hp = re.search(r"(\d+)/\s*(\d+)", bottom[12:20])
         if not (name and NAME.match(name) and level and hp):
             break
