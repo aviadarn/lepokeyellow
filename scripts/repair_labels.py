@@ -284,6 +284,7 @@ def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
         addresses = [a for a, _ in tier]
         now = [int(memory[a]) for a in addresses]
         combos = list(itertools.product(*[list(values) for _, values in tier]))
+        started = time.time()
         if len(combos) <= IN_PROCESS:
             ranked = []
             for combo in combos:
@@ -308,6 +309,9 @@ def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
                            search.judge_from, search.run, deadline=deadline)
             if deadline is not None and time.time() > deadline:
                 search.deadline = search.clock() - 1      # the sweep spent the budget
+        print(f"  resync {' '.join(f'{a:04X}' for a in addresses)} @{at}: {len(ranked)} of "
+              f"{len(combos)} values tried, furthest {max((r for r, _ in ranked), default=None)} "
+              f"(lost {lost}), {time.time() - started:.0f}s", flush=True)
         best = None
         for reach, combo in ranked:
             what = "write " + " ".join(f"{a:04X}={v}" for a, v in zip(addresses, combo)) + f" @{at}"
