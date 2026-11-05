@@ -88,8 +88,9 @@ There the flower and water tiles animate out of phase: the two emulators
 disagree on a few lag frames earlier, and the animation runs on a frame
 counter (`0xFFD8`, `0xD084`). No button reaches that, so where no edit
 helps the repair now writes hidden state. It tries the tile counters (168
-values) before widening its window, and the random bytes (65,536, on 4
-workers) after. A write is recorded with the labels (`state_writes`), every
+values), then the random bytes (65,536 on 4 workers, about a minute),
+before widening its window: a beam over 1,200 or 2,400 frames takes up to
+half an hour, and across the runs so far found an edit 2 times in 17. A write is recorded with the labels (`state_writes`), every
 replay applies it, and the frames after it are `verified_resync`, never
 `verified`.
 

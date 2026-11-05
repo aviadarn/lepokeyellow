@@ -326,7 +326,7 @@ def resync(search: Search, masks: np.ndarray, lost: int, limit: int, tiers,
 def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.ndarray,
            lost: int, limit: int, max_edits: int, max_backtracks: int, width: int = 4,
            depth: int = 12, window: int = 300, max_window: int = 2400, cap: int = 400,
-           stuck_budget: float | None = None, tiers=(), workers: int = 4):
+           stuck_budget: float | None = None, tiers=(), workers: int = 4, sweep=None):
     """Greedy repair with backtracking: (masks, video frame sync is lost at, edits).
 
     Each step takes the best set of edits at the current loss of sync
@@ -346,21 +346,24 @@ def repair(search: Search, masks: np.ndarray, held_p: np.ndarray, onset_p: np.nd
     costly = tuple(t for t in tiers if size(t) > IN_PROCESS)
 
     def find(m, at, exclude, avoid=None):
-        # Cheapest first: the narrow beam, then a small resync (the tile tier
-        # is 168 replays; widening to 2,400 frames can take half an hour),
-        # then the wider beams, then a large resync.
+        # Cheapest first: the narrow beam, then the resyncs -- small tiers
+        # here (the tile tier is 168 replays), large ones on workers (the
+        # random bytes' 65,536 take about a minute) -- then the wider beams:
+        # widening to 2,400 frames can take half an hour, and has rarely
+        # found an edit.
         w = window
         while True:
             found = beam(search, m, held_p, onset_p, at, limit, width, depth, w, cap,
                          exclude, avoid)
             if found is not None or search.out_of_time():
                 return found
-            if w == window and cheap:
-                found = resync(search, m, at, limit, cheap, exclude, avoid, workers)
+            if w == window and tiers:
+                found = resync(search, m, at, limit, cheap + costly, exclude, avoid, workers,
+                               sweep)
                 if found is not None or search.out_of_time():
                     return found
             if w >= max_window:
-                return resync(search, m, at, limit, costly, exclude, avoid, workers) if costly else None
+                return None
             w = min(2 * w, max_window)
             print(f"  nothing within {w // 2} frames: widening to {w}", flush=True)
 

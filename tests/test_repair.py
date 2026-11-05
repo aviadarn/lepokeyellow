@@ -500,6 +500,37 @@ def test_a_cheap_resync_comes_before_widening_the_window():
     assert lost == n and edits[0]["edit"].startswith("write FFD8=7")
 
 
+def test_a_costly_resync_comes_before_widening_the_window(monkeypatch):
+    # Window 1 (Mt. Moon): widening to 600 and 1,200 frames used the whole
+    # budget, so the random tier (a minute's sweep on workers) never ran.
+    import scripts.repair_labels as rl
+
+    calls = []
+    narrow = rl.beam
+
+    def beam(search, masks, held_p, onset_p, lost, limit, width, depth, window, *rest, **kw):
+        calls.append(("beam", window))
+        return narrow(search, masks, held_p, onset_p, lost, limit, width, depth, window, *rest, **kw)
+
+    def sweep(replayer, snapshot, cap, registers, workers, writes, at, judge_from, run,
+              deadline=None):
+        calls.append(("sweep",))
+        return [(cap, (7, 0))]
+
+    monkeypatch.setattr(rl, "beam", beam)
+    n = 1000
+    search = rl.Search(_HiddenWall(), (0, {0xFFD8: 0, 0xD084: 0, 0xFFD4: 0}), n)
+    masks = np.zeros(n, np.int64)
+    lost = search.base(masks, 0)
+    big = ((0xFFD8, range(40)), (0xFFD4, range(40)))      # 1,600 values: a worker tier
+    _, lost, edits = rl.repair(search, masks, _held(n), np.zeros((n, 8), np.float32), lost, n,
+                               max_edits=5, max_backtracks=1, max_window=2400,
+                               tiers=(big,), sweep=sweep)
+    assert lost == n and edits[0]["edit"].startswith("write FFD8=7")
+    assert calls[:2] == [("beam", 300), ("sweep",)]
+    assert ("beam", 600) not in calls
+
+
 def test_only_if_better_counts_resync_verified_frames(tmp_path):
     import h5py
 
