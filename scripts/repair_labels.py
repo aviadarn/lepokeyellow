@@ -449,12 +449,13 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
     [first, first + frames): the first party menu read the same on two
     frames `step` apart, and the first item list. A door's save state has
     its own party and bag; the player's are on screen when they open them."""
-    from poke.party import set_bag, set_party
+    from poke.party import items_by_name, set_bag, set_party
     from poke.screen_text import font
     from poke.screens import bag_screen, party_screen
     from scripts.sync_opening import text_classes
 
     glyphs, classes = font(rom, symbols), text_classes(h5["colours"][:])
+    items = items_by_name(rom, symbols)
     out: dict = {}
     previous = None
     for start in range(first, first + frames, 2048):
@@ -468,7 +469,8 @@ def rebuild_from_screens(pyboy, h5, first: int, frames: int, rom: bytes, symbols
                                guessed=set_party(pyboy, rom, symbols, party))
                 previous = party
             if "bag" not in out:
-                bag = bag_screen(block[i], classes, glyphs)
+                # Only names that are items: the START menu's OPTION is a list too.
+                bag = [name for name in bag_screen(block[i], classes, glyphs) or [] if name in items]
                 if bag:
                     set_bag(pyboy, rom, symbols, bag)
                     out.update(bag=bag, bag_frame=v)

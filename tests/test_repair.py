@@ -615,3 +615,19 @@ def test_a_windows_screens_rebuild_its_party_and_bag():
     assert [p["level"] for p in rebuilt["party"]] == [26, 27, 28, 26, 26, 25]
     assert 659860 <= rebuilt["party_frame"] <= 659960
     assert env.pyboy.memory[0xD162] == 6
+
+
+@pytest.mark.skipif(not (ROM_PATH.exists() and VIDEO_PATH.exists()), reason="needs the ROM and the video")
+def test_the_start_menu_is_not_taken_for_the_bag():
+    # Mt. Moon, 0:42:33: the START menu's OPTION read as a one-item list.
+    import h5py
+
+    from poke.env import PokeEnv
+    from poke.symbols import load
+    from scripts.repair_labels import rebuild_from_screens
+
+    env = PokeEnv(str(ROM_PATH), "states/cgb/teleport/MtMoon1F_w0.state", color=True)
+    env.reset()
+    with h5py.File(VIDEO_PATH) as h5:
+        rebuilt = rebuild_from_screens(env.pyboy, h5, 153040, 40, ROM_PATH.read_bytes(), load())
+    assert "bag" not in rebuilt
